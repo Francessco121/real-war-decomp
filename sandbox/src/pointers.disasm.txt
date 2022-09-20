@@ -1,0 +1,23 @@
+File Type: COFF OBJECT
+
+_set:
+  00000000: 8B 44 24 04        mov         eax,dword ptr [esp+4]
+  00000004: C7 00 05 00 00 00  mov         dword ptr [eax],5
+  0000000A: C3                 ret
+
+_main:
+  00000000: 51                 push        ecx
+  00000001: 8D 44 24 00        lea         eax,[esp]
+  00000005: 50                 push        eax
+  00000006: E8 00 00 00 00     call        0000000B
+  0000000B: 59                 pop         ecx
+  0000000C: 59                 pop         ecx
+  0000000D: C3                 ret
+
+  Summary
+
+          20 .debug$F
+          26 .drectve
+          19 .text
+
+

@@ -1,0 +1,15 @@
+File Type: COFF OBJECT
+
+_add:
+  00000000: 8B 44 24 08        mov         eax,dword ptr [esp+8]
+  00000004: 8B 4C 24 04        mov         ecx,dword ptr [esp+4]
+  00000008: 03 C1              add         eax,ecx
+  0000000A: C3                 ret
+
+  Summary
+
+          10 .debug$F
+          26 .drectve
+           B .text
+
+

@@ -1,0 +1,11 @@
+- compiled with _WINMAIN_, _MBCS, WINHEAP
+- `.\RealWar.exe -L 1 -G 1` launch model viewer in windowed mode
+- IMAGE_RICH_HEADER (dumped from Ghidra):
+    - Unknown Product (c), build 7291
+    - C++ Compiler from VS98 (6.0), build 8168
+    - Unknown Product (e), build 7299
+    - Unknown Product (25), build 8755
+    - Unknown Product (13), build 8034
+    - Unmarked objects, build 0
+    - C Compiler from VS98 (6.0), build 8168
+    - CVTRes from VS97 (5.0) SP3 cvtres 5.00.1668, build 1720

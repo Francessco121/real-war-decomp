@@ -1,0 +1,23 @@
+0x4e31c4:	mov	eax, dword ptr [esp + 4]
+0x4e31c8:	add	dword ptr [eax], 4
+0x4e31cb:	mov	eax, dword ptr [eax]
+0x4e31cd:	mov	eax, dword ptr [eax - 4]
+0x4e31d0:	ret	
+
+Initial IR:
+- each assembly instruction gets a single statement
+v1 = arg0
+*v1 = *v1 + 4
+v2 = *v1
+v3 = *(v2 - 4)
+return v3
+
+Variable reduction:
+- variables that don't get reused later are folded
+*arg0 = *arg0 + 4
+return *(*arg0 - 4)
+
+Pattern simplification:
+- recognize and simplify known patterns 
+- (e.g. incrementing something and then returning the decrement is a post-increment)
+return (*arg0)++;

@@ -1,0 +1,6 @@
+# Editor files
+.vscode/
+
+# Ignore actual game files
+game/*
+!game/.gitkeep

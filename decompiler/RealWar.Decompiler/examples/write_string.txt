@@ -1,0 +1,104 @@
+B0:
+0x4e318c:	push	ebx                         ;; save ebx         (arg0 now at esp + 8)
+0x4e318d:	mov	ebx, dword ptr [esp + 0xc]      ;; ebx_1 = arg1
+0x4e3191:	mov	eax, ebx                        ;; eax_1 = ebx_1
+0x4e3193:	dec	ebx                             ;; ebx_2 = ebx_1 - 1
+0x4e3194:	push	esi                         ;; save esi         (arg0 now at esp + 12)
+0x4e3195:	push	edi                         ;; save edi         (arg0 now at esp + 16)
+0x4e3196:	test	eax, eax
+0x4e3198:	jle	0x4e31c0                        ;; if (eax_1 <= 0) goto L4e31c0
+B1:
+0x4e319a:	mov	edi, dword ptr [esp + 0x1c]     ;; edi_1 = arg3
+0x4e319e:	mov	esi, dword ptr [esp + 0x10]     ;; esi_1 = arg0
+B2:
+L4e31a2:
+0x4e31a2:	movsx	eax, byte ptr [esi]         ;; eax_2 = (int)(*esi_1)
+0x4e31a5:	push	edi
+0x4e31a6:	inc	esi                             ;; esi_1 = esi_1 + 1    // B2 depends on esi and B2 can be reached from itself, so we cannot make a new variable
+0x4e31a7:	push	dword ptr [esp + 0x1c]
+0x4e31ab:	push	eax
+0x4e31ac:	call	0x4e3126                    ;; func_0x4e3126(eax_2, arg2, edi_1)
+0x4e31b1:	add	esp, 0xc
+0x4e31b4:	cmp	dword ptr [edi], -1
+0x4e31b7:	je	0x4e31c0                        ;; if (*edi_1 == -1) goto L4e31c0
+B3:
+0x4e31b9:	mov	eax, ebx                        ;; eax_3 = ebx_2
+0x4e31bb:	dec	ebx                             ;; ebx_2 = ebx_2 - 1    // B3 depends on ebx and B3 can be reached from itself, so we cannot make a new variable
+0x4e31bc:	test	eax, eax
+0x4e31be:	jg	0x4e31a2                        ;; if (eax_3 > 0) goto L4e31a2
+B4:
+L4e31c0:
+0x4e31c0:	pop	edi                             ;; epilogue
+0x4e31c1:	pop	esi
+0x4e31c2:	pop	ebx
+0x4e31c3:	ret	
+
+Initial IR:
+B0:
+ebx_1 = arg1
+eax_1 = ebx_1
+ebx_2 = ebx_1 - 1
+if (eax_1 <= 0) goto L4e31c0
+B1:
+edi_1 = arg3
+esi_1 = arg0
+B2:
+L4e31a2:
+eax_2 = (int)(*esi_1)
+esi_1 = esi_1 + 1
+func_0x4e3126(eax_2, arg2, edi_1)
+if (*edi_1 == -1) goto L4e31c0
+B3:
+eax_3 = ebx_2
+ebx_2 = ebx_2 - 1
+if (eax_3 > 0) goto L4e31a2
+B4:
+L4e31c0:
+
+Variable reduction:
+B0:
+eax_1 = arg1                        // ebx_1 is eliminated since it is succeeded by ebx_2
+ebx_2 = arg1 - 1
+if (eax_1 <= 0) goto L4e31c0
+B1:
+edi_1 = arg3                        // edi_1 and esi_1 are not touched since they are the final versions of those registers
+esi_1 = arg0                        // at the end of this block (only fold within a block)
+B2:
+L4e31a2:
+eax_2 = (int)(*esi_1)               // eax_2 cannot be folded into the call because it depends on esi, which is modified
+esi_1 = esi_1 + 1                   // before the call. therefore, folding is only allowed passed instructions that don't modify their dependencies
+func_0x4e3126(eax_2, arg2, edi_1)   // edi is not folded because it is not defined in this block
+if (*edi_1 == -1) goto L4e31c0
+B3:
+eax_3 = ebx_2                       // eax_3 is not folded for the same reason as eax_2
+ebx_2 = ebx_2 - 1
+if (eax_3 > 0) goto L4e31a2
+B4:
+L4e31c0:
+
+Control flow analysis:
+B0:
+eax_1 = arg1
+ebx_2 = arg1 - 1
+if (eax_1 <= 0) goto L4e31c0        // step 3: B0 is a valid if to B4 even tho it contains a loop (B2 <-> B3) because
+                                    // the loop is fully contained within the if
+B1:
+edi_1 = arg3
+esi_1 = arg0
+B2:
+L4e31a2:
+eax_2 = (int)(*esi_1)
+esi_1 = esi_1 + 1
+func_0x4e3126(eax_2, arg2, edi_1)
+if (*edi_1 == -1) goto L4e31c0      // step 2: B2 is inside of a loop and its branch leads to the end of the loop,
+                                    // therefore this must be a break. if B2 wasn't known to be in a loop, it cannot
+                                    // be an if because it leads to a block that comes back to B2 and the if is not
+                                    // contained within that loop
+B3:
+eax_3 = ebx_2
+ebx_2 = ebx_2 - 1
+if (eax_3 > 0) goto L4e31a2         // step 1: B3 is a valid loop to B2 because B2 leads to B3. it's ok that B2 goes to
+                                    // B4 before B4 is where the loop exits to (therefore B2's condition can be represented
+                                    // by a break (or even a return since B4 is the exit and doesn't lead anywhere else))
+B4:
+L4e31c0:
