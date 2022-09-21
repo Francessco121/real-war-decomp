@@ -17,8 +17,11 @@ void cd_check() {
 
         if (func_004d6a60(intro_cd_path)) {
             flag = TRUE;
+        } else {
+            display_message("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");
+        }
 
-            cdtest:
+        if (flag) {
             sprintf(intro_cd_path, "%scdtest.txt", "vids\\");
 
             file = fopen(intro_cd_path, "wb");
@@ -26,18 +29,9 @@ void cd_check() {
                 flag = FALSE;
                 fclose(file);
                 _unlink(intro_cd_path);
-                display_message("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");
-                
-            } else {
-                if (flag) {
-                    return;
-                }
-            }
-        } else {
-            display_message("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");
-
-            if (flag) {
-                goto cdtest;
+                display_message("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");   
+            } else if (flag) {
+                return;
             }
         }
 

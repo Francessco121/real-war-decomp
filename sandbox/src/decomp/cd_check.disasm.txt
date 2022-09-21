@@ -22,13 +22,12 @@ _cd_check:
   00000027: 85 C0              test        eax,eax
   00000029: 74 07              je          00000032
   0000002B: BE 01 00 00 00     mov         esi,1
-  00000030: EB 11              jmp         $cdtest$52804
+  00000030: EB 11              jmp         00000043
   00000032: 68 00 00 00 00     push        offset _cd_check
   00000037: E8 00 00 00 00     call        0000003C
   0000003C: 83 C4 04           add         esp,4
   0000003F: 85 F6              test        esi,esi
   00000041: 74 4F              je          00000092
-$cdtest$52804:
   00000043: 68 00 00 00 00     push        offset _cd_check
   00000048: 68 00 00 00 00     push        offset _cd_check
   0000004D: 68 00 00 00 00     push        offset _cd_check
@@ -70,26 +69,26 @@ RELOCATIONS #3
                                                 Symbol    Symbol
  Offset    Type              Applied To         Index     Name
  --------  ----------------  -----------------  --------  ------
- 00000007  DIR32                      00000000        23  ??_C@_05GNKB@vids?2?$AA@ (`string')
- 0000000C  DIR32                      00000000        20  ??_C@_0M@MBIA@?$CFsintro?4mpg?$AA@ (`string')
+ 00000007  DIR32                      00000000        22  ??_C@_05GNKB@vids?2?$AA@ (`string')
+ 0000000C  DIR32                      00000000        1F  ??_C@_0M@MBIA@?$CFsintro?4mpg?$AA@ (`string')
  00000011  DIR32                      00000000         8  _intro_cd_path
- 00000016  REL32                      00000000        1D  _sprintf
+ 00000016  REL32                      00000000        1C  _sprintf
  0000001B  DIR32                      00000000         8  _intro_cd_path
- 00000020  REL32                      00000000        1C  _func_004d6a60
- 00000033  DIR32                      00000000        1B  ??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@ (`string')
- 00000038  REL32                      00000000        18  _display_message
- 00000044  DIR32                      00000000        23  ??_C@_05GNKB@vids?2?$AA@ (`string')
+ 00000020  REL32                      00000000        1B  _func_004d6a60
+ 00000033  DIR32                      00000000        1A  ??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@ (`string')
+ 00000038  REL32                      00000000        17  _display_message
+ 00000044  DIR32                      00000000        22  ??_C@_05GNKB@vids?2?$AA@ (`string')
  00000049  DIR32                      00000000        16  ??_C@_0N@BFFL@?$CFscdtest?4txt?$AA@ (`string')
  0000004E  DIR32                      00000000         8  _intro_cd_path
- 00000053  REL32                      00000000        1D  _sprintf
+ 00000053  REL32                      00000000        1C  _sprintf
  00000058  DIR32                      00000000        13  ??_C@_02NGAF@wb?$AA@ (`string')
  0000005D  DIR32                      00000000         8  _intro_cd_path
  00000062  REL32                      00000000        10  _fopen
  00000071  REL32                      00000000         F  _fclose
  00000076  DIR32                      00000000         8  _intro_cd_path
  0000007B  REL32                      00000000         E  __unlink
- 00000080  DIR32                      00000000        1B  ??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@ (`string')
- 00000085  REL32                      00000000        18  _display_message
+ 00000080  DIR32                      00000000        1A  ??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@ (`string')
+ 00000085  REL32                      00000000        17  _display_message
  0000009D  REL32                      00000000         D  _game_exit
 
 LINENUMBERS #3
@@ -97,10 +96,10 @@ LINENUMBERS #3
  Symbol index:        B Base line number:    10
  Symbol name = _cd_check
  00000004(   12)  00000006(   16)  0000001A(   18)  0000002B(   19)
- 00000032(   37)  0000003F(   39)  00000043(   22)  00000057(   24)
- 00000069(   25)  0000006D(   27)  00000075(   28)  0000007F(   29)
- 0000008C(   31)  0000008E(   32)  00000092(   44)  0000009C(   45)
- 000000A1(   15)  000000A8(   48)
+ 00000030(   20)  00000032(   21)  0000003F(   24)  00000043(   25)
+ 00000057(   27)  00000069(   28)  0000006D(   30)  00000075(   31)
+ 0000007F(   32)  0000008C(   33)  00000092(   38)  0000009C(   39)
+ 000000A1(   15)  000000A8(   42)
 
 RELOCATIONS #9
                                                 Symbol    Symbol
@@ -108,8 +107,6 @@ RELOCATIONS #9
  --------  ----------------  -----------------  --------  ------
  00000020  SECREL                     00000000         B  _cd_check
  00000024  SECTION                        0000         B  _cd_check
- 00000034  SECREL                     00000000        17  $cdtest$52804
- 00000038  SECTION                        0000        17  $cdtest$52804
 
 RELOCATIONS #A
                                                 Symbol    Symbol
@@ -121,7 +118,7 @@ RELOCATIONS #A
 
           71 .data
           10 .debug$F
-        1F09 .debug$S
+        1EF7 .debug$S
           5C .debug$T
           50 .drectve
           B0 .text
