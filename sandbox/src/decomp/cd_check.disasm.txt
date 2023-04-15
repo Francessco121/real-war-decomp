@@ -4,8 +4,8 @@ RELOCATIONS #2
                                                 Symbol    Symbol
  Offset    Type              Applied To         Index     Name
  --------  ----------------  -----------------  --------  ------
- 000000AC  SECREL                     00000000         8  _intro_cd_path
- 000000B0  SECTION                        0000         8  _intro_cd_path
+ 000000AC  SECREL                     00000000         8  _temp_string
+ 000000B0  SECTION                        0000         8  _temp_string
 
 _cd_check:
   00000000: 56                 push        esi
@@ -71,21 +71,21 @@ RELOCATIONS #3
  --------  ----------------  -----------------  --------  ------
  00000007  DIR32                      00000000        22  ??_C@_05GNKB@vids?2?$AA@ (`string')
  0000000C  DIR32                      00000000        1F  ??_C@_0M@MBIA@?$CFsintro?4mpg?$AA@ (`string')
- 00000011  DIR32                      00000000         8  _intro_cd_path
+ 00000011  DIR32                      00000000         8  _temp_string
  00000016  REL32                      00000000        1C  _sprintf
- 0000001B  DIR32                      00000000         8  _intro_cd_path
+ 0000001B  DIR32                      00000000         8  _temp_string
  00000020  REL32                      00000000        1B  _func_004d6a60
  00000033  DIR32                      00000000        1A  ??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@ (`string')
  00000038  REL32                      00000000        17  _display_message
  00000044  DIR32                      00000000        22  ??_C@_05GNKB@vids?2?$AA@ (`string')
  00000049  DIR32                      00000000        16  ??_C@_0N@BFFL@?$CFscdtest?4txt?$AA@ (`string')
- 0000004E  DIR32                      00000000         8  _intro_cd_path
+ 0000004E  DIR32                      00000000         8  _temp_string
  00000053  REL32                      00000000        1C  _sprintf
  00000058  DIR32                      00000000        13  ??_C@_02NGAF@wb?$AA@ (`string')
- 0000005D  DIR32                      00000000         8  _intro_cd_path
+ 0000005D  DIR32                      00000000         8  _temp_string
  00000062  REL32                      00000000        10  _fopen
  00000071  REL32                      00000000         F  _fclose
- 00000076  DIR32                      00000000         8  _intro_cd_path
+ 00000076  DIR32                      00000000         8  _temp_string
  0000007B  REL32                      00000000         E  __unlink
  00000080  DIR32                      00000000        1A  ??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@ (`string')
  00000085  REL32                      00000000        17  _display_message
@@ -118,7 +118,7 @@ RELOCATIONS #A
 
           71 .data
           10 .debug$F
-        1EF7 .debug$S
+        1EF5 .debug$S
           5C .debug$T
           50 .drectve
           B0 .text
