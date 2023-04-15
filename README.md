@@ -3,12 +3,12 @@ A work in progress decompilation of the PC game [Real War (2001) by Rival Intera
 
 ## Prerequisites
 - A legitimate copy of the game.
-- Visual Studio 6.0 Enterprise (6.00.8168)
+- Visual C++ 6.0 Professional/Enterprise (build 8168)
     - Tooling currently assumes that this is installed at the default location:
         - `C:\Program Files (x86)\Microsoft Visual Studio\VC98`
         - `C:\Program Files (x86)\Microsoft Visual Studio\Common\MSDev98`
-- .NET 6.0
-- Dart >=2.18.0
+    - This can also be installed via Visual Studio 6.0 Enterprise (6.00.8168).
+- Dart >=2.19.0
 
 ## Development
 1. Unpack game CD into `game/`.

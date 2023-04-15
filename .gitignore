@@ -4,3 +4,6 @@
 # Ignore actual game files
 game/*
 !game/.gitkeep
+
+# Build artifacts
+build/

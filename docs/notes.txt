@@ -9,3 +9,5 @@
     - Unmarked objects, build 0
     - C Compiler from VS98 (6.0), build 8168
     - CVTRes from VS97 (5.0) SP3 cvtres 5.00.1668, build 1720
+- apparently ffmpeg 4.4 can read the .vag audio files
+    - ffmpeg -i intro.mpg -i intro.vag intro.mp4
