@@ -5,8 +5,12 @@ import 'package:path/path.dart' as p;
 import 'package:watcher/watcher.dart';
 
 const vsPath = 'C:\\Program Files (x86)\\Microsoft Visual Studio';
+const dxPath = 'C:\\dx7sdk';
 const clExePath = '$vsPath\\VC98\\Bin\\CL.EXE';
-const clIncludePath = '$vsPath\\VC98\\Include';
+const clIncludePaths = [
+  '$dxPath\\include',
+  '$vsPath\\VC98\\Include'
+];
 const dumpbinExePath = '$vsPath\\VC98\\Bin\\DUMPBIN.EXE';
 final envPath = [
   '$vsPath\\VC98\\Bin',
@@ -42,7 +46,20 @@ Future<void> compile(String cPath) async {
   final String pdbPath = makePdbPath(cPath);
   final String disasmPath = makeDisasmPath(cPath);
 
-  final args = ['/nologo', '/c', '/I', clIncludePath, '/Fo$objPath', '/Fd$pdbPath', '/O2', '/Zi', cPath];
+  final args = [
+    '/nologo', 
+    '/c', 
+    for (final incPath in clIncludePaths)
+      ...[
+        '/I',
+        incPath
+      ],
+    '/Fo$objPath', 
+    '/Fd$pdbPath', 
+    '/O2', 
+    '/Zi', 
+    cPath,
+  ];
   print('[${DateTime.now()}] cl ${args.join(' ')}');
 
   // Ensure obj directory exists

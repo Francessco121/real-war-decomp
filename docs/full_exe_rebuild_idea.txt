@@ -1,0 +1,39 @@
+Rebuilding a fully matching exe from partially decompiled code mixed with original binary:
+- if the linker always adds content to sections in the order they are given on the command line:
+    - could extract binary and generate COFF files from them with the expected sections
+    - link "extracted COFF" files with recompiled ones in the right order
+    - will probably need to avoid linking in a binary blob of libc
+    - will symbol addresses play nice?
+- probably better to use a command file for linking, could generate this from a tool (like splat does)
+- where in the world will symbols declared in header files end up?
+    - this probably can't work unless we can force globals to link in a specific order... like,
+      generate a fake COFF for just that global maybe? if the order is just the first COFF file that
+      references it, that would kinda fake it.
+
+Options 2:
+- don't use a linker, and patch in recompiled COFF files ourselves.
+    - would have to parse and apply relocations
+    - might be way more realistic
+    - this is more useful for binary patching than anything,
+      just have to be careful that the replacement code is the exact same size
+
+Plan B:
+- instead of comparing entire exe files, we could extend our diff program to be
+  aware of symbol address differences.
+
+
+Interesting excerpt from the msdn docs:
+"4.2 Grouped Sections (Object Only)
+The "$" character (dollar sign) has a special interpretation in section names in object files.
+
+When determining the image section that will contain the contents of an object section, the linker discards 
+the "$" and all characters following it. Thus, an object section named .text$X will actually contribute to 
+the .text section in the image.
+
+However, the characters following the "$" determine the ordering of the contributions to the image section. 
+All contributions with the same object-section name will be allocated contiguously in the image, and the 
+blocks of contributions will be sorted in lexical order by object-section name. Therefore, everything in 
+object files with section name .text$X will end up together, after the .text$W contributions and before 
+the .text$Y contributions.
+
+The section name in an image file will never contain a "$" character."

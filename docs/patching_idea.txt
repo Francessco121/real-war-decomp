@@ -1,0 +1,13 @@
+Adding/changing existing code without a finished decomp is tricky because the replacement code
+must be less or equal to the size of the original code, since you can't just shift existing
+code up to make room.
+
+Instead, changing a function could choose one of two routes:
+1. if the replacement function fits in the original space, just overwrite the binary
+2. if it doesn't, link it in at the end of the file, and then patch the original function
+  to just jump to our new function
+
+New functions would just always take option 2. Notably, replacing functions cannot change
+the function prototype. To change something like the prototype, you would instead need to
+make a new function and then patch functions that call it, which for an unfinished decomp
+is probably dangerous.
