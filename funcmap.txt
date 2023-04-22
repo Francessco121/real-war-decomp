@@ -1,7 +1,8 @@
 FUN_00401000	00401000	undefined FUN_00401000(undefined4 param_1)	120
 FUN_00401080	00401080	undefined FUN_00401080()	126
-FUN_00401100	00401100	undefined FUN_00401100(undefined4 param_1)	74
-FUN_00401150	00401150	undefined FUN_00401150()	182
+FUN_00401100	00401100	int FUN_00401100(HWND hwnd)	74
+try_find_valid_d3d_device	00401150	int try_find_valid_d3d_device(void)	182
+enum_devices_callback	00401210	HRESULT enum_devices_callback(LPGUID lpGUID, LPSTR lpszDeviceDesc, LPSTR lpszDeviceName, LPD3DDEVICEDESC lpd3dHWDeviceDesc, LPD3DDEVICEDESC lpd3dSWDeviceDesc, LPVOID lpUserArg)	403
 FUN_004013b0	004013b0	undefined FUN_004013b0()	63
 FUN_004013f0	004013f0	undefined FUN_004013f0()	1152
 FUN_00401870	00401870	undefined FUN_00401870()	308
@@ -446,9 +447,9 @@ FUN_00461990	00461990	undefined FUN_00461990()	268
 FUN_00461aa0	00461aa0	undefined FUN_00461aa0(undefined4 param_1)	309
 FUN_00461be0	00461be0	undefined FUN_00461be0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	305
 FUN_00461d20	00461d20	undefined FUN_00461d20(undefined4 param_1, undefined4 param_2)	169
-FUN_00461dd0	00461dd0	undefined FUN_00461dd0()	193
-FUN_00461ea0	00461ea0	undefined FUN_00461ea0(undefined4 param_1)	297
-FUN_00461fd0	00461fd0	undefined FUN_00461fd0(undefined4 param_1)	279
+create_registry_keys	00461dd0	undefined create_registry_keys()	193
+to_absolute_data_path2	00461ea0	undefined to_absolute_data_path2(undefined4 path)	297
+to_absolute_data_path	00461fd0	undefined to_absolute_data_path(undefined4 path)	279
 cd_check	004620f0	undefined cd_check()	169
 FUN_004621a0	004621a0	undefined FUN_004621a0(undefined4 param_1, undefined4 param_2)	83
 FUN_00462200	00462200	undefined FUN_00462200(undefined4 param_1, undefined4 param_2)	881
@@ -929,7 +930,7 @@ FUN_004bfea0	004bfea0	undefined FUN_004bfea0()	246
 FUN_004bffa0	004bffa0	undefined FUN_004bffa0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	251
 FUN_004c00a0	004c00a0	undefined FUN_004c00a0()	566
 FUN_004c02e0	004c02e0	undefined FUN_004c02e0(undefined4 param_1)	110
-FUN_004c0350	004c0350	undefined FUN_004c0350(undefined4 param_1, undefined4 param_2)	880
+FUN_004c0350	004c0350	undefined FUN_004c0350(undefined4 path, undefined4 param_2)	880
 FUN_004c06c0	004c06c0	undefined FUN_004c06c0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	937
 FUN_004c0a70	004c0a70	undefined FUN_004c0a70(undefined4 param_1)	415
 FUN_004c0c10	004c0c10	undefined FUN_004c0c10(undefined4 param_1, undefined4 param_2)	92
@@ -976,7 +977,7 @@ FUN_004c4370	004c4370	undefined FUN_004c4370(undefined4 param_1, undefined4 para
 FUN_004c4780	004c4780	undefined FUN_004c4780(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6)	41
 FUN_004c47b0	004c47b0	undefined FUN_004c47b0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	457
 FUN_004c4980	004c4980	undefined FUN_004c4980(undefined4 param_1, undefined4 param_2)	23
-FUN_004c49a0	004c49a0	undefined FUN_004c49a0(undefined4 param_1, undefined4 param_2)	127
+FUN_004c49a0	004c49a0	undefined FUN_004c49a0(ushort * in, ushort * out)	127
 FUN_004c4a20	004c4a20	undefined FUN_004c4a20()	45
 FUN_004c4a50	004c4a50	undefined FUN_004c4a50()	45
 FUN_004c4a80	004c4a80	undefined FUN_004c4a80(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7)	616
@@ -1093,9 +1094,9 @@ init_systems	004d4510	undefined init_systems(HINSTANCE hInstance, int nCmdShow)	
 FUN_004d45b0	004d45b0	undefined FUN_004d45b0()	15
 game_create_window	004d45c0	undefined game_create_window(HINSTANCE hInstance, int nCmdShow)	364
 game_wndproc	004d4730	LRESULT game_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)	472
-WinMain	004d4930	void WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)	1014
+WinMain	004d4930	int WinMain(undefined hInstance, undefined hPrevInstance, LPSTR lpCmdLine, int nShowCmd)	1014
 display_message_and_exit	004d4d30	undefined display_message_and_exit(undefined4 param_1)	18
-FUN_004d4d50	004d4d50	undefined FUN_004d4d50()	187
+game_exit	004d4d50	undefined game_exit()	187
 display_message	004d4e10	void display_message(char * format, ...)	83
 FUN_004d4e70	004d4e70	undefined FUN_004d4e70(undefined4 param_1)	58
 FUN_004d4eb0	004d4eb0	undefined FUN_004d4eb0()	53
@@ -1117,13 +1118,13 @@ FUN_004d59d0	004d59d0	undefined FUN_004d59d0()	27
 FUN_004d59f0	004d59f0	undefined FUN_004d59f0(undefined4 param_1, undefined4 param_2)	38
 FUN_004d5a20	004d5a20	undefined FUN_004d5a20()	693
 FUN_004d5ce0	004d5ce0	undefined FUN_004d5ce0()	376
-zero_mem_1	004d5e60	undefined zero_mem_1()	34
+setup_virtual_memory_buffers	004d5e60	undefined setup_virtual_memory_buffers()	34
 FUN_004d5e90	004d5e90	undefined FUN_004d5e90()	11
 FUN_004d5ea0	004d5ea0	undefined FUN_004d5ea0()	59
 FUN_004d5ee0	004d5ee0	undefined FUN_004d5ee0()	197
 FUN_004d5fb0	004d5fb0	undefined FUN_004d5fb0(undefined4 param_1)	378
 custom_alloc	004d6130	LPVOID custom_alloc(uint bytes)	187
-FUN_004d61f0	004d61f0	undefined FUN_004d61f0(undefined4 param_1)	176
+custom_free	004d61f0	undefined custom_free(undefined4 param_1)	176
 FUN_004d62a0	004d62a0	undefined FUN_004d62a0()	71
 FUN_004d62f0	004d62f0	undefined FUN_004d62f0(undefined4 param_1)	10
 FUN_004d6300	004d6300	undefined FUN_004d6300()	6
@@ -1140,16 +1141,16 @@ FUN_004d6790	004d6790	undefined FUN_004d6790(undefined4 param_1, undefined4 para
 FUN_004d67e0	004d67e0	undefined FUN_004d67e0(undefined4 param_1)	30
 FUN_004d6800	004d6800	undefined FUN_004d6800(undefined4 param_1)	30
 FUN_004d6820	004d6820	undefined FUN_004d6820(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	57
-FUN_004d6860	004d6860	undefined FUN_004d6860(undefined4 param_1, undefined4 param_2)	170
+read_data_file	004d6860	undefined read_data_file(undefined4 path, undefined4 out)	170
 FUN_004d6910	004d6910	undefined FUN_004d6910(undefined4 param_1, undefined4 param_2)	80
 FUN_004d6960	004d6960	undefined FUN_004d6960(undefined4 param_1, undefined4 param_2)	50
 FUN_004d69a0	004d69a0	undefined FUN_004d69a0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	178
-FUN_004d6a60	004d6a60	long FUN_004d6a60(char * file_path)	129
+get_data_file_length	004d6a60	long get_data_file_length(char * file_path)	129
 FUN_004d6af0	004d6af0	undefined FUN_004d6af0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	69
-FUN_004d6b40	004d6b40	undefined FUN_004d6b40(undefined4 param_1, undefined4 param_2)	133
-FUN_004d6bd0	004d6bd0	undefined FUN_004d6bd0(undefined4 param_1)	49
-FUN_004d6c10	004d6c10	undefined FUN_004d6c10(undefined4 param_1)	309
-FUN_004d6d50	004d6d50	undefined FUN_004d6d50(undefined4 param_1)	212
+FUN_004d6b40	004d6b40	char * FUN_004d6b40(byte * param_1, uint * param_2)	133
+some_kind_of_string_hash?	004d6bd0	undefined some_kind_of_string_hash?(undefined4 param_1)	49
+load_bigfile_header	004d6c10	undefined load_bigfile_header(char * path)	309
+find_bigfile_entry_by_path	004d6d50	int find_bigfile_entry_by_path(char * path)	212
 FUN_004d6e30	004d6e30	undefined FUN_004d6e30(undefined4 param_1, undefined4 param_2)	119
 FUN_004d6eb0	004d6eb0	undefined FUN_004d6eb0(undefined4 param_1, undefined4 param_2)	193
 FUN_004d6f80	004d6f80	undefined FUN_004d6f80(undefined4 param_1)	81
@@ -1179,8 +1180,8 @@ check_window_focus_change	004d8090	undefined check_window_focus_change(undefined
 is_key_pressed	004d8140	undefined is_key_pressed(undefined4 nVirtKey)	29
 update_keys_pressed	004d8160	undefined update_keys_pressed()	64
 was_key_tapped	004d81a0	undefined was_key_tapped(undefined4 virtKeyCode)	12
-GetSaveFileNameA	004d81b0	thunk BOOL GetSaveFileNameA(LPOPENFILENAMEA param_1)	6
-GetOpenFileNameA	004d81b6	thunk BOOL GetOpenFileNameA(LPOPENFILENAMEA param_1)	6
+GetSaveFileNameA	004d81b0	thunk undefined GetSaveFileNameA(undefined param_1)	6
+GetOpenFileNameA	004d81b6	thunk undefined GetOpenFileNameA(undefined param_1)	6
 FUN_004d81c0	004d81c0	undefined FUN_004d81c0(undefined4 param_1, undefined4 param_2)	226
 FUN_004d82b0	004d82b0	undefined FUN_004d82b0(undefined4 param_1)	61
 FUN_004d82f0	004d82f0	undefined FUN_004d82f0(undefined4 param_1, undefined4 param_2)	54
@@ -1227,35 +1228,35 @@ FUN_004e03a0	004e03a0	undefined FUN_004e03a0(undefined4 param_1)	2815
 FUN_004e0ea0	004e0ea0	undefined FUN_004e0ea0(undefined4 param_1)	1080
 FUN_004e12e0	004e12e0	undefined FUN_004e12e0(undefined4 param_1, undefined4 param_2)	268
 FUN_004e13f0	004e13f0	undefined FUN_004e13f0(undefined4 param_1, undefined4 param_2)	268
-DirectDrawCreate	004e1500	thunk undefined DirectDrawCreate()	6
-DirectSoundCreate	004e1506	thunk undefined DirectSoundCreate()	6
-strstr	004e1510	char * strstr(char * param_1, char * param_2)	315
+DirectDrawCreate	004e1500	thunk HRESULT DirectDrawCreate(GUID * param_1, LPDIRECTDRAW * param_2, IUnknown * param_3)	6
+DirectSoundCreate	004e1506	thunk HRESULT DirectSoundCreate(LPGUID lpGuid, pointer ppDS, LPUNKNOWN pUnkOuter)	6
+strstr	004e1510	char * strstr(char * _Str, char * _SubStr)	315
 _FPinit	004e1590	undefined _FPinit()	23
 _cfltcvt_init	004e15a8	undefined _cfltcvt_init()	56
-__ftol	004e15e0	undefined __ftol()	39
+__ftol	004e15e0	longlong __ftol(float10 param_1)	39
 sprintf	004e1607	undefined sprintf(undefined4 param_1, undefined4 param_2, undefined1 param_3)	82
 sscanf	004e1659	int sscanf(char * str, char * format, ...)	52
 fgets	004e168d	wchar_t * fgets(_TSCHAR * string, int param_2, FILE * str)	87
 fclose	004e16e4	int fclose(FILE * str)	86
 fseek	004e173a	int fseek(FILE * str, long offset, int whence)	140
 fread	004e17c6	size_t fread(void * buffer, size_t size, size_t num, FILE * stream)	232
-free	004e18ae	undefined free(undefined4 param_1)	47
-malloc	004e18dd	void * malloc(size_t size)	18
+free	004e18ae	void free(void * _Memory)	47
+malloc	004e18dd	void * malloc(size_t _Size)	18
 __nh_malloc	004e18ef	void * __nh_malloc(size_t _Size, int _NhFlag)	44
 _heap_alloc_base	004e191b	undefined _heap_alloc_base(undefined4 param_1)	54
 _fwrite_lk	004e1951	undefined _fwrite_lk(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	266
 _fsopen	004e1a5b	FILE * _fsopen(_TSCHAR * file, _TSCHAR * mode, int shflag)	32
 fopen	004e1a7b	FILE * fopen(_TSCHAR * file, _TSCHAR * mode)	19
-srand	004e1a8e	void srand(uint seed)	10
+srand	004e1a8e	void srand(uint _Seed)	10
 rand	004e1a98	int rand(void)	30
-atol	004e1ab6	long atol(char * nptr)	139
-atoi	004e1b41	int atoi(char * nptr)	11
+atol	004e1ab6	long atol(char * _Str)	139
+atoi	004e1b41	int atoi(char * _Str)	11
 _unlink	004e1b4c	undefined _unlink(undefined4 param_1)	42
 fputs	004e1b76	int fputs(char * string, FILE * stream)	67
 fprintf	004e1bb9	undefined fprintf(undefined4 param_1, undefined4 param_2, undefined1 param_3)	50
 _strncmp	004e1bf0	int _strncmp(char * _Str1, char * _Str2, size_t _MaxCount)	56
 ftell	004e1c28	long ftell(FILE * str)	344
-strtok	004e1d80	char * strtok(char * cliStr, char * control)	156
+strtok	004e1d80	char * strtok(char * _Str, char * _Delim)	156
 _cinit	004e1e1c	void _cinit(void)	45
 exit	004e1e49	void exit(int _Code)	17
 __exit	004e1e5a	void __exit(int _Code)	17
@@ -1265,8 +1266,8 @@ vsprintf	004e1f1e	undefined vsprintf(undefined4 param_1, undefined4 param_2, und
 mainCRTStartup	004e1f6f	void mainCRTStartup(void)	215
 __amsg_exit	004e2065	void __amsg_exit(int param_1)	34
 fast_error_exit	004e208a	void fast_error_exit(int rterrnum)	35
-rewind	004e2167	undefined rewind(undefined4 param_1)	84
-perror	004e21bb	void perror(char * param_1)	108
+rewind	004e2167	void rewind(FILE * param_1)	84
+perror	004e21bb	void perror(char * _ErrMsg)	108
 _realloc_base	004e2227	undefined _realloc_base(undefined4 param_1, undefined4 param_2)	288
 _setdefaultprecision	004e241c	undefined _setdefaultprecision()	18
 _ms_p5_test_fdiv	004e242e	undefined _ms_p5_test_fdiv()	62
@@ -1289,7 +1290,7 @@ get_int_arg	004e31c4	undefined4 get_int_arg(int * param_1)	13
 get_int64_arg	004e31d1	undefined8 get_int64_arg(va_list * param_1)	16
 get_short_arg	004e31e1	short get_short_arg(va_list * param_1)	14
 _input	004e31ef	int _input(FILE * stream, char * format, va_list arglist)	2597
-maybe__hextodec	004e3c14	undefined maybe__hextodec(undefined4 param_1)	55
+__hextodec	004e3c14	undefined __hextodec(undefined4 param_1)	55
 _inc	004e3c4b	undefined _inc(undefined4 param_1)	26
 _un_inc	004e3c65	undefined _un_inc(undefined4 param_1, undefined4 param_2)	23
 _whiteout	004e3c7c	undefined _whiteout(undefined4 param_1, undefined4 param_2)	36
@@ -1302,7 +1303,7 @@ _flush	004e3f0d	undefined _flush(undefined4 param_1)	92
 _flsall	004e3f72	undefined _flsall(undefined4 param_1)	109
 _lseek	004e3fdf	undefined _lseek(undefined4 param_1, undefined4 param_2, undefined4 param_3)	154
 _read_lk	004e4079	undefined _read_lk(undefined4 param_1, undefined4 param_2, undefined4 param_3)	502
-memcpy	004e4270	void * memcpy(void * dst, void * src, size_t count)	516
+memcpy	004e4270	void * memcpy(void * _Dst, void * _Src, size_t _Size)	516
 _heap_init	004e45a5	int _heap_init(int mtflag)	60
 __sbh_heap_init	004e45e1	int __sbh_heap_init(void)	62
 __sbh_find_block	004e461f	undefined __sbh_find_block(undefined4 param_1)	43
@@ -1315,13 +1316,13 @@ _callnewh	004e5120	undefined _callnewh(undefined4 param_1)	27
 _write_lk	004e513b	int _write_lk(int param_1, char * param_2, int param_3)	429
 _openfile	004e52e8	undefined _openfile(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	368
 _getstream	004e5458	undefined _getstream()	120
-_isctype	004e54d0	undefined _isctype(undefined4 param_1, undefined4 param_2)	117
+_isctype	004e54d0	int _isctype(int _C, int _Type)	117
 __allmul	004e5550	undefined __allmul(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	52
 _dosmaperr	004e5584	undefined _dosmaperr(undefined4 param_1)	103
 _stbuf	004e55eb	int _stbuf(FILE * str)	141
 _ftbuf	004e5678	undefined _ftbuf(undefined4 param_1, undefined4 param_2)	61
 _ioinit	004e56b5	int _ioinit(void)	427
-_XcptFilter	004e5860	void _XcptFilter(int _Code, undefined * param_2)	321
+_XcptFilter	004e5860	int _XcptFilter(ulong _ExceptionNum, undefined _ExceptionPtr)	321
 xcptlookup	004e59a1	undefined xcptlookup(undefined4 param_1)	67
 _wincmdln	004e59e4	undefined _wincmdln()	88
 _setenvp	004e5a3c	int _setenvp(void)	185
@@ -1351,22 +1352,22 @@ _ShrMan	004e6643	undefined _ShrMan(undefined4 param_1, undefined4 param_2)	141
 _ld12cvt	004e66d0	undefined _ld12cvt(undefined4 param_1, undefined4 param_2, undefined4 param_3)	364
 _ld12tod	004e683c	undefined _ld12tod(undefined4 param_1, undefined4 param_2)	22
 _ld12tof	004e6852	undefined _ld12tof(undefined4 param_1, undefined4 param_2)	22
-_atodbl	004e6868	undefined _atodbl(undefined4 param_1, undefined4 param_2)	45
-_atoflt	004e6895	undefined _atoflt(undefined4 param_1, undefined4 param_2)	45
+_atodbl	004e6868	int _atodbl(_CRT_DOUBLE * _Result, char * _Str)	45
+_atoflt	004e6895	int _atoflt(_CRT_FLOAT * _Result, char * _Str)	45
 strcpy	004e68d0	char * strcpy(char * _Dest, char * _Source)	134
 strcat	004e68e0	char * strcat(char * _Dest, char * _Source)	97
 _fptostr	004e69c0	undefined _fptostr(undefined4 param_1, undefined4 param_2, undefined4 param_3)	119
 _fltout	004e6a37	undefined * _fltout(undefined param_1)	100
 __dtold	004e6a9b	undefined __dtold(undefined4 param_1, undefined4 param_2)	182
 memset	004e6b60	void * memset(void * _Dst, int _Val, size_t _Size)	88
-memmove	004e6bc0	undefined memmove(undefined4 param_1, undefined4 param_2, undefined4 param_3)	516
+memmove	004e6bc0	void * memmove(void * _Dst, void * _Src, size_t _Size)	516
 _fptrap	004e6ef5	undefined _fptrap()	9
 _getbuf	004e6efe	undefined _getbuf(undefined4 param_1)	68
 _isatty	004e6f42	undefined _isatty(undefined4 param_1)	38
-wctomb	004e6f68	undefined wctomb(undefined4 param_1, undefined2 param_2)	104
+wctomb	004e6f68	int wctomb(char * _MbCh, wchar_t _WCh)	104
 __aulldiv	004e6fd0	undefined __aulldiv(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	104
 __aullrem	004e7040	undefined __aullrem(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	117
-mbtowc	004e70b5	undefined mbtowc(undefined4 param_1, undefined4 param_2, undefined4 param_3)	200
+mbtowc	004e70b5	int mbtowc(wchar_t * _DstCh, char * _SrcCh, size_t _SrcSizeInBytes)	200
 _istspace	004e717d	undefined _istspace(undefined4 param_1)	40
 __allshl	004e71b0	undefined __allshl()	31
 _ungetwc_lk	004e71cf	undefined _ungetwc_lk(undefined4 param_1, undefined4 param_2)	110
@@ -1401,4 +1402,4 @@ maybe__alloca	004e8b40	void * maybe__alloca(size_t param_1)	47
 __ld12mul	004e8b6f	undefined __ld12mul(undefined4 param_1, undefined4 param_2)	544
 __multtenpow12	004e8d8f	undefined __multtenpow12(undefined4 param_1, undefined4 param_2, undefined4 param_3)	124
 _setmode_lk	004e8e0b	int _setmode_lk(int param_1, int param_2)	118
-RtlUnwind	004e8e90	thunk void RtlUnwind(PVOID TargetFrame, PVOID TargetIp, PEXCEPTION_RECORD ExceptionRecord, PVOID ReturnValue)	6
+RtlUnwind	004e8e90	thunk void RtlUnwind(PVOID TargetFrame, PVOID TargetIp, undefined ExceptionRecord, PVOID ReturnValue)	6

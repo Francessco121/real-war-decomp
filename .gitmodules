@@ -1,0 +1,3 @@
+[submodule "tools/lib/capstone-dart"]
+	path = tools/lib/capstone-dart
+	url = https://github.com/Francessco121/capstone-dart.git

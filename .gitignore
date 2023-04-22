@@ -7,3 +7,9 @@ game/*
 
 # Build artifacts
 build/
+
+# Binaries
+*.dll
+*.exe
+*.obj
+*.bin

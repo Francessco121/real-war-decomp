@@ -1,7 +1,7 @@
 COM interfaces are defined as structs with the first field always being a virtual method table.
 
 DECLARE_INTERFACE_ macro expansion example:
-```
+```c
 typedef struct IDirect3D {
     struct IDirect3DVtbl *lpVtbl;
 } IDirect3D;
@@ -25,6 +25,14 @@ const struct IDirect3DVtbl {
 ```
 
 COM interfaces usually also declare a pointer typedef:
-```
+```c
 typedef struct IDirect3D *LPDIRECT3D;
+```
+
+For C programming, there's also usually macros defined for each function:
+```c
+// i.e. instead of
+lpD3D->lpVtbl->Release(lpD3D);
+// you can do
+IDirect3D_Release(lpD3D);
 ```
