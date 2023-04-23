@@ -24,7 +24,7 @@ config:
 segments:
   - [0x401150, try_find_valid_d3d_device]
   - [0x4620f0, cd_check]
-  - [0x4c49a0, FUN_004c49a0]
+  - [0x4c49a0, segment_004c49a0]
   - [0x4d5e60, setup_virtual_memory_buffers]
   # LIBC.LIB
   - [0x4e1510, null]
@@ -1012,7 +1012,7 @@ symbols:
   FUN_004c4780: 0x4c4780
   FUN_004c47b0: 0x4c47b0
   FUN_004c4980: 0x4c4980
-  FUN_004c49a0: 0x4c49a0
+  rle_decode: 0x4c49a0
   FUN_004c4a20: 0x4c4a20
   FUN_004c4a50: 0x4c4a50
   FUN_004c4a80: 0x4c4a80
