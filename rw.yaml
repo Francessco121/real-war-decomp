@@ -12,6 +12,7 @@ config:
   buildDir: build
   includeDir: rw/include
   srcDir: rw/src
+  asmDir: asm
 
 # List of base exe virtual addresses and which object file maps to them
 #

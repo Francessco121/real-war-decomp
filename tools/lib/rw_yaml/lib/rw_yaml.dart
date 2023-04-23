@@ -51,12 +51,14 @@ class RealWarYamlConfig {
   final String buildDir;
   final String includeDir;
   final String srcDir;
+  final String asmDir;
 
   RealWarYamlConfig._(YamlMap map)
       : exePath = map['exePath'],
         buildDir = map['buildDir'],
         includeDir = map['includeDir'],
-        srcDir = map['srcDir'];
+        srcDir = map['srcDir'],
+        asmDir = map['asmDir'];
 }
 
 class RealWarYamlSegment {

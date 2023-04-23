@@ -66,7 +66,7 @@ Future<void> main(List<String> args) async {
       virtualAddress - 0x400000; // 0x400000 == imageBase
 
   // Init capstone
-  final capstoneDll = ffi.DynamicLibrary.open('capstone.dll');
+  final capstoneDll = ffi.DynamicLibrary.open('../capstone.dll');
   final disassembler = FunctionDisassembler.init(capstoneDll);
 
   print('Loading...');
@@ -115,21 +115,25 @@ Future<void> main(List<String> args) async {
       console.write('Compiling...');
 
       // Compile
+      bool error = false;
       try {
         await builder.compile(cFilePath);
       } on BuildException catch (ex) {
         _displayError(console, ex.message);
+        error = true;
       }
 
-      // Disassemble
-      final List<Instruction> objInsts =
-          _loadObjInstructions(objFilePath, symbolName, disassembler);
+      if (!error) {
+        // Disassemble
+        final List<Instruction> objInsts =
+            _loadObjInstructions(objFilePath, symbolName, disassembler);
 
-      // Diff
-      lines = _diff(exeInsts, objInsts);
-      
-      // Refresh
-      refresh();
+        // Diff
+        lines = _diff(exeInsts, objInsts);
+        
+        // Refresh
+        refresh();
+      }
 
       refreshing = false;
       refreshCompleter!.complete();

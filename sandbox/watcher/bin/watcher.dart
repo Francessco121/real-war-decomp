@@ -142,7 +142,8 @@ Future<void> main() async {
 
   // Listen for source file changes
   final subscription = DirectoryWatcher(srcPath).events.listen((event) {
-    if (p.extension(event.path) != '.c') {
+    final ext = p.extension(event.path);
+    if (ext != '.c' && ext != '.cpp') {
       return;
     }
 

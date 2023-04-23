@@ -1,0 +1,122 @@
+File Type: COFF OBJECT
+
+?test@Test@@QAEHHH@Z (public: int __thiscall Test::test(int,int)):
+  00000000: 8B 44 24 08        mov         eax,dword ptr [esp+8]
+  00000004: 8B 4C 24 04        mov         ecx,dword ptr [esp+4]
+  00000008: 03 C1              add         eax,ecx
+  0000000A: C2 08 00           ret         8
+  0000000D: 90                 nop
+  0000000E: 90                 nop
+  0000000F: 90                 nop
+
+LINENUMBERS #3
+
+ Symbol index:        9 Base line number:    10
+ Symbol name = ?test@Test@@QAEHHH@Z (public: int __thiscall Test::test(int,int))
+ 0000000A(   12)
+
+RELOCATIONS #4
+                                                Symbol    Symbol
+ Offset    Type              Applied To         Index     Name
+ --------  ----------------  -----------------  --------  ------
+ 00000020  SECREL                     00000000         9  ?test@Test@@QAEHHH@Z (public: int __thiscall Test::test(int,int))
+ 00000024  SECTION                        0000         9  ?test@Test@@QAEHHH@Z (public: int __thiscall Test::test(int,int))
+
+RELOCATIONS #5
+                                                Symbol    Symbol
+ Offset    Type              Applied To         Index     Name
+ --------  ----------------  -----------------  --------  ------
+ 00000000  DIR32NB                    00000000         9  ?test@Test@@QAEHHH@Z (public: int __thiscall Test::test(int,int))
+
+?get@Test@@QAEHXZ (public: int __thiscall Test::get(void)):
+  00000000: 8B 01              mov         eax,dword ptr [ecx]
+  00000002: C3                 ret
+  00000003: 90                 nop
+  00000004: 90                 nop
+  00000005: 90                 nop
+  00000006: 90                 nop
+  00000007: 90                 nop
+  00000008: 90                 nop
+  00000009: 90                 nop
+  0000000A: 90                 nop
+  0000000B: 90                 nop
+  0000000C: 90                 nop
+  0000000D: 90                 nop
+  0000000E: 90                 nop
+  0000000F: 90                 nop
+
+LINENUMBERS #6
+
+ Symbol index:       16 Base line number:    14
+ Symbol name = ?get@Test@@QAEHXZ (public: int __thiscall Test::get(void))
+ 00000002(   16)
+
+RELOCATIONS #7
+                                                Symbol    Symbol
+ Offset    Type              Applied To         Index     Name
+ --------  ----------------  -----------------  --------  ------
+ 00000020  SECREL                     00000000        16  ?get@Test@@QAEHXZ (public: int __thiscall Test::get(void))
+ 00000024  SECTION                        0000        16  ?get@Test@@QAEHXZ (public: int __thiscall Test::get(void))
+
+RELOCATIONS #8
+                                                Symbol    Symbol
+ Offset    Type              Applied To         Index     Name
+ --------  ----------------  -----------------  --------  ------
+ 00000000  DIR32NB                    00000000        16  ?get@Test@@QAEHXZ (public: int __thiscall Test::get(void))
+
+?biggerTest@Test@@QAEHPAH0H@Z (public: int __thiscall Test::biggerTest(int *,int *,int)):
+  00000000: 8B 4C 24 08        mov         ecx,dword ptr [esp+8]
+  00000004: 8B 54 24 04        mov         edx,dword ptr [esp+4]
+  00000008: 8B 44 24 0C        mov         eax,dword ptr [esp+0Ch]
+  0000000C: 56                 push        esi
+  0000000D: 2B D1              sub         edx,ecx
+  0000000F: BE 0A 00 00 00     mov         esi,0Ah
+  00000014: 89 04 0A           mov         dword ptr [edx+ecx],eax
+  00000017: 89 01              mov         dword ptr [ecx],eax
+  00000019: 83 C1 04           add         ecx,4
+  0000001C: 4E                 dec         esi
+  0000001D: 75 F5              jne         00000014
+  0000001F: 5E                 pop         esi
+  00000020: C2 0C 00           ret         0Ch
+  00000023: 90                 nop
+  00000024: 90                 nop
+  00000025: 90                 nop
+  00000026: 90                 nop
+  00000027: 90                 nop
+  00000028: 90                 nop
+  00000029: 90                 nop
+  0000002A: 90                 nop
+  0000002B: 90                 nop
+  0000002C: 90                 nop
+  0000002D: 90                 nop
+  0000002E: 90                 nop
+  0000002F: 90                 nop
+
+LINENUMBERS #9
+
+ Symbol index:       23 Base line number:    18
+ Symbol name = ?biggerTest@Test@@QAEHPAH0H@Z (public: int __thiscall Test::biggerTest(int *,int *,int))
+ 00000004(   20)  00000017(   21)  00000020(   25)
+
+RELOCATIONS #A
+                                                Symbol    Symbol
+ Offset    Type              Applied To         Index     Name
+ --------  ----------------  -----------------  --------  ------
+ 00000020  SECREL                     00000000        23  ?biggerTest@Test@@QAEHPAH0H@Z (public: int __thiscall Test::biggerTest(int *,int *,int))
+ 00000024  SECTION                        0000        23  ?biggerTest@Test@@QAEHPAH0H@Z (public: int __thiscall Test::biggerTest(int *,int *,int))
+
+RELOCATIONS #B
+                                                Symbol    Symbol
+ Offset    Type              Applied To         Index     Name
+ --------  ----------------  -----------------  --------  ------
+ 00000000  DIR32NB                    00000000        23  ?biggerTest@Test@@QAEHPAH0H@Z (public: int __thiscall Test::biggerTest(int *,int *,int))
+
+  Summary
+
+          30 .debug$F
+         1DC .debug$S
+          50 .debug$T
+          26 .drectve
+          50 .text
+
+
