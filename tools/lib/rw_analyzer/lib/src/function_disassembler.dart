@@ -6,6 +6,19 @@ import 'package:ffi/ffi.dart';
 import 'file_data.dart';
 import 'instruction.dart';
 
+class DisassembledFunction {
+  final List<Instruction> instructions;
+  final Set<int> branchTargetSet;
+  /// In order of discovery.
+  final List<int> branchTargets;
+
+  DisassembledFunction({
+    required this.instructions,
+    required this.branchTargetSet,
+    required this.branchTargets,
+  });
+}
+
 class FunctionDisassembler {
   final Pointer<Pointer<Uint8>> _codePtr;
   final Pointer<Size> _sizePtr;
@@ -38,6 +51,8 @@ class FunctionDisassembler {
 
       arena.using(handle, (handle) => cs.close(handle));
 
+      cs.option(handle.value, cs_opt_type.DETAIL, cs_opt_value.ON);
+
       return FunctionDisassembler._(cs, handle, arena);
     } on Exception {
       arena.releaseAll();
@@ -45,15 +60,20 @@ class FunctionDisassembler {
     }
   }
 
-  List<Instruction> disassembleFunction(FileData data, int offset, {required int address}) {
+  DisassembledFunction disassembleFunction(FileData data, int offset,
+      {required int address}) {
     _codePtr.value = Pointer<Uint8>.fromAddress(data.data.address + offset);
     _sizePtr.value = data.size - offset;
     _addressPtr.value = address;
 
     final insts = <Instruction>[];
+    final branchTargetSet = <int>{};
+    final branchTargets = <int>[];
+    int? furthestBranchEnd;
 
     while (true) {
-      if (!_cs.disasm_iter(_handle.value, _codePtr, _sizePtr, _addressPtr, _instPtr)) {
+      if (!_cs.disasm_iter(
+          _handle.value, _codePtr, _sizePtr, _addressPtr, _instPtr)) {
         int err = _cs.errno(_handle.value);
         if (err == cs_err.OK) {
           // Ran out of bytes to disassemble
@@ -66,12 +86,34 @@ class FunctionDisassembler {
       final inst = Instruction.fromCapstone(_instPtr.ref);
       insts.add(inst);
 
-      if (inst.mnemonic == 'ret') {
+      if (inst.isBranch) {
+        // Branch
+        assert(inst.operands.length == 1);
+        assert(inst.operands[0].type == x86_op_type.X86_OP_IMM);
+        
+        final target = inst.operands[0].imm!;
+        if (branchTargetSet.add(target)) {
+          branchTargets.add(target);
+        }
+        furthestBranchEnd = target;
+      }
+
+      if (furthestBranchEnd != null && inst.address >= furthestBranchEnd) {
+        // Reached end of a branch
+        furthestBranchEnd = null;
+      }
+
+      // Only break on RET if we're outside of all branches in the function
+      if (inst.mnemonic == 'ret' && furthestBranchEnd == null) {
         break;
       }
     }
 
-    return insts;
+    return DisassembledFunction(
+      instructions: insts,
+      branchTargetSet: branchTargetSet,
+      branchTargets: branchTargets,
+    );
   }
 
   void dispose() {

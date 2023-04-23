@@ -14,6 +14,13 @@ config:
   srcDir: rw/src
   asmDir: asm
 
+# PE header information
+exe:
+  imageBase: 0x400000
+  textFileOffset: 0x1000
+  textVirtualAddress: 0x1000
+  textPhysicalSize: 950272
+
 # List of base exe virtual addresses and which object file maps to them
 #
 # Example: [0x1234, filename], where 0x1234 is a virtual address in the

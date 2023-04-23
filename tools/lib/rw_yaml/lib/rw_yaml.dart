@@ -3,12 +3,14 @@ import 'package:yaml/yaml.dart';
 class RealWarYaml {
   final String dir;
   final RealWarYamlConfig config;
+  final RealWarYamlExe exe;
   final List<RealWarYamlSegment> segments;
   final Map<String, int> symbols;
 
   RealWarYaml._({
     required this.dir,
     required this.config,
+    required this.exe,
     required this.segments,
     required this.symbols,
   });
@@ -17,6 +19,7 @@ class RealWarYaml {
     final yaml = loadYaml(contents);
 
     final config = RealWarYamlConfig._(yaml['config']);
+    final exe = RealWarYamlExe._(yaml['exe']);
 
     final segments = <RealWarYamlSegment>[];
     int lastSegmentAddress = 0;
@@ -40,6 +43,7 @@ class RealWarYaml {
     return RealWarYaml._(
       dir: dir,
       config: config,
+      exe: exe,
       segments: segments,
       symbols: symbols,
     );
@@ -59,6 +63,23 @@ class RealWarYamlConfig {
         includeDir = map['includeDir'],
         srcDir = map['srcDir'],
         asmDir = map['asmDir'];
+}
+
+class RealWarYamlExe {
+  /// Address of first byte in memory when exe is loaded into memory.
+  final int imageBase;
+  /// File offset of the .text section data.
+  final int textFileOffset;
+  /// Virtual address of the .text section in memory relative to [imageBase].
+  final int textVirtualAddress;
+  /// Size (in bytes) of the .text section within the exe file.
+  final int textPhysicalSize;
+
+  RealWarYamlExe._(YamlMap map)
+      : imageBase = map['imageBase'],
+        textFileOffset = map['textFileOffset'],
+        textVirtualAddress = map['textVirtualAddress'],
+        textPhysicalSize = map['textPhysicalSize'];
 }
 
 class RealWarYamlSegment {

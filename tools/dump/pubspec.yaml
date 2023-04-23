@@ -9,6 +9,8 @@ dependencies:
     path: ../lib/capstone-dart
   ffi: ^2.0.1
   path: ^1.8.2
+  rw_analyzer:
+    path: ../lib/rw_analyzer
   rw_yaml:
     path: ../lib/rw_yaml
   

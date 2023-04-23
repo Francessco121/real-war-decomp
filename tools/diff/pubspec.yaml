@@ -6,14 +6,14 @@ environment:
 
 dependencies: 
   ansicolor: ^2.0.1
-  capstone:
-    path: ../lib/capstone-dart
   collection: ^1.17.1
   dart_console: ^1.1.2
   ffi: ^2.0.1
   path: ^1.8.2
   pe_coff:
     path: ../lib/pe_coff
+  rw_analyzer:
+    path: ../lib/rw_analyzer
   rw_yaml:
     path: ../lib/rw_yaml
   tuple: ^2.0.1

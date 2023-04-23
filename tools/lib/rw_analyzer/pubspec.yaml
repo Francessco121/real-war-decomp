@@ -1,0 +1,13 @@
+name: rw_analyzer
+publish_to: none
+
+environment:
+  sdk: '>=2.19.0 <3.0.0'
+
+dependencies: 
+  capstone:
+    path: ../capstone-dart
+  ffi: ^2.0.1
+  
+dev_dependencies:
+  lints: ^2.0.0
