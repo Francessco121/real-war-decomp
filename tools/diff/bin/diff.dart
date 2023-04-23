@@ -1,14 +1,18 @@
+import 'dart:async';
 import 'dart:ffi' as ffi;
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:math';
 
 import 'package:ansicolor/ansicolor.dart';
 import 'package:collection/collection.dart';
+import 'package:dart_console/dart_console.dart';
 import 'package:diff/build.dart';
 import 'package:diff/diff.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe_coff.dart';
 import 'package:rw_yaml/rw_yaml.dart';
-import 'package:tuple/tuple.dart';
+import 'package:watcher/watcher.dart';
 
 /*
   1. find address of requested symbol and determine which obj file to look at
@@ -22,16 +26,6 @@ import 'package:tuple/tuple.dart';
   9. on source file changed, recompile obj, and repeat from 3.
 */
 
-class DiffLine {
-  final DiffEditType diffType;
-  /// Target (base exe)
-  final Instruction? target;
-  /// Source (obj)
-  final Instruction? source;
-
-  DiffLine(this.diffType, this.target, this.source);
-}
-
 Future<void> main(List<String> args) async {
   if (args.length != 1) {
     print('Usage: diff.dart <func symbol name>');
@@ -41,63 +35,226 @@ Future<void> main(List<String> args) async {
   // Assume we're ran from the diff package dir
   final String projectDir = p.normalize(p.join(p.current, '../../'));
 
-  final rw = RealWarYaml.load(File(p.join(projectDir, 'rw.yaml')).readAsStringSync(), dir: projectDir);
-  final builder = Builder(rw);
+  // Load project config
+  final rw = RealWarYaml.load(
+      File(p.join(projectDir, 'rw.yaml')).readAsStringSync(),
+      dir: projectDir);
 
+  // Figure out symbol address and related obj path
+  final String symbolName = args[0];
+  final int? virtualAddress = rw.symbols[symbolName];
+  if (virtualAddress == null) {
+    print('Cannot locate symbol address: $symbolName');
+    return;
+  }
+  final String? objPath =
+      rw.segments.firstWhereOrNull((s) => s.address >= virtualAddress)?.objPath;
+  if (objPath == null) {
+    print('Symbol not mapped to an object file: $symbolName');
+    return;
+  }
+
+  // Compute paths
+  final String exeFilePath = p.join(projectDir, rw.config.exePath);
+  final String objFilePath =
+      p.join(projectDir, rw.config.buildDir, 'obj', '$objPath.obj');
+  final String srcDirPath = p.join(projectDir, rw.config.srcDir);
+  final String cFilePath = p.join(srcDirPath, '$objPath.c');
+
+  // Compute physical (file) address of the symbol in the base exe
+  final int physicalAddress =
+      virtualAddress - 0x400000; // 0x400000 == imageBase
+
+  // Init capstone
   final capstoneDll = ffi.DynamicLibrary.open('capstone.dll');
   final disassembler = FunctionDisassembler.init(capstoneDll);
 
+  print('Loading...');
+  
   try {
-    final String symbolName = args[0];
-    final String symbolNameMangled = '_$symbolName'; // is this right?
-    final int? virtualAddress = rw.symbols[symbolName];
-    if (virtualAddress == null) {
-      print('Cannot locate symbol address: $symbolName');
-      return;
-    }
-    final String? objPath = rw.segments.firstWhereOrNull((s) => s.address >= virtualAddress)?.objPath;
-    if (objPath == null) {
-      print('Symbol not mapped to an object file: $symbolName');
-      return;
-    }
-    final String exeFilePath = p.join(projectDir, rw.config.exePath);
-    final String objFilePath = p.join(projectDir, rw.config.buildDir, 'obj', '$objPath.obj');
-    final String cFilePath = p.join(projectDir, rw.config.srcDir, '$objPath.c');
-
-    final int physicalAddress =
-        virtualAddress - 0x400000; // 0x400000 == imageBase
-
+    // Disassemble base exe function
     final List<Instruction> exeInsts =
         _loadExeInstructions(exeFilePath, physicalAddress, disassembler);
-    
-    // print('$symbolName: (exe)');
 
-    // for (final i in exeInsts) {
-    //   print('0x${i.address.toRadixString(16)}:\t${i.mnemonic}\t\t${i.opStr}');
-    // }
+    // Build config
+    final builder = Builder(rw);
 
-    if (!File(objFilePath).existsSync()) {
-      await builder.compile(cFilePath);
+    // Init console
+    final console = Console();
+
+    List<DiffLine> lines = [];
+    int scrollPosition = 0;
+
+    bool refreshing = false;
+    bool waitingForRefresh = false;
+    Completer<void>? refreshCompleter;
+
+    void refresh() {
+      // Clamp scroll position
+      scrollPosition = max(min(scrollPosition, lines.length - 1), 0);
+
+      // Update screen
+      _displayDiff(console, lines, scrollPosition);
     }
 
-    final List<Instruction> objInsts = _loadObjInstructions(
-      objFilePath, [symbolName, symbolNameMangled], disassembler);
+    Future<void> recompileAndRefresh() async {
+      if (refreshing) {
+        if (waitingForRefresh) {
+          return;
+        }
 
-    // print('\n$symbolName: (obj)');
+        waitingForRefresh = true;
+        await refreshCompleter!.future;
+        waitingForRefresh = false;
+      }
 
-    // for (final i in objInsts) {
-    //   print('0x${i.address.toRadixString(16)}:\t${i.mnemonic}\t\t${i.opStr}');
-    // }
+      refreshing = true;
+      refreshCompleter = Completer();
 
-    _display(exeInsts, objInsts);
+      console.cursorPosition = Coordinate(0, console.windowWidth - 'Compiling...'.length);
+      console.write('Compiling...');
+
+      // Compile
+      try {
+        await builder.compile(cFilePath);
+      } on BuildException catch (ex) {
+        _displayError(console, ex.message);
+      }
+
+      // Disassemble
+      final List<Instruction> objInsts =
+          _loadObjInstructions(objFilePath, symbolName, disassembler);
+
+      // Diff
+      lines = _diff(exeInsts, objInsts);
+      
+      // Refresh
+      refresh();
+
+      refreshing = false;
+      refreshCompleter!.complete();
+    }
+
+    // Listen for src directory changes
+    final subscription = DirectoryWatcher(srcDirPath.replaceAll('/', '\\')).events.listen((event) {
+      final ext = p.extension(event.path).toLowerCase();
+      if (ext != '.c' && ext != '.h') {
+        return;
+      }
+
+      if (event.type == ChangeType.ADD || event.type == ChangeType.MODIFY) {
+        recompileAndRefresh();
+      }
+    });
+
+    // Initial display
+    await recompileAndRefresh();
+
+    // Input loop
+    try {
+      console.rawMode = true;
+      console.hideCursor();
+
+      final consoleReader = await ConsoleReadIsolate.init();
+
+      try {
+        while (true) {
+          final key = await consoleReader.readKey();
+          if (key.char == 'q') {
+            console.clearScreen();
+            break;
+          }
+
+          if (key.controlChar == ControlCharacter.arrowDown) {
+            scrollPosition++;
+            refresh();
+          } else if (key.controlChar == ControlCharacter.arrowUp) {
+            scrollPosition--;
+            refresh();
+          } else if (key.controlChar == ControlCharacter.pageDown) {
+            scrollPosition += (console.windowHeight - 1);
+            refresh();
+          } else if (key.controlChar == ControlCharacter.pageUp) {
+            scrollPosition -= (console.windowHeight - 1);
+            refresh();
+          } else if (key.controlChar == ControlCharacter.home) {
+            scrollPosition = 0;
+            refresh();
+          } else if (key.controlChar == ControlCharacter.home) {
+            scrollPosition = 0;
+            refresh();
+          } else if (key.controlChar == ControlCharacter.end) {
+            scrollPosition = lines.length - (console.windowHeight - 2);
+            refresh();
+          }
+        }
+      } finally {
+        consoleReader.dispose();
+      }
+    } finally {
+      subscription.cancel();
+      console.showCursor();
+      console.rawMode = false;
+    }
   } finally {
     disassembler.dispose();
   }
 }
 
-Future<void> _display(List<Instruction> exeInsts, List<Instruction> objInsts) async {
-  final lines = _diff(exeInsts, objInsts);
+/// An unfortuante hack to get around console reads locking up the whole thread.
+/// 
+/// Trying to do [Console.readKey] in the main isolate will prevent the directory
+/// watcher from working correctly.
+class ConsoleReadIsolate {
+  final Stream _readStream;
+  final ReceivePort _readPort;
+  final SendPort _cmdPort;
 
+  final Isolate isolate;
+
+  ConsoleReadIsolate._(this.isolate, this._readStream, this._readPort, this._cmdPort);
+
+  static Future<ConsoleReadIsolate> init() async {
+    final readPort = ReceivePort();
+
+    final isolate = await Isolate.spawn((responsePort) {
+      final cmdPort = ReceivePort();
+      responsePort.send(cmdPort.sendPort);
+
+      final console = Console();
+      cmdPort.listen((message) {
+        if (message == 'key') {
+          responsePort.send(console.readKey());
+        } else {
+          throw UnimplementedError();
+        }
+      });
+    }, readPort.sendPort);
+
+    final readStream = readPort.asBroadcastStream();
+    final SendPort cmdPort = await readStream.first;
+
+    return ConsoleReadIsolate._(isolate, readStream, readPort, cmdPort);
+  }
+
+  Future<Key> readKey() async {
+    _cmdPort.send('key');
+    return await _readStream.first;
+  }
+
+  void dispose() {
+    _readPort.close();
+    isolate.kill();
+  }
+}
+
+void _displayError(Console console, String error) {
+  console.clearScreen();
+  console.resetCursorPosition();
+  console.writeErrorLine(error);
+}
+
+void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition) {
   final mnemonicDiffPen = AnsiPen()..xterm(12);
   final opDiffPen = AnsiPen()..xterm(3);
   final addPen = AnsiPen()..xterm(10);
@@ -105,9 +262,16 @@ Future<void> _display(List<Instruction> exeInsts, List<Instruction> objInsts) as
 
   const columnWidth = 55;
 
-  print('${'TARGET'.padRight(columnWidth)} CURRENT');
+  console.resetCursorPosition();
 
-  for (final line in lines) {
+  console.eraseLine();
+  console.write('${'TARGET'.padRight(columnWidth)} CURRENT');
+
+  int spaceLeft = console.windowHeight - 1;
+
+  for (final line in lines.skip(scrollPosition).take(console.windowHeight - 1)) {
+    spaceLeft--;
+
     final String targLine;
     final String srcLine;
 
@@ -115,30 +279,52 @@ Future<void> _display(List<Instruction> exeInsts, List<Instruction> objInsts) as
       final targ = line.target!;
       final src = line.source!;
       if (targ.opStr == src.opStr) {
-        targLine = '${targ.address.toRadixString(16).padLeft(2)}:    ${targ.mnemonic.padRight(10)} ${targ.opStr}';
-        srcLine = '  ${src.address.toRadixString(16).padLeft(2)}:    ${src.mnemonic.padRight(10)} ${src.opStr}';
+        targLine =
+            '${targ.address.toRadixString(16).padLeft(2)}:    ${targ.mnemonic.padRight(10)} ${targ.opStr}';
+        srcLine =
+            '  ${src.address.toRadixString(16).padLeft(2)}:    ${src.mnemonic.padRight(10)} ${src.opStr}';
       } else {
-        targLine = '${opDiffPen('${targ.address.toRadixString(16).padLeft(2)}:')}    ${targ.mnemonic.padRight(10)} ${opDiffPen(targ.opStr)}';
-        srcLine = '${opDiffPen('o ${src.address.toRadixString(16).padLeft(2)}:')}    ${src.mnemonic.padRight(10)} ${opDiffPen(src.opStr)}';
+        targLine =
+            '${opDiffPen('${targ.address.toRadixString(16).padLeft(2)}:')}    ${targ.mnemonic.padRight(10)} ${opDiffPen(targ.opStr)}';
+        srcLine =
+            '${opDiffPen('o ${src.address.toRadixString(16).padLeft(2)}:')}    ${src.mnemonic.padRight(10)} ${opDiffPen(src.opStr)}';
       }
     } else if (line.diffType == DiffEditType.substitute) {
       final targ = line.target!;
       final src = line.source!;
-      targLine = mnemonicDiffPen('${targ.address.toRadixString(16).padLeft(2)}:    ${targ.mnemonic.padRight(10)} ${targ.opStr}');
-      srcLine = mnemonicDiffPen('| ${src.address.toRadixString(16).padLeft(2)}:    ${src.mnemonic.padRight(10)} ${src.opStr}');
+      targLine = mnemonicDiffPen(
+          '${targ.address.toRadixString(16).padLeft(2)}:    ${targ.mnemonic.padRight(10)} ${targ.opStr}');
+      srcLine = mnemonicDiffPen(
+          '| ${src.address.toRadixString(16).padLeft(2)}:    ${src.mnemonic.padRight(10)} ${src.opStr}');
     } else if (line.diffType == DiffEditType.insert) {
       final src = line.source!;
       targLine = '';
-      srcLine = addPen('> ${src.address.toRadixString(16).padLeft(2)}:    ${src.mnemonic.padRight(10)} ${src.opStr}');
+      srcLine = addPen(
+          '> ${src.address.toRadixString(16).padLeft(2)}:    ${src.mnemonic.padRight(10)} ${src.opStr}');
     } else if (line.diffType == DiffEditType.delete) {
       final targ = line.target!;
-      targLine = delPen('${targ.address.toRadixString(16).padLeft(2)}:    ${targ.mnemonic.padRight(10)} ${targ.opStr}');
+      targLine = delPen(
+          '${targ.address.toRadixString(16).padLeft(2)}:    ${targ.mnemonic.padRight(10)} ${targ.opStr}');
       srcLine = delPen('<');
     } else {
       throw UnimplementedError();
     }
 
-    print('${_ansiAwarePadRight(targLine, columnWidth)} $srcLine');
+    console.writeLine();
+    console.eraseLine();
+    console.write('${_ansiAwarePadRight(targLine, columnWidth)} $srcLine');
+  }
+
+  if (spaceLeft > 0) {
+    spaceLeft--;
+    console.writeLine();
+    console.eraseLine();
+    console.write('END');
+  }
+
+  while (spaceLeft-- > 0) {
+    console.writeLine();
+    console.eraseLine();
   }
 }
 
@@ -156,6 +342,18 @@ String _ansiAwarePadRight(String str, int width) {
 
     return buffer.toString();
   }
+}
+
+class DiffLine {
+  final DiffEditType diffType;
+
+  /// Target (base exe)
+  final Instruction? target;
+
+  /// Source (obj)
+  final Instruction? source;
+
+  DiffLine(this.diffType, this.target, this.source);
 }
 
 List<DiffLine> _diff(List<Instruction> target, List<Instruction> source) {
@@ -177,8 +375,10 @@ List<DiffLine> _diff(List<Instruction> target, List<Instruction> source) {
   for (int i = edits.length - 1; i >= 0; i--) {
     final edit = edits[i];
 
-    if (edit.type == DiffEditType.equal || edit.type == DiffEditType.substitute) {
-      lines.add(DiffLine(edit.type, target[edit.sourceIndex - 1], source[edit.targetIndex! - 1]));
+    if (edit.type == DiffEditType.equal ||
+        edit.type == DiffEditType.substitute) {
+      lines.add(DiffLine(edit.type, target[edit.sourceIndex - 1],
+          source[edit.targetIndex! - 1]));
     } else if (edit.type == DiffEditType.insert) {
       lines.add(DiffLine(edit.type, null, source[edit.targetIndex! - 1]));
     } else if (edit.type == DiffEditType.delete) {
@@ -210,8 +410,12 @@ List<Instruction> _loadExeInstructions(
   }
 }
 
-List<Instruction> _loadObjInstructions(String filePath,
-    List<String> symbolNameVariations, FunctionDisassembler disassembler) {
+List<Instruction> _loadObjInstructions(
+    String filePath, String symbolName, FunctionDisassembler disassembler) {
+  final symbolNameVariations = [
+    symbolName,
+    '_$symbolName'
+  ]; // why do functions get an underscore in the obj file?
   final bytes = File(filePath).readAsBytesSync();
   final obj = CoffFile.fromList(bytes);
 
