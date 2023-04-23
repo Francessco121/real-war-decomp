@@ -19,8 +19,17 @@ class RealWarYaml {
     final config = RealWarYamlConfig._(yaml['config']);
 
     final segments = <RealWarYamlSegment>[];
+    int lastSegmentAddress = 0;
     for (final segment in yaml['segments']) {
-      segments.add(RealWarYamlSegment._(segment));
+      final seg = RealWarYamlSegment._(segment);
+      segments.add(seg);
+
+      if (seg.address <= lastSegmentAddress) {
+        throw Exception('Segment addresses must be in ascending order. '
+            '(last = $lastSegmentAddress, cur = ${seg.address})');
+      }
+
+      lastSegmentAddress = seg.address;
     }
 
     final symbols = <String, int>{};

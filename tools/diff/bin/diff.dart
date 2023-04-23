@@ -160,7 +160,7 @@ Future<void> main(List<String> args) async {
       try {
         while (true) {
           final key = await consoleReader.readKey();
-          if (key.char == 'q') {
+          if (key.char == 'q' || key.controlChar == ControlCharacter.ctrlC) {
             console.clearScreen();
             break;
           }

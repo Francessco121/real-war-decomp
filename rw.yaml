@@ -21,7 +21,10 @@ config:
 #
 # Addresses must be in ascending order in this list.
 segments:
+  - [0x401150, try_find_valid_d3d_device]
+  - [0x4620f0, cd_check]
   - [0x4c49a0, FUN_004c49a0]
+  - [0x4d5e60, setup_virtual_memory_buffers]
   # LIBC.LIB
   - [0x4e1510, null]
 

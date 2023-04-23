@@ -25,10 +25,12 @@ class BuildException implements Exception {
 
 class Builder {
   final String _srcDir;
+  final String _includeDir;
   final String _buildDir;
 
   Builder(RealWarYaml rw)
       : _srcDir = p.join(rw.dir, rw.config.srcDir),
+        _includeDir = p.join(rw.dir, rw.config.includeDir),
         _buildDir = p.join(rw.dir, rw.config.buildDir);
 
   /// Compile a single source file.
@@ -41,6 +43,7 @@ class Builder {
     final args = [
       '/nologo', 
       '/c', 
+      ...['/I', _includeDir],
       for (final incPath in _clIncludePaths)
         ...[
           '/I',

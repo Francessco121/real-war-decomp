@@ -5,11 +5,37 @@ _add:
   00000004: 8B 4C 24 04        mov         ecx,dword ptr [esp+4]
   00000008: 03 C1              add         eax,ecx
   0000000A: C3                 ret
+  0000000B: 90                 nop
+  0000000C: 90                 nop
+  0000000D: 90                 nop
+  0000000E: 90                 nop
+  0000000F: 90                 nop
+
+LINENUMBERS #3
+
+ Symbol index:        9 Base line number:     1
+ Symbol name = _add
+ 0000000A(    3)
+
+RELOCATIONS #4
+                                                Symbol    Symbol
+ Offset    Type              Applied To         Index     Name
+ --------  ----------------  -----------------  --------  ------
+ 00000020  SECREL                     00000000         9  _add
+ 00000024  SECTION                        0000         9  _add
+
+RELOCATIONS #5
+                                                Symbol    Symbol
+ Offset    Type              Applied To         Index     Name
+ --------  ----------------  -----------------  --------  ------
+ 00000000  DIR32NB                    00000000         9  _add
 
   Summary
 
           10 .debug$F
+          E3 .debug$S
+          50 .debug$T
           26 .drectve
-           B .text
+          10 .text
 
 
