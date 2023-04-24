@@ -48,8 +48,7 @@ Future<void> main(List<String> args) async {
     print('Cannot locate symbol address: $symbolName');
     return;
   }
-  final String? objPath =
-      rw.segments.firstWhereOrNull((s) => s.address >= virtualAddress)?.objPath;
+  final String? objPath = rw.findSegmentOfAddress(virtualAddress)?.objPath;
   if (objPath == null) {
     print('Symbol not mapped to an object file: $symbolName');
     return;
@@ -270,12 +269,12 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   final addPen = AnsiPen()..xterm(10);
   final delPen = AnsiPen()..xterm(9);
   final branchPens = [
-    AnsiPen()..xterm(14),   // cyan
-    AnsiPen()..xterm(200),  // purple
-    AnsiPen()..xterm(33),   // blue
-    AnsiPen()..xterm(46),   // green
-    AnsiPen()..xterm(226),  // yellow
-    AnsiPen()..xterm(9),    // red
+    AnsiPen()..xterm(14), // cyan
+    AnsiPen()..xterm(200), // purple
+    AnsiPen()..xterm(33), // blue
+    AnsiPen()..xterm(46), // green
+    AnsiPen()..xterm(226), // yellow
+    AnsiPen()..xterm(9), // red
   ];
 
   const columnWidth = 60;
@@ -296,7 +295,8 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   console.write('${'TARGET'.padRight(columnWidth)} CURRENT');
 
   int spaceLeft = console.windowHeight - 1;
-  final visibleLines = lines.skip(scrollPosition).take(console.windowHeight - 1);
+  final visibleLines =
+      lines.skip(scrollPosition).take(console.windowHeight - 1);
 
   for (final line in visibleLines) {
     spaceLeft--;
@@ -305,16 +305,23 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     final String srcLine;
 
     // this is an abomination
-    final targInBranchPen = line.target != null ? targetBranchColors[line.target!.address] : null;
-    final srcInBranchPen = line.source != null ? sourceBranchColors[line.source!.address] : null;
+    final targInBranchPen =
+        line.target != null ? targetBranchColors[line.target!.address] : null;
+    final srcInBranchPen =
+        line.source != null ? sourceBranchColors[line.source!.address] : null;
 
     final targInBranch = targInBranchPen != null ? targInBranchPen('~>') : '  ';
     final srcInBranch = srcInBranchPen != null ? srcInBranchPen('~>') : '  ';
 
-    final targOutBranchPen = (line.target != null && line.target!.isBranch) ? targetBranchColors[line.target!.operands[0].imm!] : null;
-    final srcOutBranchPen = (line.source != null && line.source!.isBranch) ? sourceBranchColors[line.source!.operands[0].imm!] : null;
+    final targOutBranchPen = (line.target != null && line.target!.isLocalBranch)
+        ? targetBranchColors[line.target!.operands[0].imm!]
+        : null;
+    final srcOutBranchPen = (line.source != null && line.source!.isLocalBranch)
+        ? sourceBranchColors[line.source!.operands[0].imm!]
+        : null;
 
-    final targOutBranch = targOutBranchPen != null ? targOutBranchPen(' ~>') : '';
+    final targOutBranch =
+        targOutBranchPen != null ? targOutBranchPen(' ~>') : '';
     final srcOutBranch = srcOutBranchPen != null ? srcOutBranchPen(' ~>') : '';
 
     if (line.diffType == DiffEditType.equal) {
@@ -471,17 +478,17 @@ DisassembledFunction _loadObjFunction(
   final bytes = File(filePath).readAsBytesSync();
   final obj = CoffFile.fromList(bytes);
 
-  final int textFileAddress = obj.sections
-      .firstWhere((s) => s.header.name == '.text')
-      .header
-      .pointerToRawData;
-  final int symbolValue = obj.symbolTable!.firstWhere((sym) {
+  final SymbolTableEntry symbol = obj.symbolTable!.values.firstWhere((sym) {
     final name =
         sym.name.shortName ?? obj.stringTable!.strings[sym.name.offset]!;
     return symbolNameVariations.contains(name);
-  }).value;
+  });
+  // NOTE: Functions may be compiled as COMDATs, so there's possibly more than one .text section.
+  // The symbol specifies which section exactly and a relative offset within it.
+  final int textFileAddress =
+      obj.sections[symbol.sectionNumber - 1].header.pointerToRawData;
 
-  final int funcFileAddress = textFileAddress + symbolValue;
+  final int funcFileAddress = textFileAddress + symbol.value;
 
   final objData = FileData.fromList(bytes);
 

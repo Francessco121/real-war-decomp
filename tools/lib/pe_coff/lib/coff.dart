@@ -22,7 +22,7 @@ class CoffFile {
   final List<Section> sections;
 
   /// The symbol table.
-  final List<SymbolTableEntry>? symbolTable;
+  final Map<int, SymbolTableEntry>? symbolTable;
 
   /// The string table.
   final StringTable? stringTable;
@@ -94,17 +94,17 @@ class CoffFile {
       ));
     }
 
-    final List<SymbolTableEntry>? symbols;
+    final Map<int, SymbolTableEntry>? symbols;
     if (header.pointerToSymbolTable != 0) {
       reader.setPosition(header.pointerToSymbolTable);
-      symbols = [];
+      symbols = {};
 
       for (int i = 0; i < header.numberOfSymbols; i++) {
         final symbol = SymbolTableEntry.fromReader(reader);
+        symbols[i] = symbol;
+
         // aux symbols count toward numberOfSymbols
         i += symbol.auxSymbols.length;
-
-        symbols.add(symbol);
       }
     } else {
       symbols = null;

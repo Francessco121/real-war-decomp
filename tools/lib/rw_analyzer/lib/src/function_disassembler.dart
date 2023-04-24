@@ -86,11 +86,8 @@ class FunctionDisassembler {
       final inst = Instruction.fromCapstone(_instPtr.ref);
       insts.add(inst);
 
-      if (inst.isBranch) {
-        // Branch
-        assert(inst.operands.length == 1);
-        assert(inst.operands[0].type == x86_op_type.X86_OP_IMM);
-        
+      if (inst.isLocalBranch) {
+        // Local branch
         final target = inst.operands[0].imm!;
         if (branchTargetSet.add(target)) {
           branchTargets.add(target);

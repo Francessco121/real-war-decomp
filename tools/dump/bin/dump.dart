@@ -78,7 +78,7 @@ void main(List<String> args) {
       buffer.write('/* ${inst.address.toRadixString(16)} */'.padRight(14));
       buffer.write(inst.mnemonic.padRight(10));
       buffer.write(' ');
-      if (inst.isBranch) {
+      if (inst.isLocalBranch) {
         // Replace branch target imm with label
         if (inst.operands.length == 1 && inst.operands[0].imm != null) {
           buffer.write(makeBranchLabel(inst.operands[0].imm!));

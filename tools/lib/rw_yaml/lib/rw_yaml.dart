@@ -48,6 +48,20 @@ class RealWarYaml {
       symbols: symbols,
     );
   }
+
+  RealWarYamlSegment? findSegmentOfAddress(int virtualAddress) {
+    RealWarYamlSegment? lastSeg;
+
+    for (final segment in segments) {
+      if (segment.address <= virtualAddress) {
+        lastSeg = segment;
+      } else {
+        break;
+      }
+    }
+
+    return lastSeg;
+  }
 }
 
 class RealWarYamlConfig {

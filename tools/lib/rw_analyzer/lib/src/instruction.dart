@@ -63,6 +63,10 @@ class Operand {
 
 class Instruction {
   bool get isBranch => mnemonic.startsWith('j');
+  bool get isLocalBranch =>
+      isBranch &&
+      operands.length == 1 &&
+      operands[0].type == x86_op_type.X86_OP_IMM;
 
   final Uint8List bytes;
   final int address;
