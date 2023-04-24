@@ -10,6 +10,9 @@
  * 
  * This process repeats until 0xFFFF is encountered, which terminates
  * the RLE string.
+ * 
+ * [in] - String to decode.
+ * [out] - Decoded output.
  */
 void rle_decode(WORD *in, WORD *out) {
     WORD ctrl;

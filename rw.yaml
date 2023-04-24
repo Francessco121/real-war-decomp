@@ -41,6 +41,8 @@ segments:
 # Map of symbol names to their base exe virtual address
 symbols:
   # Globals
+  gBigFileAbsolutePath: 0x51e340
+  gBigFileHeader: 0x5735e0
   # Functions
   FUN_00401000: 0x401000
   FUN_00401080: 0x401080
@@ -1190,12 +1192,12 @@ symbols:
   FUN_004d6960: 0x4d6960
   FUN_004d69a0: 0x4d69a0
   get_data_file_length: 0x4d6a60
-  FUN_004d6af0: 0x4d6af0
+  write_bytes_to_file: 0x4d6af0
   FUN_004d6b40: 0x4d6b40
   some_kind_of_string_hash: 0x4d6bd0
   load_bigfile_header: 0x4d6c10
   find_bigfile_entry_by_path: 0x4d6d50
-  FUN_004d6e30: 0x4d6e30
+  read_data_file_internal: 0x4d6e30
   FUN_004d6eb0: 0x4d6eb0
   FUN_004d6f80: 0x4d6f80
   FUN_004d6fe0: 0x4d6fe0
@@ -1288,7 +1290,7 @@ symbols:
   malloc: 0x4e18dd
   __nh_malloc: 0x4e18ef
   _heap_alloc_base: 0x4e191b
-  _fwrite_lk: 0x4e1951
+  fwrite: 0x4e1951
   _fsopen: 0x4e1a5b
   fopen: 0x4e1a7b
   srand: 0x4e1a8e
