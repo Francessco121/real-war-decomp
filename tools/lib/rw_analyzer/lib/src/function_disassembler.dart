@@ -92,7 +92,10 @@ class FunctionDisassembler {
         if (branchTargetSet.add(target)) {
           branchTargets.add(target);
         }
-        furthestBranchEnd = target;
+
+        if (furthestBranchEnd == null || target > furthestBranchEnd) {
+          furthestBranchEnd = target;
+        }
       }
 
       if (furthestBranchEnd != null && inst.address >= furthestBranchEnd) {

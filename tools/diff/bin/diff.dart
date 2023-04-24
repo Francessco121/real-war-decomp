@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:ansicolor/ansicolor.dart';
+import 'package:async/async.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_console/dart_console.dart';
 import 'package:diff/build.dart';
@@ -59,6 +60,7 @@ Future<void> main(List<String> args) async {
   final String objFilePath =
       p.join(projectDir, rw.config.buildDir, 'obj', '$objPath.obj');
   final String srcDirPath = p.join(projectDir, rw.config.srcDir);
+  final String incDirPath = p.join(projectDir, rw.config.includeDir);
   final String cFilePath = p.join(srcDirPath, '$objPath.c');
 
   // Compute physical (file) address of the symbol in the base exe
@@ -141,8 +143,11 @@ Future<void> main(List<String> args) async {
     }
 
     // Listen for src directory changes
-    final watcher = DirectoryWatcher(srcDirPath.replaceAll('/', '\\'));
-    final subscription = watcher.events.listen((event) {
+    final srcWatcher = DirectoryWatcher(srcDirPath.replaceAll('/', '\\'));
+    final incWatcher = DirectoryWatcher(incDirPath.replaceAll('/', '\\'));
+    final watcherSubscription =
+        StreamGroup.merge([srcWatcher.events, incWatcher.events])
+            .listen((event) {
       final ext = p.extension(event.path).toLowerCase();
       if (ext != '.c' && ext != '.h') {
         return;
@@ -198,7 +203,7 @@ Future<void> main(List<String> args) async {
         consoleReader.dispose();
       }
     } finally {
-      subscription.cancel();
+      watcherSubscription.cancel();
       console.showCursor();
       console.rawMode = false;
     }
@@ -277,7 +282,7 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     AnsiPen()..xterm(9), // red
   ];
 
-  const columnWidth = 60;
+  const columnWidth = 58;
 
   // Assign color to each unique branch
   final targetBranchColors = <int, AnsiPen>{};
@@ -301,9 +306,6 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   for (final line in visibleLines) {
     spaceLeft--;
 
-    final String targLine;
-    final String srcLine;
-
     // this is an abomination
     final targInBranchPen =
         line.target != null ? targetBranchColors[line.target!.address] : null;
@@ -324,53 +326,126 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
         targOutBranchPen != null ? targOutBranchPen(' ~>') : '';
     final srcOutBranch = srcOutBranchPen != null ? srcOutBranchPen(' ~>') : '';
 
+    final Instruction? targ;
+    final AnsiPen? targAddressColor;
+    final AnsiPen? targMnemonicColor;
+    final AnsiPen? targOpColor;
+
+    final Instruction? src;
+    final String srcSymbol;
+    final AnsiPen? srcAddressColor;
+    final AnsiPen? srcMnemonicColor;
+    final AnsiPen? srcOpColor;
+    final AnsiPen? srcSymbolColor;
+
     if (line.diffType == DiffEditType.equal) {
-      final targ = line.target!;
-      final src = line.source!;
+      targ = line.target!;
+      src = line.source!;
       if (targ.opStr == src.opStr) {
+        // compare exact bytes to be sure
         if (targ == src) {
-          // compare exact bytes to be sure
-          targLine =
-              '${targ.address.toRadixString(16).padLeft(2)}: $targInBranch ${targ.mnemonic.padRight(10)} ${targ.opStr}$targOutBranch';
-          srcLine =
-              '  ${src.address.toRadixString(16).padLeft(2)}: $srcInBranch ${src.mnemonic.padRight(10)} ${src.opStr}$srcOutBranch';
+          targAddressColor = null;
+          targMnemonicColor = null;
+          targOpColor = null;
+          srcSymbol = ' ';
+          srcAddressColor = null;
+          srcMnemonicColor = null;
+          srcOpColor = null;
+          srcSymbolColor = null;
         } else {
           // Shouldn't happen, but if it does it needs to be obvious
-          targLine = byteDiffPen(
-              '${targ.address.toRadixString(16).padLeft(2)}: $targInBranch ${targ.mnemonic.padRight(10)} ${targ.opStr}$targOutBranch');
-          srcLine = byteDiffPen(
-              'b ${src.address.toRadixString(16).padLeft(2)}: $srcInBranch ${src.mnemonic.padRight(10)} ${src.opStr}$srcOutBranch');
+          targAddressColor = byteDiffPen;
+          targMnemonicColor = byteDiffPen;
+          targOpColor = byteDiffPen;
+          srcSymbol = 'b';
+          srcAddressColor = byteDiffPen;
+          srcMnemonicColor = byteDiffPen;
+          srcOpColor = byteDiffPen;
+          srcSymbolColor = byteDiffPen;
         }
       } else {
-        targLine =
-            '${opDiffPen('${targ.address.toRadixString(16).padLeft(2)}:')} $targInBranch ${targ.mnemonic.padRight(10)} ${opDiffPen(targ.opStr)}$targOutBranch';
-        srcLine =
-            '${opDiffPen('o ${src.address.toRadixString(16).padLeft(2)}:')} $srcInBranch ${src.mnemonic.padRight(10)} ${opDiffPen(src.opStr)}$srcOutBranch';
+        targAddressColor = opDiffPen;
+        targMnemonicColor = null;
+        targOpColor = opDiffPen;
+        srcSymbol = 'o';
+        srcAddressColor = opDiffPen;
+        srcMnemonicColor = null;
+        srcOpColor = opDiffPen;
+        srcSymbolColor = opDiffPen;
       }
     } else if (line.diffType == DiffEditType.substitute) {
-      final targ = line.target!;
-      final src = line.source!;
-      targLine = mnemonicDiffPen(
-          '${targ.address.toRadixString(16).padLeft(2)}: $targInBranch ${targ.mnemonic.padRight(10)} ${targ.opStr}$targOutBranch');
-      srcLine = mnemonicDiffPen(
-          '| ${src.address.toRadixString(16).padLeft(2)}: $srcInBranch ${src.mnemonic.padRight(10)} ${src.opStr}$srcOutBranch');
+      targ = line.target!;
+      src = line.source!;
+
+      targAddressColor = mnemonicDiffPen;
+      targMnemonicColor = mnemonicDiffPen;
+      targOpColor = mnemonicDiffPen;
+      srcSymbol = '|';
+      srcAddressColor = mnemonicDiffPen;
+      srcMnemonicColor = mnemonicDiffPen;
+      srcOpColor = mnemonicDiffPen;
+      srcSymbolColor = mnemonicDiffPen;
     } else if (line.diffType == DiffEditType.insert) {
-      final src = line.source!;
-      targLine = '';
-      srcLine = addPen(
-          '> ${src.address.toRadixString(16).padLeft(2)}: $srcInBranch ${src.mnemonic.padRight(10)} ${src.opStr}$srcOutBranch');
+      targ = null;
+      src = line.source!;
+
+      targAddressColor = null;
+      targMnemonicColor = null;
+      targOpColor = null;
+      srcSymbol = '>';
+      srcAddressColor = addPen;
+      srcMnemonicColor = addPen;
+      srcOpColor = addPen;
+      srcSymbolColor = addPen;
     } else if (line.diffType == DiffEditType.delete) {
-      final targ = line.target!;
-      targLine = delPen(
-          '${targ.address.toRadixString(16).padLeft(2)}: $targInBranch ${targ.mnemonic.padRight(10)} ${targ.opStr}$targOutBranch');
-      srcLine = delPen('<');
+      targ = line.target!;
+      src = null;
+
+      targAddressColor = delPen;
+      targMnemonicColor = delPen;
+      targOpColor = delPen;
+      srcSymbol = '<';
+      srcAddressColor = null;
+      srcMnemonicColor = null;
+      srcOpColor = null;
+      srcSymbolColor = delPen;
     } else {
       throw UnimplementedError();
     }
 
+    final targBuffer = StringBuffer();
+    if (targ != null) {
+      final addr = '${targ.address.toRadixString(16).padLeft(2)}: ';
+      final mnemonic = targ.mnemonic.padRight(10);
+      targBuffer.write(targAddressColor == null ? addr : targAddressColor(addr));
+      targBuffer.write(targInBranch);
+      targBuffer.write(' ');
+      targBuffer.write(targMnemonicColor == null ? mnemonic : targMnemonicColor(mnemonic));
+      targBuffer.write(' ');
+      targBuffer.write(targOpColor == null ? targ.opStr : targOpColor(targ.opStr));
+      targBuffer.write(targOutBranch);
+    }
+
+    final srcBuffer = StringBuffer();
+    if (src != null) {
+      final addr = '${src.address.toRadixString(16).padLeft(2)}: ';
+      final mnemonic = src.mnemonic.padRight(10);
+      srcBuffer.write(srcSymbolColor == null ? srcSymbol : srcSymbolColor(srcSymbol));
+      srcBuffer.write(' ');
+      srcBuffer.write(srcAddressColor == null ? addr : srcAddressColor(addr));
+      srcBuffer.write(srcInBranch);
+      srcBuffer.write(' ');
+      srcBuffer.write(srcMnemonicColor == null ? mnemonic : srcMnemonicColor(mnemonic));
+      srcBuffer.write(' ');
+      srcBuffer.write(srcOpColor == null ? src.opStr : srcOpColor(src.opStr));
+      srcBuffer.write(srcOutBranch);
+    } else {
+      srcBuffer.write(srcSymbolColor == null ? srcSymbol : srcSymbolColor(srcSymbol));
+    }
+
     console.writeLine();
     console.eraseLine();
-    console.write('${_ansiAwarePadRight(targLine, columnWidth)} $srcLine');
+    console.write('${_ansiAwarePadRight(targBuffer.toString(), columnWidth)} $srcBuffer');
   }
 
   if (spaceLeft > 0) {
