@@ -31,8 +31,10 @@ exe:
 segments:
   - [0x401150, try_find_valid_d3d_device]
   - [0x4620f0, cd_check]
-  - [0x4c49a0, segment_004c49a0]
+  - [0x4c49a0, segment_4c49a0]
   - [0x4d5e60, setup_virtual_memory_buffers]
+  - [0x4d6860, bigfile]
+  - [0x4d7050, null]
   # LIBC.LIB
   - [0x4e1510, null]
 
@@ -1190,7 +1192,7 @@ symbols:
   get_data_file_length: 0x4d6a60
   FUN_004d6af0: 0x4d6af0
   FUN_004d6b40: 0x4d6b40
-  some_kind_of_string_hash?: 0x4d6bd0
+  some_kind_of_string_hash: 0x4d6bd0
   load_bigfile_header: 0x4d6c10
   find_bigfile_entry_by_path: 0x4d6d50
   FUN_004d6e30: 0x4d6e30
