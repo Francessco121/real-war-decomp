@@ -83,6 +83,10 @@ Future<void> main(List<String> args) async {
 
     // Init console
     final console = Console();
+    _eraseScrollback(console);
+
+    int lastWindowWidth = console.windowWidth;
+    int lastWindowHeight = console.windowHeight;
 
     DisassembledFunction? objFunc;
     List<DiffLine> lines = [];
@@ -93,6 +97,14 @@ Future<void> main(List<String> args) async {
     Completer<void>? refreshCompleter;
 
     void refresh() {
+      // Resizing the window can cause the scrollback to build up, which is kinda jank
+      if (lastWindowWidth != console.windowWidth || 
+          lastWindowHeight != console.windowHeight) {
+        _eraseScrollback(console);
+        lastWindowWidth = console.windowWidth;
+        lastWindowHeight = console.windowHeight;
+      }
+      
       // Clamp scroll position
       scrollPosition = max(min(scrollPosition, lines.length - 1), 0);
 
@@ -171,7 +183,9 @@ Future<void> main(List<String> args) async {
       try {
         while (true) {
           final key = await consoleReader.readKey();
-          if (key.char == 'q' || key.controlChar == ControlCharacter.ctrlC) {
+          if (key.char == 'q' || 
+              key.controlChar == ControlCharacter.ctrlC || 
+              key.controlChar == ControlCharacter.escape) {
             console.clearScreen();
             break;
           }
@@ -196,6 +210,8 @@ Future<void> main(List<String> args) async {
             refresh();
           } else if (key.controlChar == ControlCharacter.end) {
             scrollPosition = lines.length - (console.windowHeight - 2);
+            refresh();
+          } else if (key.controlChar == ControlCharacter.ctrlR) {
             refresh();
           }
         }
@@ -260,6 +276,10 @@ class ConsoleReadIsolate {
   }
 }
 
+void _eraseScrollback(Console console) {
+  console.write('\x1b[3J');
+}
+
 void _displayError(Console console, String error) {
   console.clearScreen();
   console.resetCursorPosition();
@@ -282,7 +302,9 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     AnsiPen()..xterm(9), // red
   ];
 
-  const columnWidth = 58;
+  //const columnWidth = 58;
+  final targColumnWidth = (console.windowWidth ~/ 2) - 1;
+  final srcColumnWidth = (console.windowWidth - targColumnWidth) - 1;
 
   // Assign color to each unique branch
   final targetBranchColors = <int, AnsiPen>{};
@@ -297,7 +319,7 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   console.resetCursorPosition();
 
   console.eraseLine();
-  console.write('${'TARGET'.padRight(columnWidth)} CURRENT');
+  console.write('${'TARGET'.padRight(targColumnWidth)} CURRENT');
 
   int spaceLeft = console.windowHeight - 1;
   final visibleLines =
@@ -445,7 +467,16 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
 
     console.writeLine();
     console.eraseLine();
-    console.write('${_ansiAwarePadRight(targBuffer.toString(), columnWidth)} $srcBuffer');
+
+    String targCol = _ansiAwarePadRight(targBuffer.toString(), targColumnWidth);
+    String srcCol = srcBuffer.toString();
+    if (targCol.length > targColumnWidth) {
+      targCol = _ansiAwareCropRight(targCol, targColumnWidth);
+    }
+    if (srcCol.length > srcColumnWidth) {
+      srcCol = _ansiAwareCropRight(srcCol, srcColumnWidth);
+    }
+    console.write('$targCol $srcCol');
   }
 
   if (spaceLeft > 0) {
@@ -475,6 +506,39 @@ String _ansiAwarePadRight(String str, int width) {
 
     return buffer.toString();
   }
+}
+
+final _ansiEscapeChar = '\x1B'.codeUnitAt(0);
+final _mChar = 'm'.codeUnitAt(0);
+
+String _ansiAwareCropRight(String str, int width) {
+  if (str.displayWidth <= width) {
+    return str;
+  }
+
+  final buffer = StringBuffer();
+  final units = str.codeUnits;
+  
+  int i = 0;
+  int displayWidth = 0;
+  while (displayWidth < (width - 1) && i < units.length) {
+    if (units[i] == _ansiEscapeChar) {
+      final ansiEscapeEnd = units.indexOf(_mChar, i + 1);
+      for (int j = i; j <= ansiEscapeEnd; j++) {
+        buffer.writeCharCode(units[j]);
+      }
+      i += ((ansiEscapeEnd + 1) - i);
+    } else {
+      buffer.writeCharCode(units[i]);
+      i++;
+      displayWidth++;
+    }
+  }
+
+  buffer.write(ansiDefault);
+  buffer.write('█');
+
+  return buffer.toString();
 }
 
 class DiffLine {
