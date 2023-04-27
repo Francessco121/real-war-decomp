@@ -1,0 +1,12 @@
+- during development, the game had normal .tga files in the data directory, however
+  the cd only contains .tgc files
+- .tgc files are run-length encoded:
+    - the first 2 bytes are presumably the width
+    - the next 2 bytes ate presumably the height
+    - multiplying the width and height together and than doubling that gives a byte size
+      for the un-encoded data.
+    - the rest of the bytes are the RLE'd data
+- it appears that .tgc files *do not* contain a valid .tga file, even after decoding
+- the function that loads these files (@ 0x004c0350) does post-processing on .tga files,
+  but returns decoded .tgc files as is.
+- .tgc files probably contain raw pixels in some expected format
