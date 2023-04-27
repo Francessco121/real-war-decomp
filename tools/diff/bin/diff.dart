@@ -10,6 +10,7 @@ import 'package:collection/collection.dart';
 import 'package:dart_console/dart_console.dart';
 import 'package:diff/build.dart';
 import 'package:diff/diff.dart';
+import 'package:diff/relocate.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe_coff.dart';
 import 'package:rw_analyzer/functions.dart';
@@ -49,8 +50,9 @@ Future<void> main(List<String> args) async {
     print('Cannot locate symbol address: $symbolName');
     return;
   }
-  final String? objPath = rw.findSegmentOfAddress(virtualAddress)?.objPath;
-  if (objPath == null) {
+  final RealWarYamlSegment? segment = rw.findSegmentOfAddress(virtualAddress);
+  final String? objPath = segment?.name;
+  if (segment == null || objPath == null) {
     print('Symbol not mapped to an object file: $symbolName');
     return;
   }
@@ -76,7 +78,7 @@ Future<void> main(List<String> args) async {
   try {
     // Disassemble base exe function
     final DisassembledFunction exeFunc =
-        _loadExeFunction(exeFilePath, physicalAddress, disassembler, rw);
+        _loadExeFunction(exeFilePath, physicalAddress, virtualAddress, disassembler, rw);
 
     // Build config
     final builder = Builder(rw);
@@ -109,7 +111,7 @@ Future<void> main(List<String> args) async {
       scrollPosition = max(min(scrollPosition, lines.length - 1), 0);
 
       // Update screen
-      _displayDiff(console, lines, scrollPosition, exeFunc, objFunc!);
+      _displayDiff(console, lines, scrollPosition, exeFunc, objFunc!, symbolName);
     }
 
     Future<void> recompileAndRefresh() async {
@@ -141,7 +143,8 @@ Future<void> main(List<String> args) async {
 
       if (!error) {
         // Disassemble
-        objFunc = _loadObjFunction(objFilePath, symbolName, disassembler);
+        objFunc = _loadObjFunction(objFilePath, symbolName, disassembler,
+            virtualAddress, rw, segment.address);
 
         // Diff
         lines = _diff(exeFunc.instructions, objFunc!.instructions);
@@ -287,7 +290,12 @@ void _displayError(Console console, String error) {
 }
 
 void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
-    DisassembledFunction targetFunc, DisassembledFunction srcFunc) {
+    DisassembledFunction targetFunc, DisassembledFunction srcFunc,
+    String symbolName) {
+  final bottomBarPen = AnsiPen()..white()..gray(level: 0.1, bg: true);
+  final bottomDiffPen = AnsiPen()..black()..xterm(3, bg: true);
+  final bottomOkPen = AnsiPen()..black()..xterm(10, bg: true);
+
   final mnemonicDiffPen = AnsiPen()..xterm(12);
   final opDiffPen = AnsiPen()..xterm(3);
   final byteDiffPen = AnsiPen()..xterm(13);
@@ -306,6 +314,14 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   final targColumnWidth = (console.windowWidth ~/ 2) - 1;
   final srcColumnWidth = (console.windowWidth - targColumnWidth) - 1;
 
+  final differenceCount = lines.fold(0, (sum, l) {
+    if (l.diffType != DiffEditType.equal) {
+      return sum + 1;
+    } else {
+      return l.source == l.target ? sum : (sum + 1);
+    }
+  });
+
   // Assign color to each unique branch
   final targetBranchColors = <int, AnsiPen>{};
   final sourceBranchColors = <int, AnsiPen>{};
@@ -319,11 +335,11 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   console.resetCursorPosition();
 
   console.eraseLine();
-  console.write('${'TARGET'.padRight(targColumnWidth)} CURRENT');
+  console.write('${'TARGET'.padRight(targColumnWidth)}   CURRENT');
 
-  int spaceLeft = console.windowHeight - 1;
+  int spaceLeft = console.windowHeight - 2;
   final visibleLines =
-      lines.skip(scrollPosition).take(console.windowHeight - 1);
+      lines.skip(scrollPosition).take(console.windowHeight - 2);
 
   for (final line in visibleLines) {
     spaceLeft--;
@@ -490,6 +506,28 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     console.writeLine();
     console.eraseLine();
   }
+
+  // Draw bottom bar
+  console.writeLine();
+  final diffText = differenceCount == 0 
+      ? bottomOkPen(' OK ') 
+      : bottomDiffPen(' DIFF: $differenceCount ');
+  final lineNumText = bottomBarPen('${scrollPosition + 1}-${scrollPosition + visibleLines.length}/${lines.length}');
+  final diffTextLen = diffText.displayWidth;
+  final lineNumTextLen = lineNumText.displayWidth;
+  console.write(lineNumText);
+  var nameStartIndex = (console.windowWidth ~/ 2) - (symbolName.length ~/ 2);
+  var nameEndIndex = nameStartIndex + symbolName.length;
+  if (nameStartIndex < (lineNumTextLen + 1) || 
+      nameEndIndex > (console.windowWidth - diffTextLen - 1)) {
+    symbolName = '...';
+    nameStartIndex = (console.windowWidth ~/ 2) - 1;
+    nameEndIndex = nameStartIndex + 3;
+  }
+  console.write(bottomBarPen(''.padRight(nameStartIndex - lineNumTextLen)));
+  console.write(bottomBarPen(symbolName));
+  console.write(bottomBarPen(''.padRight(console.windowWidth - nameEndIndex - diffTextLen)));
+  console.write(diffText);
 }
 
 final _ansiSequenceRegex = RegExp(r'\x1B\[[0-9;]+m');
@@ -588,7 +626,7 @@ List<DiffLine> _diff(List<Instruction> target, List<Instruction> source) {
   return lines;
 }
 
-DisassembledFunction _loadExeFunction(String filePath, int physicalAddress,
+DisassembledFunction _loadExeFunction(String filePath, int physicalAddress, int virtualAddress,
     FunctionDisassembler disassembler, RealWarYaml rw) {
   final file = File(filePath).openSync();
   final FileData data;
@@ -599,7 +637,7 @@ DisassembledFunction _loadExeFunction(String filePath, int physicalAddress,
 
     try {
       return disassembler.disassembleFunction(data, physicalAddress,
-          address: 0x0);
+          address: virtualAddress);
     } finally {
       data.free();
     }
@@ -609,7 +647,9 @@ DisassembledFunction _loadExeFunction(String filePath, int physicalAddress,
 }
 
 DisassembledFunction _loadObjFunction(
-    String filePath, String symbolName, FunctionDisassembler disassembler) {
+    String filePath, String symbolName, FunctionDisassembler disassembler, 
+    int virtualAddress,
+    RealWarYaml rw, int segmentVirtualAddress) {
   final symbolNameVariations = [
     symbolName,
     '_$symbolName'
@@ -629,11 +669,14 @@ DisassembledFunction _loadObjFunction(
 
   final int funcFileAddress = textFileAddress + symbol.value;
 
+  // Apply relocations
+  relocateObject(bytes, obj, rw, segmentVirtualAddress);
+
   final objData = FileData.fromList(bytes);
 
   try {
     return disassembler.disassembleFunction(objData, funcFileAddress,
-        address: 0x0);
+        address: virtualAddress);
   } finally {
     objData.free();
   }

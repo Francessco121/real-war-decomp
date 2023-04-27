@@ -1,11 +1,12 @@
-#include "WINDOWS.H"
-#include "STDIO.H"
+#include <WINDOWS.H>
+#include <STDIO.H>
 
-char temp_string[1024]; // idk what the size is
+#include "data.h"
 
-long func_004d6a60(char* file_path);
-void display_message(char *format, ...);
-void game_exit();
+extern char temp_string[1024]; // idk what the size is
+
+extern void display_message(char *format, ...);
+extern void game_exit();
 
 void cd_check() {
     int retries = 0;
@@ -15,7 +16,7 @@ void cd_check() {
     while (TRUE) {
         sprintf(temp_string, "%sintro.mpg", "vids\\");
 
-        if (func_004d6a60(temp_string)) {
+        if (get_data_file_length(temp_string)) {
             flag = TRUE;
         } else {
             display_message("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");

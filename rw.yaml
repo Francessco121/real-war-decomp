@@ -13,6 +13,7 @@ config:
   includeDir: rw/include
   srcDir: rw/src
   asmDir: asm
+  binDir: bin
 
 # PE header information
 exe:
@@ -21,28 +22,38 @@ exe:
   textVirtualAddress: 0x1000
   textPhysicalSize: 950272
 
-# List of base exe virtual addresses and which object file maps to them
+# List of base exe virtual addresses and which object/bin file maps to them
 #
-# Example: [0x1234, filename], where 0x1234 is a virtual address in the
+# Example: [0x1234, c, filename], where 0x1234 is a virtual address in the
 # base executable and filename is the path (without ext) to the object
 # file containing code decompiled from the virtual address.
 #
 # Addresses must be in ascending order in this list.
 segments:
-  - [0x401150, try_find_valid_d3d_device]
-  - [0x4620f0, cd_check]
-  - [0x4c49a0, segment_4c49a0]
-  - [0x4d5e60, setup_virtual_memory_buffers]
-  - [0x4d6860, data]
-  - [0x4d7050, null]
-  # LIBC.LIB
-  - [0x4e1510, null]
+  # DOS/PE/COFF headers
+  - [0x400000, bin, _header]
+  # .text
+  - [0x401000, bin, null]
+  #- [0x401150, c, try_find_valid_d3d_device]
+  - [0x401210, bin, null]
+  #- [0x4620f0, c, cd_check]
+  - [0x4621a0, bin, null]
+  - [0x4c49a0, c, segment_4c49a0]
+  - [0x4c4a20, bin, null]
+  #- [0x4d5e60, c, setup_virtual_memory_buffers]
+  - [0x4d5e90, bin, null]
+  - [0x4d6860, c, data]
+  - [0x4d7050, bin, null]
+  # .text: LIBC.LIB
+  - [0x4e1510, bin, _libc]
   # .rdata
-  - [0x4e9000, null]
-  # .data
-  - [0x4ec000, null]
+  - [0x4e9000, bin, _rdata]
+  # .data (initialized)
+  - [0x4ec000, bin, _data]
+  # .data (uninitialized)
+  - [0x51b000, bss, null]
   # .rsrc
-  - [0x1ba6000, null]
+  - [0x1ba6000, bin, _rsrc]
 
 # Map of symbol names to their base exe virtual address
 symbols:
@@ -54,6 +65,13 @@ symbols:
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
   sAbsolutePathTempString: 0x5f0a60
+  gD3DDeviceCounter: 0x1b2ea38
+  gSelectedD3DDevice: 0x1b2ea3c
+  # Strings
+  str_pct_s: 0x4ec3b0
+  str_rb: 0x4ec4c4
+  str_wb: 0x4ec808
+  str_pct_s_2: 0x50a840
   # Functions
   FUN_00401000: 0x401000
   FUN_00401080: 0x401080

@@ -1,16 +1,15 @@
 #include <ddraw.h>
 #include <d3d.h>
 
-int gSelectedD3DDevice;
-int gD3DDeviceCounter;
+extern int gSelectedD3DDevice;
+extern int gD3DDeviceCounter;
 
-void display_message(char *format, ...);
-HRESULT WINAPI enum_devices_callback
+extern void display_message(char *format, ...);
+extern HRESULT WINAPI enum_devices_callback
     (LPGUID lpGUID,LPSTR lpszDeviceDesc,LPSTR lpszDeviceName,
     LPD3DDEVICEDESC lpd3dHWDeviceDesc,
     LPD3DDEVICEDESC lpd3dSWDeviceDesc,LPVOID lpUserArg);
 
-// @ 0x00401150
 int try_find_valid_d3d_device() {
     static LPDIRECT3D lpD3D;
 

@@ -55,6 +55,9 @@ class SectionHeader {
   final int pointerToLineNumbers;
 
   /// Number of relocation entries for the section.
+  /// 
+  /// If [flags.lnkNrelocOvfl] is set, this value will be 0xFFFF and the real
+  /// relocation count is the relocations list length.
   final int numberOfRelocations;
 
   /// Number of line number entries for the section.

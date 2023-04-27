@@ -1,0 +1,16 @@
+name: rw_build
+publish_to: none
+
+environment:
+  sdk: '>=2.19.0 <3.0.0'
+
+dependencies: 
+  crypto: ^3.0.2
+  path: ^1.8.2
+  pe_coff:
+    path: ../lib/pe_coff
+  rw_yaml:
+    path: ../lib/rw_yaml
+  
+dev_dependencies:
+  lints: ^2.0.0

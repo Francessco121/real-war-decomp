@@ -32,3 +32,28 @@ class RelocationEntry {
     );
   }
 }
+
+abstract class RelocationTypeI386 {
+  /// Ignored.
+  static const int absolute = 0x0000;
+  /// Not supported.
+  static const int dir16 = 0x0001;
+  /// Not supported.
+  static const int rel16 = 0x0002;
+  /// The target's 32-bit VA.
+  static const int dir32 = 0x0006;
+  /// The target's 32-bit RVA.
+  static const int dir32nb = 0x0007;
+  /// Not supported.
+  static const int seg12 = 0x0009;
+  /// The 16-bit section index of the section that contains the target.
+  static const int section = 0x000A;
+  /// The 32-bit offset of the target from the beginning of its section.
+  static const int secrel = 0x000B;
+  /// The CLR token.
+  static const int token = 0x000C;
+  /// A 7-bit offset from the base of the section that contains the target.
+  static const int secrel7 = 0x000D;
+  /// The 32-bit relative displacement to the target.
+  static const int rel32 = 0x0014;
+}

@@ -50,7 +50,15 @@ class Builder {
           incPath
         ],
       '/Fo$objPath', 
-      '/O2',
+      '/Og', // global opt
+      '/Oi', // intrinsics
+      '/Ot', // favor fast code
+      '/Oy', // frame pointer omission
+      '/Ob1', // expand __inline marked functions
+      '/Gs', // only insert stack probes when over 4k
+      //'/Gf', // eliminate duplicate strings (pool to writable .data) (leave off since
+      //          it makes it harder to match data sections and isn't necessary)
+      '/Gy', // function-level linking (COMDAT)
       cPath,
     ];
 

@@ -2,6 +2,7 @@
 #include <WINDOWS.H>
 
 #include "data.h"
+#include "strings.h"
 
 extern void to_absolute_data_path(char *path);
 extern void to_absolute_data_path2(char *path);
@@ -62,11 +63,11 @@ size_t read_data_file(char *path, void *out) {
         // Not in bigfile, read from file system
 
         // Convert path to an absolute file path
-        sprintf(absolutePath, "%s", path);
+        sprintf(absolutePath, str_pct_s, path);
         to_absolute_data_path2(absolutePath);
         
         // Read
-        file = fopen(absolutePath, "rb");
+        file = fopen(absolutePath, str_rb);
         if (file != NULL) {
             fseek(file, 0, SEEK_END);
             fileSize = ftell(file);
@@ -88,7 +89,7 @@ FILE *open_data_file_relative(char *path, char *mode) {
     int index = find_bigfile_entry_by_path(path);
     if (index < 0) {
         // Convert path to an absolute file path
-        sprintf(sAbsolutePathTempString, "%s", path);
+        sprintf(sAbsolutePathTempString, str_pct_s, path);
         to_absolute_data_path2(sAbsolutePathTempString);
 
         return fopen(sAbsolutePathTempString, mode);
@@ -116,10 +117,10 @@ size_t read_data_file_partial(char *path, void *out, size_t length) {
     index = find_bigfile_entry_by_path(path);
     if (index < 0) {
         // Convert path to an absolute file path
-        sprintf(sAbsolutePathTempString, "%s", path);
+        sprintf(sAbsolutePathTempString, str_pct_s, path);
         to_absolute_data_path2(sAbsolutePathTempString);
 
-        file = fopen(sAbsolutePathTempString, "rb");
+        file = fopen(sAbsolutePathTempString, str_rb);
         if (file != NULL) {
             read = fread(out, length, 1, file);
             fclose(file);
@@ -128,7 +129,7 @@ size_t read_data_file_partial(char *path, void *out, size_t length) {
         return read;
     }
 
-    file = fopen(path, "rb");
+    file = fopen(path, str_rb);
     fseek(file, sBigFileHeader[index].byteOffset, SEEK_SET);
     fread(out, length, 1, file);
     read = fclose(file); // wtf?
@@ -146,11 +147,11 @@ size_t get_data_file_length(char *path) {
         // Not in bigfile, read from file system
 
         // Convert path to an absolute file path
-        sprintf(sAbsolutePathTempString, "%s", path);
+        sprintf(sAbsolutePathTempString, str_pct_s, path);
         to_absolute_data_path2(sAbsolutePathTempString);
 
         length = 0;
-        file = fopen(sAbsolutePathTempString, "rb");
+        file = fopen(sAbsolutePathTempString, str_rb);
         if (file != NULL) {
             fseek(file, 0, SEEK_END);
             length = ftell(file);
@@ -170,7 +171,7 @@ size_t write_bytes_to_file(const char *filename, const void *ptr, int length) {
     size_t bytesWritten;
 
     bytesWritten = 0;
-    file = fopen(filename, "wb");
+    file = fopen(filename, str_wb);
 
     if (file != NULL) {
         if (length != 0) {
@@ -182,7 +183,7 @@ size_t write_bytes_to_file(const char *filename, const void *ptr, int length) {
     return bytesWritten;
 }
 
-static char *pack_dword_for_bigfile_path_hash(char *str, unsigned int *out) {
+/*static*/ char *pack_dword_for_bigfile_path_hash(char *str, unsigned int *out) {
     unsigned int ints[4];
     char c;
     int i;
@@ -212,7 +213,7 @@ static char *pack_dword_for_bigfile_path_hash(char *str, unsigned int *out) {
     return str;
 }
 
-static unsigned int xor_hash_bigfile_entry_path(char *str) {
+/*static*/ unsigned int xor_hash_bigfile_entry_path(char *str) {
     unsigned int var2;
     unsigned int var1;
 
@@ -236,11 +237,11 @@ void load_bigfile_header(char *path) {
     memset(sBigFileEntryPointers, 0xFFFFFFFF, sizeof(BigFileEntryPointer) * MAX_BIG_FILE_ENTRY_POINTERS);
 
     // Convert path to absolute
-    sprintf(absolutePath, "%s", path);
+    sprintf(absolutePath, str_pct_s, path);
     to_absolute_data_path(absolutePath);
-    sprintf(sBigFileAbsolutePath, "%s", absolutePath);
+    sprintf(sBigFileAbsolutePath, str_pct_s, absolutePath);
 
-    file = fopen(absolutePath, "rb");
+    file = fopen(absolutePath, str_rb);
     if (file != NULL) {
         // Read entry count
         fread(&sBigFileEntryCount, 4, 1, file);
@@ -274,7 +275,6 @@ void load_bigfile_header(char *path) {
         // Done!
         sLoadedBigFileHeader = 1;
     }
-
 }
 
 static int find_bigfile_entry_by_path(char *path) {
@@ -289,7 +289,7 @@ static int find_bigfile_entry_by_path(char *path) {
     }
 
     // Convert path to uppercase
-    sprintf(pathCopy, "%s", path);
+    sprintf(pathCopy, str_pct_s_2, path);
     charIndex = 0;
     while (pathCopy[charIndex] != '\0') {
         if (pathCopy[charIndex] >= 'a' && pathCopy[charIndex] <= 'z') {
@@ -340,7 +340,7 @@ static void read_data_file_internal(char *path, void *out) {
     }
 
     // Path is in bigfile, read from bigfile on disk
-    file = fopen(sBigFileAbsolutePath, "rb");
+    file = fopen(sBigFileAbsolutePath, str_rb);
     fseek(file, sBigFileHeader[index].byteOffset, SEEK_SET);
     fread(out, sBigFileHeader[index].sizeBytes, 1, file);
     fclose(file);
@@ -360,12 +360,12 @@ FILE *open_data_file(char *path, char *mode) {
     }
 
     // Open file in bigfile
-    file = fopen(sBigFileAbsolutePath, "rb");
+    file = fopen(sBigFileAbsolutePath, str_rb);
     fseek(file, sBigFileHeader[index].byteOffset, SEEK_SET);
 
     // Find first entry pointer element that is free
     ptrIndex = 0;
-    for (i = 0; i < MAX_BIG_FILE_ENTRY_POINTERS; i++) {
+    for (i = 0; i < MAX_BIG_FILE_ENTRY_POINTERS - 1; i++) { // wtf? why the - 1?
         if (sBigFileEntryPointers[i].file == 0xFFFFFFFF) {
             break;
         }
@@ -375,7 +375,7 @@ FILE *open_data_file(char *path, char *mode) {
 
     // If there's a free slot, store information about the file
     if (ptrIndex < MAX_BIG_FILE_ENTRY_POINTERS) {
-        sprintf(sBigFileEntryPointerPaths[ptrIndex], "%s", path);
+        sprintf(sBigFileEntryPointerPaths[ptrIndex], str_pct_s, path);
         sBigFileEntryPointers[ptrIndex].file = file;
         sBigFileEntryPointers[ptrIndex].position = 0;
         sBigFileEntryPointers[ptrIndex].sizeBytes = sBigFileHeader[index].sizeBytes;

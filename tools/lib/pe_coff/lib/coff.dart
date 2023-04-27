@@ -74,7 +74,17 @@ class CoffFile {
       if (secHeader.pointerToRelocations != 0) {
         reader.setPosition(secHeader.pointerToRelocations);
 
-        for (int k = 0; k < secHeader.numberOfRelocations; k++) {
+        final extRelocs = secHeader.flags.lnkNrelocOvfl;
+        final int numRelocs;
+        if (extRelocs) {
+          assert(secHeader.numberOfRelocations == 0xFFFF);
+          final fakeEntry = RelocationEntry.fromReader(reader);
+          numRelocs = fakeEntry.virtualAddress - 1;
+        } else {
+          numRelocs = secHeader.numberOfRelocations;
+        }
+
+        for (int k = 0; k < numRelocs; k++) {
           relocations.add(RelocationEntry.fromReader(reader));
         }
       }

@@ -70,13 +70,15 @@ class RealWarYamlConfig {
   final String includeDir;
   final String srcDir;
   final String asmDir;
+  final String binDir;
 
   RealWarYamlConfig._(YamlMap map)
       : exePath = map['exePath'],
         buildDir = map['buildDir'],
         includeDir = map['includeDir'],
         srcDir = map['srcDir'],
-        asmDir = map['asmDir'];
+        asmDir = map['asmDir'],
+        binDir = map['binDir'];
 }
 
 class RealWarYamlExe {
@@ -98,9 +100,11 @@ class RealWarYamlExe {
 
 class RealWarYamlSegment {
   final int address;
-  final String? objPath;
+  final String type;
+  final String? name;
 
   RealWarYamlSegment._(YamlList list)
       : address = list[0],
-        objPath = list[1];
+        type = list[1],
+        name = list[2];
 }

@@ -8,8 +8,9 @@ game/*
 # Build artifacts
 build/
 
-# Dumped assembly
-asm/
+# Extracted asm/binary
+/asm/
+/bin/
 
 # Binaries
 *.dll
