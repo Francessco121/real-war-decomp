@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:rw_yaml/rw_yaml.dart';
+import 'package:rw_decomp/rw_yaml.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,4 +1,4 @@
-name: diff
+name: rw_diff
 publish_to: none
 
 environment:
@@ -13,12 +13,12 @@ dependencies:
   path: ^1.8.2
   pe_coff:
     path: ../lib/pe_coff
-  rw_analyzer:
-    path: ../lib/rw_analyzer
-  rw_yaml:
-    path: ../lib/rw_yaml
+  rw_decomp:
+    path: ../rw_decomp
   tuple: ^2.0.1
   watcher: ^1.0.1
+  x86_analyzer:
+    path: ../lib/x86_analyzer
   
 dev_dependencies:
   lints: ^2.0.0

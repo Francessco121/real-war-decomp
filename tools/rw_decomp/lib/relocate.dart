@@ -1,7 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:pe_coff/coff.dart';
-import 'package:rw_yaml/rw_yaml.dart';
+
+import 'rw_yaml.dart';
 
 /// Applies known symbols in rw.yaml to a COFF file via its relocations.
 /// 

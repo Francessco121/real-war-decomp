@@ -5,8 +5,8 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/coff.dart';
 import 'package:pe_coff/pe.dart';
-import 'package:rw_build/relocate.dart';
-import 'package:rw_yaml/rw_yaml.dart';
+import 'package:rw_decomp/relocate.dart';
+import 'package:rw_decomp/rw_yaml.dart';
 
 /*
 - using rw.yaml segment mapping and files in bin/ and build/obj/, link an actual exe

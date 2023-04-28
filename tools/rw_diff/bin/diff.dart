@@ -8,14 +8,14 @@ import 'package:ansicolor/ansicolor.dart';
 import 'package:async/async.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_console/dart_console.dart';
-import 'package:diff/build.dart';
-import 'package:diff/diff.dart';
-import 'package:diff/relocate.dart';
+import 'package:rw_diff/rw_diff.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe_coff.dart';
-import 'package:rw_analyzer/functions.dart';
-import 'package:rw_yaml/rw_yaml.dart';
+import 'package:rw_decomp/build.dart';
+import 'package:rw_decomp/relocate.dart';
+import 'package:rw_decomp/rw_yaml.dart';
 import 'package:watcher/watcher.dart';
+import 'package:x86_analyzer/functions.dart';
 
 /*
   1. find address of requested symbol and determine which obj file to look at

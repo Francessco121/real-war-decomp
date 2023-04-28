@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:rw_yaml/rw_yaml.dart';
+
+import 'rw_yaml.dart';
 
 const _vsPath = 'C:\\Program Files (x86)\\Microsoft Visual Studio';
 const _dxPath = 'C:\\dx7sdk';

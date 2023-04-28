@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe.dart';
-import 'package:rw_yaml/rw_yaml.dart';
+import 'package:rw_decomp/rw_yaml.dart';
 
 /*
 from rw.yaml, extract .bin and .asm files for each segment as necessary.

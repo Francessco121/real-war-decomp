@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as p;
-import 'package:rw_analyzer/functions.dart';
-import 'package:rw_yaml/rw_yaml.dart';
+import 'package:rw_decomp/rw_yaml.dart';
+import 'package:x86_analyzer/functions.dart';
 
 /// Disassembles a single function from the base executable
 void main(List<String> args) {

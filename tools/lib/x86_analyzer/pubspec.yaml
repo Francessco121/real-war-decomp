@@ -1,4 +1,4 @@
-name: rw_analyzer
+name: x86_analyzer
 publish_to: none
 
 environment:
