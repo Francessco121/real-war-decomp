@@ -36,10 +36,12 @@ A quick overview of the decompilation process:
 
 - Decompile functions and place them in `rw/src`.
 - Map files in `rw/src` and symbols to virtual exe addresses in `rw.yaml`.
-- If segments in `rw.yaml` are updated, re-run `just split`.
+- For functions that haven't been decompiled yet but are in the middle of a source file, add a `#pragma ASM_FUNC function_name` line in its place (with `function_name` being the actual name of the function) to let the rest of the file compile correctly.
+- If segments in `rw.yaml` are updated or new `#pragma ASM_FUNC`s are added, re-run `just split`.
 - If source files are added/renamed/deleted, re-run `just configure`.
 - Use `just diff {function name}` for live function diffing.
 - Once the function matches: rebuild and verify (shortcut: `just check`).
+- If the function doesn't match, surround it with `#if NON_MATCHING` and add back its `#pragma ASM_FUNC`
 
 ## Cool Stuff
 - `tools/extract_bigfile.dart` - Unpacks all files in `bigfile.dat` into a directory. 

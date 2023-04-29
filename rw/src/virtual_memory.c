@@ -32,8 +32,6 @@ void FUN_004d5e90() {
 
 #pragma ASM_FUNC FUN_004d5fb0
 
-#pragma ASM_FUNC custom_alloc
-#if NON_MATCHING
 void* custom_alloc(size_t bytes) {
     int i;
     int bufferIndex;
@@ -60,9 +58,11 @@ void* custom_alloc(size_t bytes) {
     if (bytes >= 0x400000) {
         allocatedPtr = VirtualAlloc(NULL, bytes, MEM_COMMIT, PAGE_READWRITE);
         
-        if (allocatedPtr == NULL) {
-            display_message(str_virtual_alloc_failed);
+        if (allocatedPtr != NULL) {
+            goto label2;
         }
+        
+        display_message(str_virtual_alloc_failed);
     } else {
         allocatedPtr = malloc(bytes);
 
@@ -81,7 +81,6 @@ void* custom_alloc(size_t bytes) {
 
     return allocatedPtr;
 }
-#endif
 
 void custom_free(void** ptr) {
     size_t i;
