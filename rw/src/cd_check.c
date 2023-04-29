@@ -2,35 +2,36 @@
 #include <STDIO.H>
 
 #include "data.h"
+#include "strings.h"
 
-extern char temp_string[1024]; // idk what the size is
+extern char gTempString[];
 
 extern void display_message(char *format, ...);
 extern void game_exit();
 
 void cd_check() {
-    int retries = 0;
+    int retries = 1;
     BOOL flag = FALSE;
     FILE* file;
 
     while (TRUE) {
-        sprintf(temp_string, "%sintro.mpg", "vids\\");
+        sprintf(gTempString, str_pct_intro_mpg, str_vids_slash);
 
-        if (get_data_file_length(temp_string)) {
+        if (get_data_file_length(gTempString)) {
             flag = TRUE;
         } else {
-            display_message("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");
+            display_message(str_please_insert_the_cd);
         }
 
         if (flag) {
-            sprintf(temp_string, "%scdtest.txt", "vids\\");
+            sprintf(gTempString, str_pct_cdtest_txt, str_vids_slash);
 
-            file = fopen(temp_string, "wb");
+            file = fopen(gTempString, str_wb);
             if (file != NULL) {
                 flag = FALSE;
                 fclose(file);
-                _unlink(temp_string);
-                display_message("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");   
+                _unlink(gTempString);
+                display_message(str_please_insert_the_cd);   
             } else if (flag) {
                 return;
             }

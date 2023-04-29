@@ -34,9 +34,9 @@ segments:
   - [0x400000, bin, _header]
   # .text
   - [0x401000, bin, null]
-  #- [0x401150, c, try_find_valid_d3d_device]
+  - [0x401150, c, try_find_valid_d3d_device]
   - [0x401210, bin, null]
-  #- [0x4620f0, c, cd_check]
+  - [0x4620f0, c, cd_check]
   - [0x4621a0, bin, null]
   - [0x4c49a0, c, segment_4c49a0]
   - [0x4c4a20, bin, null]
@@ -57,7 +57,9 @@ segments:
 
 # Map of symbol names to their base exe virtual address
 symbols:
-  # Globals
+  # Globals/Statics
+  IID_IDirect3D: 0x4e9e98
+  lpD3D__try_find_valid_d3d_device: 0x51adb8
   sBigFileEntryCount: 0x51b8ec
   sLoadedBigFileHeader: 0x51b98c
   sBigFileAbsolutePath: 0x51e340
@@ -65,12 +67,21 @@ symbols:
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
   sAbsolutePathTempString: 0x5f0a60
+  gTempString: 0xef6fc0
   gD3DDeviceCounter: 0x1b2ea38
   gSelectedD3DDevice: 0x1b2ea3c
   # Strings
+  str_couldnt_find_compatible_d3d_driver: 0x4ec03c
+  str_enum_of_drivers_failed: 0x4ec080
+  str_creation_of_id3d_failed: 0x4ec0a0
+  str_dd3d_obj_failed: 0x4ec0c8
   str_pct_s: 0x4ec3b0
   str_rb: 0x4ec4c4
   str_wb: 0x4ec808
+  str_vids_slash: 0x50a610
+  str_pct_cdtest_txt: 0x50a794
+  str_please_insert_the_cd: 0x50a7a4
+  str_pct_intro_mpg: 0x50a7f4
   str_pct_s_2: 0x50a840
   # Functions
   FUN_00401000: 0x401000

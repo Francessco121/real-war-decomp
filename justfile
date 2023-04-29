@@ -25,24 +25,29 @@ cl name:
     ninja build\obj\{{name}}.obj
 
 # build new exe
+[no-exit-message]
 @build:
     ninja
 
 # clean + build
+[no-exit-message]
 @rebuild:
     just clean
     just configure
     ninja
 
 # verify that the linked exe matches the original base exe
+[no-exit-message]
 @verify:
     tools/rw_decomp/build/verify.exe
 
 # verify that the base exe is valid
+[no-exit-message]
 @verifybase:
     tools/rw_decomp/build/verify.exe base
 
 # build + verify
+[no-exit-message]
 @check:
     ninja
     tools/rw_decomp/build/verify.exe
