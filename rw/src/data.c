@@ -3,12 +3,10 @@
 
 #include "data.h"
 #include "strings.h"
+#include "virtual_memory.h"
 
 extern void to_absolute_data_path(char *path);
 extern void to_absolute_data_path2(char *path);
-
-extern void *custom_alloc(unsigned int bytes);
-extern void custom_free(void *ptr);
 
 typedef struct BigFileEntry {
     char path[64];
