@@ -43,26 +43,26 @@ void start_rwmap() {
 }
 
 void end_rwmap() {
-    int var1;
-    int var2;
-    int var3;
-    int var4;
+    int thousands;
+    int bytesUsed;
+    int millions;
+    int hundreds;
 
     if (gEnableRwMap == FALSE) {
         return;
     }
 
-    var2 = gTotalVirtualMemoryAllocated - DAT_0051b988;
-    var3 = var2 / 1000000;
-    var1 = (var2 % 1000000) / 1000;
-    var4 = var2 % 1000;
+    bytesUsed = gTotalVirtualMemoryAllocated - DAT_0051b988;
+    millions = bytesUsed / 1000000;
+    thousands = (bytesUsed % 1000000) / 1000;
+    hundreds = bytesUsed % 1000;
 
-    if (var3 != 0) {
-        sprintf(gTempString, str_total_used3, var3, var1, var4);
-    } else if (var1 != 0) {
-        sprintf(gTempString, str_total_used2, var1, var4);
+    if (millions != 0) {
+        sprintf(gTempString, str_total_used3, millions, thousands, hundreds);
+    } else if (thousands != 0) {
+        sprintf(gTempString, str_total_used2, thousands, hundreds);
     } else {
-        sprintf(gTempString, str_total_used, var4);
+        sprintf(gTempString, str_total_used, hundreds);
     }
 
     fprintf(sRwMapTxtFile, str_pct_newline_newline, gTempString);
@@ -70,39 +70,39 @@ void end_rwmap() {
 }
 
 void record_virtual_memory_to_rwmap(char *str) {
-    int var1;
-    int var2;
-    int var3;
-    int var4;
+    int thousands;
+    int bytesUsed;
+    int millions;
+    int hundreds;
 
     if (gEnableRwMap == FALSE) {
         return;
     }
 
-    var2 = gTotalVirtualMemoryAllocated - DAT_00567788;
-    var3 = var2 / 1000000;
-    var1 = (var2 % 1000000) / 1000;
-    var4 = var2 % 1000;
+    bytesUsed = gTotalVirtualMemoryAllocated - DAT_00567788;
+    millions = bytesUsed / 1000000;
+    thousands = (bytesUsed % 1000000) / 1000;
+    hundreds = bytesUsed % 1000;
 
-    if (var3 != 0) {
-        sprintf(gTempString, str_used_eq_ddd, var3, var1, var4, str);
-    } else if (var1 != 0) {
-        sprintf(gTempString, str_used_eq_dd, var1, var4, str);
+    if (millions != 0) {
+        sprintf(gTempString, str_used_eq_ddd, millions, thousands, hundreds, str);
+    } else if (thousands != 0) {
+        sprintf(gTempString, str_used_eq_dd, thousands, hundreds, str);
     } else {
-        sprintf(gTempString, str_used_eq_d, var4, str);
+        sprintf(gTempString, str_used_eq_d, hundreds, str);
     }
 
-    var2 = gTotalVirtualMemoryAllocated - DAT_0051b988;
-    var3 = var2 / 1000000;
-    var1 = (var2 % 1000000) / 1000;
-    var4 = var2 % 1000;
+    bytesUsed = gTotalVirtualMemoryAllocated - DAT_0051b988;
+    millions = bytesUsed / 1000000;
+    thousands = (bytesUsed % 1000000) / 1000;
+    hundreds = bytesUsed % 1000;
 
-    if (var3 != 0) {
-        fprintf(sRwMapTxtFile, str_pct_ddd, gTempString, var3, var1, var4);
-    } else if (var1 != 0) {
-        fprintf(sRwMapTxtFile, str_pct_tab_dd, gTempString, var1, var4);
+    if (millions != 0) {
+        fprintf(sRwMapTxtFile, str_pct_ddd, gTempString, millions, thousands, hundreds);
+    } else if (thousands != 0) {
+        fprintf(sRwMapTxtFile, str_pct_tab_dd, gTempString, thousands, hundreds);
     } else {
-        fprintf(sRwMapTxtFile, str_pct_tab_d, gTempString, var4);
+        fprintf(sRwMapTxtFile, str_pct_tab_d, gTempString, hundreds);
     }
 
     DAT_00567788 = gTotalVirtualMemoryAllocated;
