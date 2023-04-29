@@ -31,6 +31,7 @@ cl name:
 # clean + build
 @rebuild:
     just clean
+    just configure
     ninja
 
 # verify that the linked exe matches the original base exe
