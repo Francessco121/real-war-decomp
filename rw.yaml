@@ -40,8 +40,8 @@ segments:
   - [0x4621a0, bin, null]
   - [0x4c49a0, c, segment_4c49a0]
   - [0x4c4a20, bin, null]
-  #- [0x4d5e60, c, setup_virtual_memory_buffers]
-  - [0x4d5e90, bin, null]
+  - [0x4d5e60, c, virtual_memory]
+  - [0x4d6350, bin, null]
   - [0x4d6860, c, data]
   - [0x4d7050, bin, null]
   # .text: LIBC.LIB
@@ -58,14 +58,22 @@ segments:
 # Map of symbol names to their base exe virtual address
 symbols:
   # Globals/Statics
+  VirtualFree: 0x4e904c
+  VirtualAlloc: 0x4e9050
   IID_IDirect3D: 0x4e9e98
   lpD3D__try_find_valid_d3d_device: 0x51adb8
   sBigFileEntryCount: 0x51b8ec
+  DAT_0051b908: 0x51b908
+  gTotalVirtualMemoryAllocated: 0x51b92c
   sLoadedBigFileHeader: 0x51b98c
   sBigFileAbsolutePath: 0x51e340
+  gVirtualMemoryNumbers: 0x53ee60
+  DAT_00567788: 0x567788
   sBigFileEntryPointers: 0x5677a0
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
+  gVirtualMemoryBuffers: 0x594f60
+  gVirtualMemorySizes: 0x59cf80 
   sAbsolutePathTempString: 0x5f0a60
   gTempString: 0xef6fc0
   gD3DDeviceCounter: 0x1b2ea38
@@ -83,6 +91,11 @@ symbols:
   str_please_insert_the_cd: 0x50a7a4
   str_pct_intro_mpg: 0x50a7f4
   str_pct_s_2: 0x50a840
+  str_no_memory_left_for_alloc: 0x51757c
+  str_virtual_alloc_failed: 0x51759c
+  str_no_memory_buffers_left: 0x5175b4
+  str_trying_to_allocate_0: 0x5175dc
+  str_virtual_free_failed: 0x5175f8
   # Functions
   FUN_00401000: 0x401000
   FUN_00401080: 0x401080

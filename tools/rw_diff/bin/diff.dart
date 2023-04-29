@@ -81,7 +81,7 @@ Future<void> main(List<String> args) async {
   try {
     // Disassemble base exe function
     final DisassembledFunction exeFunc =
-        _loadExeFunction(exeFilePath, physicalAddress, virtualAddress, disassembler, rw);
+        _loadExeFunction(exeFilePath, symbolName, physicalAddress, virtualAddress, disassembler, rw);
 
     // Init builder
     final builder = Builder(rw);
@@ -144,16 +144,20 @@ Future<void> main(List<String> args) async {
         error = true;
       }
 
-      if (!error) {
-        // Disassemble
-        objFunc = _loadObjFunction(objFilePath, symbolName, disassembler,
-            virtualAddress, rw, segment.address);
+      try {
+        if (!error) {
+          // Disassemble
+          objFunc = _loadObjFunction(objFilePath, symbolName, disassembler,
+              virtualAddress, rw, segment.address);
 
-        // Diff
-        lines = _diff(exeFunc.instructions, objFunc!.instructions);
+          // Diff
+          lines = _diff(exeFunc.instructions, objFunc!.instructions);
 
-        // Refresh
-        refresh();
+          // Refresh
+          refresh();
+        }
+      } on LoadException catch (ex) {
+        _displayError(console, ex.message);
       }
 
       refreshing = false;
@@ -232,6 +236,12 @@ Future<void> main(List<String> args) async {
   } finally {
     disassembler.dispose();
   }
+}
+
+class LoadException implements Exception {
+  final String message;
+
+  LoadException(this.message);
 }
 
 /// An unfortuante hack to get around console reads locking up the whole thread.
@@ -629,8 +639,8 @@ List<DiffLine> _diff(List<Instruction> target, List<Instruction> source) {
   return lines;
 }
 
-DisassembledFunction _loadExeFunction(String filePath, int physicalAddress, int virtualAddress,
-    FunctionDisassembler disassembler, RealWarYaml rw) {
+DisassembledFunction _loadExeFunction(String filePath, String symbolName, int physicalAddress, 
+    int virtualAddress, FunctionDisassembler disassembler, RealWarYaml rw) {
   final file = File(filePath).openSync();
   final FileData data;
 
@@ -640,7 +650,7 @@ DisassembledFunction _loadExeFunction(String filePath, int physicalAddress, int 
 
     try {
       return disassembler.disassembleFunction(data, physicalAddress,
-          address: virtualAddress);
+          address: virtualAddress, name: symbolName);
     } finally {
       data.free();
     }
@@ -653,18 +663,24 @@ DisassembledFunction _loadObjFunction(
     String filePath, String symbolName, FunctionDisassembler disassembler, 
     int virtualAddress,
     RealWarYaml rw, int segmentVirtualAddress) {
+  // TODO: support stdcall mangling
   final symbolNameVariations = [
     symbolName,
     '_$symbolName'
-  ]; // why do functions get an underscore in the obj file?
+  ];
   final bytes = File(filePath).readAsBytesSync();
   final obj = CoffFile.fromList(bytes);
 
-  final SymbolTableEntry symbol = obj.symbolTable!.values.firstWhere((sym) {
+  final SymbolTableEntry? symbol = obj.symbolTable!.values.firstWhereOrNull((sym) {
     final name =
         sym.name.shortName ?? obj.stringTable!.strings[sym.name.offset]!;
     return symbolNameVariations.contains(name);
   });
+
+  if (symbol == null) {
+    throw LoadException('Could not find symbol \'$symbolName\' in $filePath');
+  }
+
   // NOTE: Functions may be compiled as COMDATs, so there's possibly more than one .text section.
   // The symbol specifies which section exactly and a relative offset within it.
   final int textFileAddress =
@@ -680,7 +696,7 @@ DisassembledFunction _loadObjFunction(
 
   try {
     return disassembler.disassembleFunction(objData, funcFileAddress,
-        address: virtualAddress);
+        address: virtualAddress, name: symbolName);
   } finally {
     objData.free();
   }

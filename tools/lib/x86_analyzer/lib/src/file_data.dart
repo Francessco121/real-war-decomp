@@ -38,6 +38,15 @@ class FileData {
     return FileData._(data, list.lengthInBytes);
   }
 
+  factory FileData.fromClampedList(Uint8ClampedList list) {
+    final data = malloc<Uint8>(list.lengthInBytes);
+    for (int i = 0; i < list.lengthInBytes; i++) {
+      data[i] = list[i];
+    }
+
+    return FileData._(data, list.lengthInBytes);
+  }
+
   void free() {
     if (!_freed) {
       malloc.free(_data);

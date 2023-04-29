@@ -63,7 +63,7 @@ void main(List<String> args) {
 
   writer.newline();
   writer.comment('Tools');
-  writer.variable('CL', r'tools/rw_decomp/build/cl_wrapper.exe --vsdir="$VS_DIR"');
+  writer.variable('CL', r'tools/rw_decomp/build/cl_wrapper.exe --vsdir="$VS_DIR" --asmfuncdir="$BIN_DIR\_funcs"');
   writer.variable('LINK', 'tools/rw_decomp/build/link.exe');
 
   writer.newline();

@@ -7,12 +7,17 @@ import 'file_data.dart';
 import 'instruction.dart';
 
 class DisassembledFunction {
+  final String name;
+  /// Size in bytes.
+  final int size;
   final List<Instruction> instructions;
   final Set<int> branchTargetSet;
   /// In order of discovery.
   final List<int> branchTargets;
 
   DisassembledFunction({
+    required this.name,
+    required this.size,
     required this.instructions,
     required this.branchTargetSet,
     required this.branchTargets,
@@ -61,7 +66,7 @@ class FunctionDisassembler {
   }
 
   DisassembledFunction disassembleFunction(FileData data, int offset,
-      {required int address}) {
+      {required int address, required String name}) {
     _codePtr.value = Pointer<Uint8>.fromAddress(data.data.address + offset);
     _sizePtr.value = data.size - offset;
     _addressPtr.value = address;
@@ -70,6 +75,7 @@ class FunctionDisassembler {
     final branchTargetSet = <int>{};
     final branchTargets = <int>[];
     int? furthestBranchEnd;
+    int size = 0;
 
     while (true) {
       if (!_cs.disasm_iter(
@@ -83,8 +89,11 @@ class FunctionDisassembler {
         }
       }
 
+
       final inst = Instruction.fromCapstone(_instPtr.ref);
       insts.add(inst);
+
+      size += inst.bytes.lengthInBytes;
 
       if (inst.isLocalBranch) {
         // Local branch
@@ -110,6 +119,8 @@ class FunctionDisassembler {
     }
 
     return DisassembledFunction(
+      name: name,
+      size: size,
       instructions: insts,
       branchTargetSet: branchTargetSet,
       branchTargets: branchTargets,

@@ -10,7 +10,7 @@ extern void display_message(char *format, ...);
 extern void game_exit();
 
 void cd_check() {
-    int retries = 1;
+    int retries = 0;
     BOOL flag = FALSE;
     FILE* file;
 

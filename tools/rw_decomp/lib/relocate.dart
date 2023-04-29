@@ -82,7 +82,9 @@ String _unmangle(String name) {
     return '${name.substring(2, atIndex)}__${name.substring(qqIndex + 2, atIndex2)}';
   } else {
     // Other
-    if (name.startsWith('_')) {
+    if (name.startsWith('__imp__')) {
+      name = name.substring(7);
+    } else if (name.startsWith('_')) {
       name = name.substring(1);
     }
     final atIndex = name.indexOf('@');
