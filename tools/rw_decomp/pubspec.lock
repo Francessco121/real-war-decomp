@@ -18,7 +18,7 @@ packages:
     source: hosted
     version: "5.11.1"
   args:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: args
       sha256: "4cab82a83ffef80b262ddedf47a0a8e56ee6fbf7fe21e6e768b02792034dd440"
@@ -184,6 +184,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+  ninja_syntax:
+    dependency: "direct main"
+    description:
+      path: "../lib/ninja_syntax"
+      relative: true
+    source: path
+    version: "0.1.0"
   node_preamble:
     dependency: transitive
     description:
@@ -343,6 +350,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.2"
+  textwrap:
+    dependency: transitive
+    description:
+      name: textwrap
+      sha256: "342fb85c503a27c68e0dd21f7be35360acf3231f929e0dcb23cc8593d2919c36"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   typed_data:
     dependency: transitive
     description:

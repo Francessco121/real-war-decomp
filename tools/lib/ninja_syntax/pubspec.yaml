@@ -1,0 +1,12 @@
+name: ninja_syntax
+description: A Dart port of ninja_syntax.py.
+version: 0.1.0
+
+environment:
+  sdk: '>=2.19.0 <3.0.0'
+  
+dependencies:
+  textwrap: ^1.2.0
+
+dev_dependencies:
+  lints: ^2.0.0

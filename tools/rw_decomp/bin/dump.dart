@@ -1,6 +1,7 @@
 import 'dart:ffi' as ffi;
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as p;
 import 'package:rw_decomp/rw_yaml.dart';
@@ -8,13 +9,16 @@ import 'package:x86_analyzer/functions.dart';
 
 /// Disassembles a single function from the base executable
 void main(List<String> args) {
-  if (args.length != 1) {
+  final argParser = ArgParser()
+      ..addOption('root');
+
+  final argResult = argParser.parse(args);
+  final String projectDir = p.absolute(argResult['root'] ?? p.current);
+
+  if (argResult.rest.length != 1) {
     print('Usage: dump.dart <func symbol name>');
     return;
   }
-
-  // Assume we're ran from the package dir
-  final String projectDir = p.normalize(p.join(p.current, '../../'));
 
   // Load project config
   final rw = RealWarYaml.load(
@@ -22,7 +26,7 @@ void main(List<String> args) {
       dir: projectDir);
 
   // Figure out symbol address
-  final String symbolName = args[0];
+  final String symbolName = argResult.rest[0];
   final int? virtualAddress = rw.symbols[symbolName];
   if (virtualAddress == null) {
     print('Cannot locate symbol address: $symbolName');
@@ -52,7 +56,7 @@ void main(List<String> args) {
     }
 
     // Init capstone
-    final capstoneDll = ffi.DynamicLibrary.open('../capstone.dll');
+    final capstoneDll = ffi.DynamicLibrary.open(p.join(projectDir, 'tools', 'capstone.dll'));
 
     // Disassemble
     final disassembler = FunctionDisassembler.init(capstoneDll);

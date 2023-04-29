@@ -5,13 +5,13 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:ansicolor/ansicolor.dart';
+import 'package:args/args.dart';
 import 'package:async/async.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_console/dart_console.dart';
 import 'package:rw_diff/rw_diff.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe_coff.dart';
-import 'package:rw_decomp/build.dart';
 import 'package:rw_decomp/relocate.dart';
 import 'package:rw_decomp/rw_yaml.dart';
 import 'package:watcher/watcher.dart';
@@ -30,13 +30,16 @@ import 'package:x86_analyzer/functions.dart';
 */
 
 Future<void> main(List<String> args) async {
-  if (args.length != 1) {
+  final argParser = ArgParser()
+      ..addOption('root');
+
+  final argResult = argParser.parse(args);
+  final String projectDir = p.absolute(argResult['root'] ?? p.current);
+  
+  if (argResult.rest.length != 1) {
     print('Usage: diff.dart <func symbol name>');
     return;
   }
-
-  // Assume we're ran from the diff package dir
-  final String projectDir = p.normalize(p.join(p.current, '../../'));
 
   // Load project config
   final rw = RealWarYaml.load(
@@ -44,7 +47,7 @@ Future<void> main(List<String> args) async {
       dir: projectDir);
 
   // Figure out symbol address and related obj path
-  final String symbolName = args[0];
+  final String symbolName = argResult.rest[0];
   final int? virtualAddress = rw.symbols[symbolName];
   if (virtualAddress == null) {
     print('Cannot locate symbol address: $symbolName');
@@ -63,14 +66,14 @@ Future<void> main(List<String> args) async {
       p.join(projectDir, rw.config.buildDir, 'obj', '$objPath.obj');
   final String srcDirPath = p.join(projectDir, rw.config.srcDir);
   final String incDirPath = p.join(projectDir, rw.config.includeDir);
-  final String cFilePath = p.join(srcDirPath, '$objPath.c');
+
 
   // Compute physical (file) address of the symbol in the base exe
   final int physicalAddress =
       virtualAddress - (rw.exe.imageBase + rw.exe.textVirtualAddress);
 
   // Init capstone
-  final capstoneDll = ffi.DynamicLibrary.open('../capstone.dll');
+  final capstoneDll = ffi.DynamicLibrary.open(p.join(projectDir, 'tools', 'capstone.dll'));
   final disassembler = FunctionDisassembler.init(capstoneDll);
 
   print('Loading...');
@@ -80,7 +83,7 @@ Future<void> main(List<String> args) async {
     final DisassembledFunction exeFunc =
         _loadExeFunction(exeFilePath, physicalAddress, virtualAddress, disassembler, rw);
 
-    // Build config
+    // Init builder
     final builder = Builder(rw);
 
     // Init console
@@ -135,7 +138,7 @@ Future<void> main(List<String> args) async {
       // Compile
       bool error = false;
       try {
-        await builder.compile(cFilePath);
+        await builder.compile(objFilePath);
       } on BuildException catch (ex) {
         _displayError(console, ex.message);
         error = true;
@@ -670,7 +673,8 @@ DisassembledFunction _loadObjFunction(
   final int funcFileAddress = textFileAddress + symbol.value;
 
   // Apply relocations
-  relocateObject(bytes, obj, rw, segmentVirtualAddress);
+  relocateObject(bytes, obj, rw, segmentVirtualAddress, 
+      allowUnknownSymbols: true);
 
   final objData = FileData.fromList(bytes);
 

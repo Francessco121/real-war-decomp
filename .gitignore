@@ -17,3 +17,8 @@ build/
 *.exe
 *.obj
 *.bin
+
+# Ninja build
+build.ninja
+.ninja_log
+.ninja_deps

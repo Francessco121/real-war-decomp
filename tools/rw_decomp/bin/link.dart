@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/coff.dart';
 import 'package:pe_coff/pe.dart';
@@ -18,9 +19,18 @@ class LinkException implements Exception {
   LinkException(this.message);
 }
 
-int main() {
-  // Assume we're ran from the package dir
-  final String projectDir = p.normalize(p.join(p.current, '../../'));
+void main(List<String> args) {
+  final argParser = ArgParser()
+      ..addOption('root')
+      ..addFlag('no-success-message', defaultsTo: false, 
+          help: 'Don\'t write to stdout on success.')
+      ..addFlag('dump-relocated-code', defaultsTo: false, 
+          help: 'Write relocated code to .relocated files next to object files.');
+
+  final argResult = argParser.parse(args);
+  final bool noSuccessMessage = argResult['no-success-message'];
+  final bool dumpRelocatedCode = argResult['dump-relocated-code'];
+  final String projectDir = p.absolute(argResult['root'] ?? p.current);
 
   // Load project config
   final rw = RealWarYaml.load(
@@ -78,9 +88,9 @@ int main() {
         // pad with NOPs...
         final padding = segmentFilePointer - currentFilePointer;
         if (i > 0) {
-          print('WARN: $padding byte gap between "${_segmentName(rw.segments[i - 1])}" and "${_segmentName(segment)}".');
+          print('WARN: $padding byte gap between "${rw.segments[i - 1].name}" and "${segment.name}".');
         } else {
-          print('WARN: $padding byte gap between start of image and "${_segmentName(segment)}".');
+          print('WARN: $padding byte gap between start of image and "${segment.name}".');
         }
         for (int i = 0; i < padding; i++) {
           builder.addByte(0x90); // 0x90 = x86 1-byte NOP
@@ -92,7 +102,7 @@ int main() {
       final Uint8List bytes;
       if (segment.type == 'bin') {
         // .bin
-        final binFile = File(p.join(binDirPath, '${_segmentName(segment)}.bin'));
+        final binFile = File(p.join(binDirPath, '${segment.name}.bin'));
         if (!binFile.existsSync()) {
           throw LinkException('File doesn\'t exist: ${binFile.path}');
         }
@@ -100,19 +110,26 @@ int main() {
         segmentFilePath = binFile.path;
       } else if (segment.type == 'c') {
         // .obj (.text)
-        final objFile = File(p.join(buildDirPath, 'obj', '${_segmentName(segment)}.obj'));
+        final objFile = File(p.join(buildDirPath, 'obj', '${segment.name}.obj'));
         if (!objFile.existsSync()) {
           throw LinkException('File doesn\'t exist: ${objFile.path}');
         }
-        bytes = _getRelocatedTextFromObject(objFile.readAsBytesSync(), rw, segment.address);
+        try {
+          bytes = _getRelocatedTextFromObject(objFile.readAsBytesSync(), rw, segment.address);
+        } on RelocationException catch (ex) {
+          throw LinkException('${p.relative(objFile.path, from: projectDir)}: ${ex.message}');
+        }
         segmentFilePath = objFile.path;
-        File(p.join(buildDirPath, 'obj', '${_segmentName(segment)}.obj.relocated')).writeAsBytesSync(bytes);
+
+        if (dumpRelocatedCode) {
+          File(p.join(buildDirPath, 'obj', '${segment.name}.obj.relocated')).writeAsBytesSync(bytes);
+        }
       } else {
         throw UnimplementedError('Unknown segment type: ${segment.type}');
       }
 
       if (segmentByteSize != null && bytes.lengthInBytes != segmentByteSize) {
-        print('WARN: Segment "${_segmentName(segment)}" byte size (${bytes.lengthInBytes}) doesn\'t match expected size ($segmentByteSize).');
+        print('WARN: Segment "${segment.name}" byte size (${bytes.lengthInBytes}) doesn\'t match expected size ($segmentByteSize).');
       }
 
       // Add to file
@@ -134,13 +151,13 @@ int main() {
     }
     File(outMapFilePath).writeAsStringSync(strBuffer.toString());
 
-    print('Linked: ${p.relative(outExeFilePath, from: projectDir)}.');
+    if (!noSuccessMessage) {
+      print('Linked: ${p.relative(outExeFilePath, from: projectDir)}.');
+    }
   } on LinkException catch (ex) {
     print('ERR: ${ex.message}');
-    return -1;
+    exit(-1);
   }
-
-  return 0;
 }
 
 Uint8List _getRelocatedTextFromObject(Uint8List objBytes, RealWarYaml rw, int segmentVirtualAddress) {
@@ -157,8 +174,4 @@ Uint8List _getRelocatedTextFromObject(Uint8List objBytes, RealWarYaml rw, int se
   }
 
   return builder.takeBytes();
-}
-
-String _segmentName(RealWarYamlSegment segment) {
-  return segment.name ?? 'segment_${segment.address.toRadixString(16)}';
 }

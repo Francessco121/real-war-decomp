@@ -101,10 +101,10 @@ class RealWarYamlExe {
 class RealWarYamlSegment {
   final int address;
   final String type;
-  final String? name;
+  final String name;
 
   RealWarYamlSegment._(YamlList list)
       : address = list[0],
         type = list[1],
-        name = list[2];
+        name = list[2] ?? 'segment_${list[0].toRadixString(16)}';
 }

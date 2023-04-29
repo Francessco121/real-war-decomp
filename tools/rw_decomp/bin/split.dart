@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe.dart';
 import 'package:rw_decomp/rw_yaml.dart';
@@ -9,9 +10,12 @@ import 'package:rw_decomp/rw_yaml.dart';
 from rw.yaml, extract .bin and .asm files for each segment as necessary.
 */
 
-void main() {
-  // Assume we're ran from the package dir
-  final String projectDir = p.normalize(p.join(p.current, '../../'));
+void main(List<String> args) {
+  final argParser = ArgParser()
+      ..addOption('root');
+
+  final argResult = argParser.parse(args);
+  final String projectDir = p.absolute(argResult['root'] ?? p.current);
 
   // Load project config
   final rw = RealWarYaml.load(
@@ -51,8 +55,7 @@ void main() {
         : null;
     
     if (segment.type == 'bin') {
-      final name = segment.name ?? 'segment_${segment.address.toRadixString(16)}';
-      File(p.join(binDirPath, '$name.bin'))
+      File(p.join(binDirPath, '${segment.name}.bin'))
           .writeAsBytesSync(Uint8ClampedList.sublistView(
               exeBytes, segmentFilePointer, segmentByteSize == null ? null : (segmentFilePointer + segmentByteSize)));
     }

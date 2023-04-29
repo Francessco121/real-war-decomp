@@ -16,7 +16,7 @@
  */
 void rle_decode(WORD *in, WORD *out) {
     WORD ctrl;
-    int sequenceLen; // in words, not bytes
+    unsigned int sequenceLen; // in words, not bytes
     size_t i;
     int outIdx;
     int inIdx;

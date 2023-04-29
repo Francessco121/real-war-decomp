@@ -366,7 +366,7 @@ FILE *open_data_file(char *path, char *mode) {
     // Find first entry pointer element that is free
     ptrIndex = 0;
     for (i = 0; i < MAX_BIG_FILE_ENTRY_POINTERS - 1; i++) { // wtf? why the - 1?
-        if (sBigFileEntryPointers[i].file == 0xFFFFFFFF) {
+        if (sBigFileEntryPointers[i].file == (FILE*)0xFFFFFFFF) {
             break;
         }
 
@@ -393,7 +393,7 @@ void close_data_file(FILE *file) {
     for (i = 0; i < MAX_BIG_FILE_ENTRY_POINTERS; i++) {
         if (sBigFileEntryPointers[i].file == file) {
             if (ptrIndex < MAX_BIG_FILE_ENTRY_POINTERS) {
-                sBigFileEntryPointers[ptrIndex].file = 0xFFFFFFFF;
+                sBigFileEntryPointers[ptrIndex].file = (FILE*)0xFFFFFFFF;
                 sBigFileEntryPointers[ptrIndex].position = 0xFFFFFFFF;
                 sBigFileEntryPointers[ptrIndex].sizeBytes = 0xFFFFFFFF;
                 sBigFileEntryPointers[ptrIndex].byteOffset = 0xFFFFFFFF;
@@ -422,7 +422,7 @@ char *get_data_file_line(char *str, int length, FILE *file) {
         // Find entry pointer element
         ptrIndex = 0;
         for (ptrIndex = 0; ptrIndex < MAX_BIG_FILE_ENTRY_POINTERS; ptrIndex++) {
-            if (sBigFileEntryPointers[ptrIndex].file == file && sBigFileEntryPointers[ptrIndex].file != 0xFFFFFFFF) {
+            if (sBigFileEntryPointers[ptrIndex].file == file && sBigFileEntryPointers[ptrIndex].file != (FILE*)0xFFFFFFFF) {
                 break;
             }
         }

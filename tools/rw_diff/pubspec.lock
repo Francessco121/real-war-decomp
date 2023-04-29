@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.1"
+  args:
+    dependency: "direct main"
+    description:
+      name: args
+      sha256: "4cab82a83ffef80b262ddedf47a0a8e56ee6fbf7fe21e6e768b02792034dd440"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.0"
   async:
     dependency: "direct main"
     description:
@@ -96,6 +104,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
+  ninja_syntax:
+    dependency: transitive
+    description:
+      path: "../lib/ninja_syntax"
+      relative: true
+    source: path
+    version: "0.1.0"
   path:
     dependency: "direct main"
     description:
@@ -142,6 +157,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
+  textwrap:
+    dependency: transitive
+    description:
+      name: textwrap
+      sha256: "342fb85c503a27c68e0dd21f7be35360acf3231f929e0dcb23cc8593d2919c36"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   tuple:
     dependency: "direct main"
     description:

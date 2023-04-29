@@ -1,21 +1,25 @@
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
-int main(List<String> args) {
-  // Assume we're ran from the package dir
-  final String projectDir = p.normalize(p.join(p.current, '../../'));
+void main(List<String> args) {
+  final argParser = ArgParser()
+      ..addOption('root');
+
+  final argResult = argParser.parse(args);
+  final String projectDir = p.absolute(argResult['root'] ?? p.current);
 
   // Get expected MD5
   final md5FilePath = p.join(projectDir, 'rw.md5');
   final expectedMd5 = File(md5FilePath).readAsStringSync().split(' ').first;
 
   // Check
-  if (args.isNotEmpty && args.first == 'base') {
-    return _check(expectedMd5, p.join('game', 'RealWar.exe'), projectDir);
+  if (argResult.rest.isNotEmpty && argResult.rest.first == 'base') {
+    exit(_check(expectedMd5, p.join('game', 'RealWar.exe'), projectDir));
   } else {
-    return _check(expectedMd5, p.join('build', 'RealWar.exe'), projectDir);
+    exit(_check(expectedMd5, p.join('build', 'RealWar.exe'), projectDir));
   }
 }
 
