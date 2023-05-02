@@ -1,6 +1,13 @@
 import 'package:yaml/yaml.dart';
 
 class RealWarYaml {
+  Map<int, String> get addressesToSymbols {
+    _addressesToSymbols ??= symbols.map((key, value) => MapEntry(value, key));
+    return _addressesToSymbols!;
+  }
+
+  Map<int, String>? _addressesToSymbols;
+
   final String dir;
   final RealWarYamlConfig config;
   final RealWarYamlExe exe;

@@ -114,7 +114,7 @@ Future<void> main(List<String> args) async {
       scrollPosition = max(min(scrollPosition, lines.length - 1), 0);
 
       // Update screen
-      _displayDiff(console, lines, scrollPosition, exeFunc, objFunc!, symbolName);
+      _displayDiff(console, lines, scrollPosition, exeFunc, objFunc!, symbolName, rw);
     }
 
     Future<void> recompileAndRefresh() async {
@@ -302,9 +302,20 @@ void _displayError(Console console, String error) {
   console.writeErrorLine(error);
 }
 
+final _memAddressRegex = RegExp(r'(0x[0-9a-fA-F]{4,})');
+
+String _replaceAddressesWithSymbols(String str, RealWarYaml rw) {
+  return str.replaceAllMapped(_memAddressRegex, (match) {
+    final raw = match.group(1)!;
+    final address = int.parse(raw);
+
+    return rw.addressesToSymbols[address] ?? raw;
+  });
+}
+
 void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     DisassembledFunction targetFunc, DisassembledFunction srcFunc,
-    String symbolName) {
+    String symbolName, RealWarYaml rw) {
   final bottomBarPen = AnsiPen()..white()..gray(level: 0.1, bg: true);
   final bottomDiffPen = AnsiPen()..black()..xterm(3, bg: true);
   final bottomOkPen = AnsiPen()..black()..xterm(10, bg: true);
@@ -468,12 +479,13 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     if (targ != null) {
       final addr = '${targ.address.toRadixString(16).padLeft(2)}: ';
       final mnemonic = targ.mnemonic.padRight(10);
+      final op = _replaceAddressesWithSymbols(targ.opStr, rw);
       targBuffer.write(targAddressColor == null ? addr : targAddressColor(addr));
       targBuffer.write(targInBranch);
       targBuffer.write(' ');
       targBuffer.write(targMnemonicColor == null ? mnemonic : targMnemonicColor(mnemonic));
       targBuffer.write(' ');
-      targBuffer.write(targOpColor == null ? targ.opStr : targOpColor(targ.opStr));
+      targBuffer.write(targOpColor == null ? op : targOpColor(op));
       targBuffer.write(targOutBranch);
     }
 
@@ -481,6 +493,7 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     if (src != null) {
       final addr = '${src.address.toRadixString(16).padLeft(2)}: ';
       final mnemonic = src.mnemonic.padRight(10);
+      final op = _replaceAddressesWithSymbols(src.opStr, rw);
       srcBuffer.write(srcSymbolColor == null ? srcSymbol : srcSymbolColor(srcSymbol));
       srcBuffer.write(' ');
       srcBuffer.write(srcAddressColor == null ? addr : srcAddressColor(addr));
@@ -488,7 +501,7 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
       srcBuffer.write(' ');
       srcBuffer.write(srcMnemonicColor == null ? mnemonic : srcMnemonicColor(mnemonic));
       srcBuffer.write(' ');
-      srcBuffer.write(srcOpColor == null ? src.opStr : srcOpColor(src.opStr));
+      srcBuffer.write(srcOpColor == null ? op : srcOpColor(op));
       srcBuffer.write(srcOutBranch);
     } else {
       srcBuffer.write(srcSymbolColor == null ? srcSymbol : srcSymbolColor(srcSymbol));

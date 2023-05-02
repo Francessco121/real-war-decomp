@@ -65,7 +65,6 @@ void relocateObject(
       }
     }
 
-    // TODO: do we need to align this?
     // this is to handle multiple .text sections in the same obj, we expect them to be linked
     // one after another in order for the same obj
     textSectionAddress += section.header.sizeOfRawData;
