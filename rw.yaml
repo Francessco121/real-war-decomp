@@ -44,6 +44,8 @@ segments:
   - [0x4d6350, bin, null]
   - [0x4d6860, c, data]
   - [0x4d7050, bin, null]
+  - [0x4d8140, c, keyboard]
+  - [0x4d81b0, bin, null]
   # .text: LIBC.LIB
   - [0x4e1510, bin, _libc]
   # .rdata
@@ -60,7 +62,9 @@ symbols:
   # Globals/Statics
   VirtualFree: 0x4e904c
   VirtualAlloc: 0x4e9050
+  GetKeyState: 0x4e9154
   IID_IDirect3D: 0x4e9e98
+  gWindowFocused: 0x5171d0
   lpD3D__try_find_valid_d3d_device: 0x51adb8
   gEnableRwMap: 0x51b8d8
   sBigFileEntryCount: 0x51b8ec
@@ -68,7 +72,9 @@ symbols:
   gTotalVirtualMemoryAllocated: 0x51b92c
   DAT_0051b988: 0x51b988
   sLoadedBigFileHeader: 0x51b98c
+  gKeysTapped: 0x51e220
   sBigFileAbsolutePath: 0x51e340
+  gKeysPressed: 0x53ebe0
   gVirtualMemoryNumbers: 0x53ee60
   DAT_00567788: 0x567788
   sRwMapTxtFile: 0x567790
@@ -1238,7 +1244,7 @@ symbols:
   skip_virtual_memory_rwmap_record: 0x4d5e90
   start_rwmap: 0x4d5ea0
   end_rwmap: 0x4d5ee0
-  record_virtual_memory_usage_to_rwmap: 0x4d5fb0
+  record_virtual_memory_to_rwmap: 0x4d5fb0
   custom_alloc: 0x4d6130
   custom_free: 0x4d61f0
   free_all_virtual_memory_buffers: 0x4d62a0
