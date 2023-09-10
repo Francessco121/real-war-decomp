@@ -4,4 +4,8 @@
 // fake a CD by mounting the game ISO, it just makes working with the game a pain. Feel
 // free to comment this out if you think it's wrong to patch this. :)
 
-void cd_check() {}
+#include "log.h"
+
+void cd_check() {
+    log_printf("skipping CD check\n");
+}

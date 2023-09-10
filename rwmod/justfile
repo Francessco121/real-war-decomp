@@ -44,3 +44,8 @@ set shell := ["powershell.exe", "-c"]
 @rebuildrun:
     just rebuild
     just run
+
+# watch modlog.txt
+[no-exit-message]
+@logtail:
+    Get-Content game/modlog.txt -Wait -Tail 10
