@@ -55,9 +55,9 @@ cl name:
 # clean build artifacts (excluding tools)
 @clean:
     if (Test-Path build -PathType Container) { Remove-Item build -Force -Recurse }
-    if (Test-Path build.ninja -PathType Leaf) { Remove-Item build.ninja -Force -Recurse }
-    if (Test-Path .ninja_log -PathType Leaf) { Remove-Item .ninja_log -Force -Recurse }
-    if (Test-Path .ninja_deps -PathType Leaf) { Remove-Item .ninja_deps -Force -Recurse }
+    if (Test-Path build.ninja -PathType Leaf) { Remove-Item build.ninja -Force }
+    if (Test-Path .ninja_log -PathType Leaf) { Remove-Item .ninja_log -Force }
+    if (Test-Path .ninja_deps -PathType Leaf) { Remove-Item .ninja_deps -Force }
 
 # clean build and split artifacts (excluding tools)
 @clean-full:

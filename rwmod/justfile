@@ -13,6 +13,21 @@ set shell := ["powershell.exe", "-c"]
 @build:
     ninja
 
+# clean + build
+[no-exit-message]
+@rebuild:
+    just clean
+    just configure
+    ninja
+
+# clean build artifacts
+@clean:
+    if (Test-Path build -PathType Container) { Remove-Item build -Force -Recurse }
+    if (Test-Path game\RealWar.exe -PathType Leaf) { Remove-Item game\RealWar.exe -Force }
+    if (Test-Path build.ninja -PathType Leaf) { Remove-Item build.ninja -Force }
+    if (Test-Path .ninja_log -PathType Leaf) { Remove-Item .ninja_log -Force }
+    if (Test-Path .ninja_deps -PathType Leaf) { Remove-Item .ninja_deps -Force }
+
 # run patched exe
 [no-exit-message]
 @run:
