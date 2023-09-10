@@ -67,7 +67,7 @@ cl name:
 
 # start a file watcher for the sandbox
 @sandbox:
-    cd sandbox && dart run watcher/bin/watcher.dart
+    cd sandbox; dart run watcher/bin/watcher.dart
 
 # precompile tools
 build-tools:

@@ -35,7 +35,7 @@ class SymbolTableEntry {
   factory SymbolTableEntry.fromReader(StructuredFileReader reader) {
     final name = reader.readBytes(8);
     final value = reader.readUint32();
-    final sectionNumber = reader.readUint16();
+    final sectionNumber = reader.readInt16();
     final type = reader.readUint16();
     final storageClass = reader.readUint8();
     final numberOfAuxSymbols = reader.readUint8();

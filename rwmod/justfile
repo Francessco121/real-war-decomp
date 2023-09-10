@@ -1,0 +1,19 @@
+set shell := ["powershell.exe", "-c"]
+
+# list justfile recipes
+@help:
+    just --list -u
+
+# recreate build.ninja
+@configure:
+    dart run ../tools/rw_mod/bin/configure.dart --decomp-root=../ --mod-root=./
+
+# build new patched exe
+[no-exit-message]
+@build:
+    ninja
+
+# run patched exe
+[no-exit-message]
+@run:
+    cd game; ./RealWar.exe

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:pe_coff/coff.dart';
 
 import 'rw_yaml.dart';
+import 'symbol_utils.dart';
 
 class RelocationException implements Exception {
   final String message;
@@ -33,7 +34,7 @@ void relocateObject(
 
       final symbolName = symbol.name.shortName ??
           coff.stringTable!.strings[symbol.name.offset!]!;
-      final symbolAddress = rw.symbols[_unmangle(symbolName)];
+      final symbolAddress = rw.symbols[unmangle(symbolName)];
 
       if (symbolAddress == null) {
         if (allowUnknownSymbols) {
@@ -69,28 +70,4 @@ void relocateObject(
     // one after another in order for the same obj
     textSectionAddress += section.header.sizeOfRawData;
   }
-}
-
-String _unmangle(String name) {
-  if (name.startsWith('_?')) {
-    // Static declared within a function, return in form of 'staticVarName__function_name'
-    final qqIndex = name.indexOf('??');
-    final atIndex = name.indexOf('@');
-    final atIndex2 = name.indexOf('@', atIndex + 1);
-
-    return '${name.substring(2, atIndex)}__${name.substring(qqIndex + 2, atIndex2)}';
-  } else {
-    // Other
-    if (name.startsWith('__imp__')) {
-      name = name.substring(7);
-    } else if (name.startsWith('_')) {
-      name = name.substring(1);
-    }
-    final atIndex = name.indexOf('@');
-    if (atIndex >= 0) {
-      name = name.substring(0, atIndex);
-    }
-  }
-
-  return name;
 }

@@ -39,12 +39,11 @@ Future<void> main(List<String> args) async {
   final List<String> includes = argResults['include'];
   final List<String> flags = argResults['flag'];
 
-  final rwIncludeDir = includes.firstWhere((i) => i.startsWith('rw')); // this is kind of cheating...
-
   // Analyze input C file (find header dependencies and ASM_FUNC pragmas)
   final inputLines = File(input).readAsLinesSync();
 
-  final deps = _scanIncludes(input, inputLines, rwIncludeDir);
+  final deps = _scanIncludes(input, inputLines, 
+      includes.where((i) => !i.startsWith(vsdir)));
   final asmFuncs = _scanAsmFuncPragmas(inputLines);
 
   // If we need to, preprocess the input file for ASM_FUNC
@@ -258,10 +257,11 @@ void _writeDepsFile(String output, List<String> deps) {
   File('$output.d').writeAsStringSync(buffer.toString());
 }
 
-List<String> _scanIncludes(String srcPath, List<String> srcLines, String rwIncludeDir) {
+List<String> _scanIncludes(String srcPath, List<String> srcLines, Iterable<String> includeDirs) {
   final includeRegex = RegExp(r'#include ["<](.*)[">]');
   final deps = <String>[srcPath];
   final resolved = <String>{};
+  final fromIncludeDirCache = <String, String>{};
 
   String? resolve(String srcPath, String includePath) {
     // Try path relative to the file that included it
@@ -269,13 +269,21 @@ List<String> _scanIncludes(String srcPath, List<String> srcLines, String rwInclu
     if (File(relativePath).existsSync()) {
       return relativePath;
     } else {
-      // Otherwise, try from the include directory
-      final fromIncludePath = '$rwIncludeDir\\$includePath';
-      if (File(fromIncludePath).existsSync()) {
-        return fromIncludePath;
+      // Otherwise, try from the include directories
+      String? fromIncludePath = fromIncludeDirCache[includePath];
+      
+      if (fromIncludePath == null) {
+        for (final includeDir in includeDirs) {
+          final tryIncludePath = '$includeDir\\$includePath';
+          if (File(tryIncludePath).existsSync()) {
+            fromIncludePath = tryIncludePath;
+            fromIncludeDirCache[includePath] = tryIncludePath;
+            break;
+          }
+        }
       }
 
-      return null;
+      return fromIncludePath;
     }
   }
 
