@@ -45,7 +45,7 @@ Future<void> main(List<String> args) async {
   writer.variable('DECOMP_DIR', p.normalize(decompDir));
   writer.variable('SRC_DIR', 'src');
   writer.variable('BUILD_DIR', 'build');
-  writer.variable('ORIG_GAME_DIR', p.join(decompDir, 'game'));
+  writer.variable('ORIG_GAME_DIR', p.normalize(p.join(decompDir, 'game')));
   writer.variable('OUT_GAME_DIR', 'game');
   writer.variable('OPT_FLAGS', [
     '/W3', // warning level 3
@@ -60,7 +60,7 @@ Future<void> main(List<String> args) async {
   ].join(','));
   writer.variable('INCLUDES', [
     '-I "include"',
-    r'-I "$DECOMP_DIR\include"',
+    r'-I "$DECOMP_DIR\rw\include"',
     r'-I "$DX_DIR\include"',
     r'-I "$VS_DIR\VC98\Include"',
   ].join(' '));
@@ -75,7 +75,7 @@ Future<void> main(List<String> args) async {
   writer.rule('cl', r'$CL $INCLUDES --flag="$OPT_FLAGS" -o $out -i $in',
       depfile: r'$out.d', deps: 'gcc', 
       description: r'Compiling $in...');
-  writer.rule('rwpatch', r'$RWPATCH -o $out -i $in',
+  writer.rule('rwpatch', r'$RWPATCH -o $out $in',
       description: r'Patching new executable...');
     
   writer.newline();

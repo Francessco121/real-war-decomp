@@ -32,3 +32,15 @@ set shell := ["powershell.exe", "-c"]
 [no-exit-message]
 @run:
     cd game; ./RealWar.exe
+
+# build + run
+[no-exit-message]
+@buildrun:
+    just build
+    just run
+
+# rebuild + run
+[no-exit-message]
+@rebuildrun:
+    just rebuild
+    just run

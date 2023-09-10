@@ -12,15 +12,20 @@ Future<void> main(List<String> args) async {
   final argParser = ArgParser()
       ..addOption('rwyaml', mandatory: true, help: 'Path to rw.yaml.')
       ..addOption('baseexe', mandatory: true, help: 'Path to the base RealWar.exe.')
-      ..addMultiOption('input', abbr: 'i', help: 'Object files to patch in.')
       ..addOption('output', mandatory: true, abbr: 'o', help: 'Output exe.');
   
+  if (args.isEmpty) {
+    print('rwpatch.dart [options...] objfile...');
+    print(argParser.usage);
+    exit(-1);
+  }
+
   final argResult = argParser.parse(args);
 
   final String rwyamlPath = argResult['rwyaml'];
   final String baseExePath = argResult['baseexe'];
-  final List<String> inputs = argResult['input'];
   final String outputPath = argResult['output'];
+  final List<String> inputs = argResult.rest;
 
   // Load rw.yaml
   final rw = RealWarYaml.load(
