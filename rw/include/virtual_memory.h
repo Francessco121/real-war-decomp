@@ -1,3 +1,7 @@
+#pragma once
+
+#include <MEMORY.H>
+
 extern int gVirtualMemoryBufferNumber;
 
 void setup_virtual_memory_buffers();

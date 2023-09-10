@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @file
  * @brief Static strings affected by duplicate string elimination (/Gf) in the
@@ -16,6 +18,9 @@ extern char str_rb[]; // "rb"
 extern char str_wb[]; // "wb"
 extern char str_pct_s[]; // "%s"
 extern char str_pct_s_2[]; // "%s"
+
+extern char str_bad_or_missing_adpcm_file[]; // "Bad or Missing Adpcm file.\n%s"
+extern char str_couldnt_malloc_adpcm_buf[]; // "Could not Malloc Adpcm Sound Buffer."
 
 extern char str_dd3d_obj_failed[]; // "Direct Draw 3D Object Failed"
 extern char str_creation_of_id3d_failed[]; // "Creation of Direct3D interface failed."

@@ -40,6 +40,8 @@ segments:
   - [0x4621a0, bin, null]
   - [0x4c49a0, c, segment_4c49a0]
   - [0x4c4a20, bin, null]
+  - [0x4d2050, c, sound]
+  - [0x4d26c0, bin, null]
   - [0x4d5e60, c, virtual_memory]
   - [0x4d6350, bin, null]
   - [0x4d6860, c, data]
@@ -64,18 +66,27 @@ symbols:
   VirtualAlloc: 0x4e9050
   GetKeyState: 0x4e9154
   IID_IDirect3D: 0x4e9e98
+  gADPCMIndexTable: 0x51702c
+  gADPCMStepsizeTable: 0x51706c
   gWindowFocused: 0x5171d0
   lpD3D__try_find_valid_d3d_device: 0x51adb8
   gEnableRwMap: 0x51b8d8
   sBigFileEntryCount: 0x51b8ec
+  gSoundSystemInitialized: 0x51b8f0
+  gADPCMPredictor: 0x51b8f8
+  gADPCMIndex: 0x51b8fa
+  gADPCMPredictor2: 0x51b8fc
+  gADPCMIndex2: 0x51b8fe
   gVirtualMemoryBufferNumber: 0x51b908
   gTotalVirtualMemoryAllocated: 0x51b92c
   DAT_0051b988: 0x51b988
   sLoadedBigFileHeader: 0x51b98c
   gKeysTapped: 0x51e220
   sBigFileAbsolutePath: 0x51e340
+  gHResult1: 0x51e3c4
   gKeysPressed: 0x53ebe0
   gVirtualMemoryNumbers: 0x53ee60
+  gHResult2: 0x546e74
   DAT_00567788: 0x567788
   sRwMapTxtFile: 0x567790
   sBigFileEntryPointers: 0x5677a0
@@ -101,6 +112,8 @@ symbols:
   str_please_insert_the_cd: 0x50a7a4
   str_pct_intro_mpg: 0x50a7f4
   str_pct_s_2: 0x50a840
+  str_bad_or_missing_adpcm_file: 0x5172d8
+  str_couldnt_malloc_adpcm_buf: 0x5172f8
   str_memory_map_file: 0x517474
   str_rwmap_txt: 0x51748c
   str_pct_newline_newline: 0x517498
@@ -1184,12 +1197,12 @@ symbols:
   FUN_004d1ee0: 0x4d1ee0
   FUN_004d1f40: 0x4d1f40
   FUN_004d1fa0: 0x4d1fa0
-  FUN_004d2050: 0x4d2050
+  write_bytes_to_sound_buffer: 0x4d2050
   FUN_004d2100: 0x4d2100
-  FUN_004d22a0: 0x4d22a0
-  FUN_004d22b0: 0x4d22b0
-  FUN_004d23d0: 0x4d23d0
-  FUN_004d25e0: 0x4d25e0
+  display_message_and_exit_2: 0x4d22a0
+  adpcm_decompress: 0x4d22b0
+  adpcm_decompress_stereo: 0x4d23d0
+  read_adpcm_file: 0x4d25e0
   FUN_004d26c0: 0x4d26c0
   FUN_004d2a10: 0x4d2a10
   FUN_004d2ca0: 0x4d2ca0
