@@ -41,8 +41,10 @@ Future<void> main(List<String> args) async {
   // Merge sections from input files and map them to relative addresses
   final combinedSectionByteBuilders = <String, BytesBuilder>{};
   final combinedSectionBytes = <String, Uint8List>{};
+  final combinedSectionLengths = <String, int>{};
   final objSectionMappings = <CoffFile, Map<int, MappedSection>>{};
   final sectionFlags = <String, SectionFlags>{};
+  final sectionNames = <String>[];
 
   for (final path in inputs) {
     final objBytes = await File(path).readAsBytes();
@@ -51,23 +53,35 @@ Future<void> main(List<String> args) async {
     for (int i = 0; i < obj.sections.length; i++) {
       final section = obj.sections[i];
 
-      if (section.header.pointerToRawData == 0) {
-        continue;
-      }
-
       if (!const ['.text', '.data', '.rdata', '.bss'].contains(section.header.name)) {
         continue;
       }
-      
-      final combinedBytes = combinedSectionByteBuilders
-          .putIfAbsent(section.header.name, () => BytesBuilder(copy: false));
-      final mappedOffset = combinedBytes.length;
 
-      combinedBytes.add(Uint8List.sublistView(objBytes, 
-          section.header.pointerToRawData, section.header.pointerToRawData + section.header.sizeOfRawData));
+      if (!sectionNames.contains(section.header.name)) {
+        sectionNames.add(section.header.name);
+      }
+
+      // Calculate byte offset of where to merge this section into the larger single new section
+      final currentCombinedSectionLength = combinedSectionLengths.putIfAbsent(section.header.name, () => 0);
+
+      // Copy bytes into combined buffer, if any
+      if (section.header.pointerToRawData > 0) {
+        final combinedBytes = combinedSectionByteBuilders
+            .putIfAbsent(section.header.name, () => BytesBuilder(copy: false));
+
+        combinedBytes.add(Uint8List.sublistView(objBytes, 
+            section.header.pointerToRawData, section.header.pointerToRawData + section.header.sizeOfRawData));
+      }
+
+      // Map object section to combined section
       final mapList = objSectionMappings.putIfAbsent(obj, () => {});
-      mapList[i] = MappedSection(obj, section, i, mappedOffset);
+      mapList[i] = MappedSection(obj, section, i, currentCombinedSectionLength);
+      
+      // Note: Even if there wasn't real bytes to copy, we need to track the virtual size of the section 
+      // so we can support uninitialized data sections
+      combinedSectionLengths[section.header.name] = currentCombinedSectionLength + section.header.sizeOfRawData;
 
+      // Store section flags for later section header creation
       sectionFlags.putIfAbsent(section.header.name, () => section.header.flags);
     }
   }
@@ -81,17 +95,21 @@ Future<void> main(List<String> args) async {
   int lastSectionEndPA = baseExeBytes.length;
   int lastSectionEndVA = _getLastSectionEndVA(baseExe);
 
-  for (final name in combinedSectionBytes.keys) {
-    final bytes = combinedSectionBytes[name]!;
+  for (final name in sectionNames) {
+    final bytes = combinedSectionBytes[name];
+    final physicalSize = bytes?.length ?? 0;
+    final virtualSize = combinedSectionLengths[name]!;
     final flags = sectionFlags[name]!;
 
     final virtualAddress = _sectionAlign(lastSectionEndVA, baseExe);
-    final physicalAddress = _fileAlign(lastSectionEndPA, baseExe);
+    final physicalAddress = bytes == null ? 0 : _fileAlign(lastSectionEndPA, baseExe);
 
-    newSections[name] = NewSection(name, flags, bytes.length, virtualAddress, physicalAddress);
+    newSections[name] = NewSection(name, flags, virtualSize, physicalSize, virtualAddress, physicalAddress);
 
-    lastSectionEndVA = virtualAddress + bytes.length;
-    lastSectionEndPA = physicalAddress + bytes.length;
+    lastSectionEndVA = virtualAddress + virtualSize;
+    if (bytes != null) {
+      lastSectionEndPA = physicalAddress + physicalSize;
+    }
   }
 
   // Calculate symbol addresses and determine trampolines
@@ -143,6 +161,10 @@ Future<void> main(List<String> args) async {
 
   // Relocate objects
   for (final section in objSectionMappings.values.expand((m) => m.values)) {
+    if (section.section.relocations.isEmpty) {
+      continue;
+    }
+
     final newSection = newSections[section.section.header.name]!;
 
     final virtualAddress = imageBase + newSection.virtualAddress + section.mappedOffset;
@@ -181,9 +203,9 @@ Future<void> main(List<String> args) async {
 
     final header = SectionHeader(
       name: newSection.name,
-      virtualSize: newSection.size,
+      virtualSize: newSection.virtualSize,
       virtualAddress: newSection.virtualAddress,
-      sizeOfRawData: newSection.size,
+      sizeOfRawData: newSection.physicalSize,
       pointerToRawData: newSection.physicalAddress,
       pointerToRelocations: 0,
       pointerToLineNumbers: 0,
@@ -196,7 +218,7 @@ Future<void> main(List<String> args) async {
   }
 
   // Update section count and image size
-  final newDataLength = lastSectionEndPA - baseExeBytes.length;
+  final newDataLength = lastSectionEndVA - baseExeBytes.length;
   baseExeData
     ..setUint16(0x000000E6, baseExe.coffHeader.numberOfSections + newSectionList.length, Endian.little)
     ..setUint32(0x00000130, 
@@ -208,6 +230,10 @@ Future<void> main(List<String> args) async {
   newExeBytes.add(baseExeBytes);
 
   for (final newSection in newSectionList) {
+    if (newSection.physicalAddress == 0) {
+      continue;
+    }
+
     final padding = newSection.physicalAddress - newExeBytes.length;
     newExeBytes.add(Uint8List(padding));
     newExeBytes.add(combinedSectionBytes[newSection.name]!);
@@ -227,11 +253,12 @@ const int32Min = -2147483648;
 class NewSection {
   final String name;
   final SectionFlags flags;
-  final int size;
+  final int virtualSize;
+  final int physicalSize;
   final int virtualAddress;
   final int physicalAddress;
 
-  NewSection(this.name, this.flags, this.size, this.virtualAddress, this.physicalAddress);
+  NewSection(this.name, this.flags, this.virtualSize, this.physicalSize, this.virtualAddress, this.physicalAddress);
 }
 
 /// A section from an input object file that was merged into the larger new section.

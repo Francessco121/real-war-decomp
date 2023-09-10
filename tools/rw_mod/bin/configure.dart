@@ -22,7 +22,7 @@ Future<void> main(List<String> args) async {
   // Collect list of files to compile
   final compilationUnits = <String>[];
 
-  await for (final file in Directory(modSrcDir).list()) {
+  await for (final file in Directory(modSrcDir).list(recursive: true)) {
     if (file is File) {
       final basename = p.basenameWithoutExtension(file.path);
       final dir = p.dirname(file.path);
