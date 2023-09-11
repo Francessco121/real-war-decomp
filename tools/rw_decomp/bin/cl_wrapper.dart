@@ -19,7 +19,7 @@ Future<void> main(List<String> args) async {
       ..addOption('input', abbr: 'i', mandatory: true, help: 'Input C file.')
       ..addOption('output', abbr: 'o', mandatory: true, help: 'Output OBJ file.')
       ..addOption('vsdir', mandatory: true, help: 'Visual Studio directory.')
-      ..addOption('asmfuncdir', mandatory: true, help: 'Directory containing raw function assembly for ASM_FUNC.')
+      ..addOption('asmfuncdir', help: 'Directory containing raw function assembly for ASM_FUNC.')
       ..addMultiOption('include', abbr: 'I', help: 'Include paths.')
       ..addOption('deps', abbr: 'd', help: 'Output header dependencies file.')
       ..addMultiOption('flag', abbr: 'f', help: 'Compiler flags.');
@@ -33,7 +33,7 @@ Future<void> main(List<String> args) async {
   final argResults = argParser.parse(args);
 
   final String vsdir = argResults['vsdir'];
-  final String asmfuncdir = argResults['asmfuncdir'];
+  final String? asmfuncdir = argResults['asmfuncdir'];
   final String input = argResults['input'];
   final String output = argResults['output'];
   final List<String> includes = argResults['include'];
@@ -44,57 +44,19 @@ Future<void> main(List<String> args) async {
 
   final deps = _scanIncludes(input, inputLines, 
       includes.where((i) => !i.startsWith(vsdir)));
-  final asmFuncs = _scanAsmFuncPragmas(inputLines);
+  
+  final AsmFuncInfo? asmFuncInfo;
+  if (asmfuncdir != null) {
+    final asmFuncs = _scanAsmFuncPragmas(inputLines);
 
-  // If we need to, preprocess the input file for ASM_FUNC
-  final String? preprocessedInput;
-  final Map<String, Uint8List> asmFuncBytes = {};
-  final Map<int, int> lineNumberMap = {};
-
-  if (asmFuncs.isNotEmpty) {
-    for (final asmFuncPragma in asmFuncs) {
-      final funcBinFile = File(p.join(asmfuncdir, '${asmFuncPragma.funcName}.bin'));
-      if (!funcBinFile.existsSync()) {
-        stderr.writeln(
-            '${p.basename(input)}(${asmFuncPragma.lineIndex + 1}) : Could not find ASM_FUNC file ${funcBinFile.path}');
-        exit(1);
-      }
-
-      final bytes = funcBinFile.readAsBytesSync();
-      asmFuncBytes[asmFuncPragma.funcName] = bytes;
-
-      // Replace the pragma with inline assembly that results in a nop'd function of the exact
-      // same amount of bytes required to fit the actual function assembly, we will stitch in
-      // the real bytes after compilation
-      final buffer = StringBuffer();
-      buffer.writeln('void ${asmFuncPragma.funcName}() {');
-      buffer.writeln('    __asm');
-      buffer.writeln('    {');
-      // Note: The final RET is automatically included by the compiler
-      for (int i = 0; i < (bytes.lengthInBytes - 1); i++) {
-        buffer.writeln('        NOP');
-      }
-      buffer.writeln('    }');
-      buffer.write('}');
-
-      inputLines[asmFuncPragma.lineIndex] = buffer.toString();
-    }
-
-    preprocessedInput = p.join(Directory.systemTemp.path, 
-        '${p.basenameWithoutExtension(input)}.preprocessed.c');
-    await (File(preprocessedInput).openWrite()
-      ..writeAll(inputLines, '\n'))
-      .close();
-    
-    const newlineChar = 10;
-    int preprocessedLine = 0;
-    for (int i = 0; i < inputLines.length; i++, preprocessedLine++) {
-      lineNumberMap[preprocessedLine] = i;
-      preprocessedLine += inputLines[i].codeUnits
-          .fold(0, (sum, c) => c == newlineChar ? (sum + 1) : sum);
+    // If we need to, preprocess the input file for ASM_FUNC
+    if (asmFuncs.isNotEmpty) {
+      asmFuncInfo = await _asmFuncPreprocess(asmFuncs, asmfuncdir, input, inputLines);
+    } else {
+      asmFuncInfo = null;
     }
   } else {
-    preprocessedInput = null;
+    asmFuncInfo = null;
   }
 
   // Build command
@@ -117,19 +79,19 @@ Future<void> main(List<String> args) async {
 
   clArgs.add('/Fo$output');
   clArgs.addAll(flags);
-  clArgs.add(preprocessedInput ?? input);
+  clArgs.add(asmFuncInfo?.preprocessedInput ?? input);
 
   // Compile
   final result = Process.runSync('$vsdir\\VC98\\Bin\\CL.EXE', clArgs,
     environment: {'PATH': path},
   );
 
-  if (preprocessedInput != null) {
-    File(preprocessedInput).deleteSync();
+  if (asmFuncInfo != null) {
+    File(asmFuncInfo.preprocessedInput).deleteSync();
   }
 
   var stdoutStr = result.stdout.toString();
-  if (preprocessedInput != null) {
+  if (asmFuncInfo != null) {
     // Get rid of the temp path for clarity
     stdoutStr = stdoutStr.replaceAll('${Directory.systemTemp.path}\\', '');
 
@@ -137,11 +99,11 @@ Future<void> main(List<String> args) async {
     final inputName = p.basenameWithoutExtension(input);
     final lineNumberRegex = RegExp('$inputName\\.preprocessed\\.c\\(([0-9]+)\\)');
     stdoutStr = stdoutStr.replaceAllMapped(lineNumberRegex, (match) {
-      final srcLineNumber = lineNumberMap[int.parse(match.group(1)!)];
+      final srcLineNumber = asmFuncInfo!.lineNumberMap[int.parse(match.group(1)!)];
       return '$inputName.c($srcLineNumber)';
     });
   }
-  final srcEchoLine = p.basename(preprocessedInput ?? input);
+  final srcEchoLine = p.basename(asmFuncInfo?.preprocessedInput ?? input);
   if (stdoutStr.startsWith(srcEchoLine)) {
     // CL annoyingly echos the source file name, strip it out
     stdoutStr = stdoutStr.substring(srcEchoLine.length + 2);
@@ -163,9 +125,18 @@ Future<void> main(List<String> args) async {
   _writeDepsFile(output, deps);
 
   // Stitch in actual function assembly for ASM_FUNCs
-  if (asmFuncs.isNotEmpty) {
-    _stitchInAsmFuncs(asmFuncs, asmFuncBytes, output);
+  if (asmFuncInfo != null && asmFuncInfo.asmFuncs.isNotEmpty) {
+    _stitchInAsmFuncs(asmFuncInfo.asmFuncs, asmFuncInfo.asmFuncBytes, output);
   }
+}
+
+class AsmFuncInfo {
+  final List<AsmFuncPragma> asmFuncs;
+  final String preprocessedInput;
+  final Map<String, Uint8List> asmFuncBytes;
+  final Map<int, int> lineNumberMap;
+
+  AsmFuncInfo(this.asmFuncs, this.preprocessedInput, this.asmFuncBytes, this.lineNumberMap);
 }
 
 class AsmFuncPragma {
@@ -212,6 +183,61 @@ void _stitchInAsmFuncs(
 
   // Write out new .obj
   objectFile.writeAsBytesSync(bytes);
+}
+
+Future<AsmFuncInfo> _asmFuncPreprocess(
+  List<AsmFuncPragma> asmFuncs, 
+  String asmfuncdir,
+  String input,
+  List<String> inputLines,
+) async {
+  final String? preprocessedInput;
+  final Map<String, Uint8List> asmFuncBytes = {};
+  final Map<int, int> lineNumberMap = {};
+
+  for (final asmFuncPragma in asmFuncs) {
+    final funcBinFile = File(p.join(asmfuncdir, '${asmFuncPragma.funcName}.bin'));
+    if (!funcBinFile.existsSync()) {
+      stderr.writeln(
+          '${p.basename(input)}(${asmFuncPragma.lineIndex + 1}) : Could not find ASM_FUNC file ${funcBinFile.path}');
+      exit(1);
+    }
+
+    final bytes = funcBinFile.readAsBytesSync();
+    asmFuncBytes[asmFuncPragma.funcName] = bytes;
+
+    // Replace the pragma with inline assembly that results in a nop'd function of the exact
+    // same amount of bytes required to fit the actual function assembly, we will stitch in
+    // the real bytes after compilation
+    final buffer = StringBuffer();
+    buffer.writeln('void ${asmFuncPragma.funcName}() {');
+    buffer.writeln('    __asm');
+    buffer.writeln('    {');
+    // Note: The final RET is automatically included by the compiler
+    for (int i = 0; i < (bytes.lengthInBytes - 1); i++) {
+      buffer.writeln('        NOP');
+    }
+    buffer.writeln('    }');
+    buffer.write('}');
+
+    inputLines[asmFuncPragma.lineIndex] = buffer.toString();
+  }
+
+  preprocessedInput = p.join(Directory.systemTemp.path, 
+      '${p.basenameWithoutExtension(input)}.preprocessed.c');
+  await (File(preprocessedInput).openWrite()
+    ..writeAll(inputLines, '\n'))
+    .close();
+  
+  const newlineChar = 10;
+  int preprocessedLine = 0;
+  for (int i = 0; i < inputLines.length; i++, preprocessedLine++) {
+    lineNumberMap[preprocessedLine] = i;
+    preprocessedLine += inputLines[i].codeUnits
+        .fold(0, (sum, c) => c == newlineChar ? (sum + 1) : sum);
+  }
+
+  return AsmFuncInfo(asmFuncs, preprocessedInput, asmFuncBytes, lineNumberMap);
 }
 
 List<AsmFuncPragma> _scanAsmFuncPragmas(List<String> lines) {

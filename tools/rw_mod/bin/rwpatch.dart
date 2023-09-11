@@ -6,11 +6,13 @@ import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe_coff.dart';
 import 'package:rw_decomp/rw_yaml.dart';
 import 'package:rw_decomp/symbol_utils.dart';
+import 'package:rw_mod/rwmod_yaml.dart';
 
 /// Patches custom object files into an existing RealWar.exe.
 Future<void> main(List<String> args) async {
   final argParser = ArgParser()
       ..addOption('rwyaml', mandatory: true, help: 'Path to rw.yaml.')
+      ..addOption('rwmodyaml', mandatory: true, help: 'Path to rwmod.yaml.')
       ..addOption('baseexe', mandatory: true, help: 'Path to the base RealWar.exe.')
       ..addOption('output', mandatory: true, abbr: 'o', help: 'Output exe.');
   
@@ -23,6 +25,7 @@ Future<void> main(List<String> args) async {
   final argResult = argParser.parse(args);
 
   final String rwyamlPath = argResult['rwyaml'];
+  final String rwmodyamlPath = argResult['rwmodyaml'];
   final String baseExePath = argResult['baseexe'];
   final String outputPath = argResult['output'];
   final List<String> inputs = argResult.rest;
@@ -31,6 +34,10 @@ Future<void> main(List<String> args) async {
   final rw = RealWarYaml.load(
       await File(rwyamlPath).readAsString(),
       dir: p.dirname(rwyamlPath));
+  
+  // Load rwmod.yaml
+  final rwmod = RealWarModYaml.load(
+      await File(rwmodyamlPath).readAsString());
 
   // Open base exe
   final baseExeBytes = await File(baseExePath).readAsBytes();
@@ -112,9 +119,8 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  // Calculate symbol addresses and determine trampolines
+  // Calculate symbol addresses
   final symbolAddresses = <String, int>{};
-  final trampolines = <TrampolinePatch>[];
   for (final entry in objSectionMappings.entries) {
     final obj = entry.key;
     final newSectionMap = entry.value;
@@ -145,14 +151,8 @@ Future<void> main(List<String> args) async {
           ?? obj.stringTable!.strings[symbol.name.offset]!;
       final unmangledName = unmangle(name);
       
-      final isFunction = (symbol.type >> 4) == 2;
-      
       if (rw.symbols.containsKey(unmangledName)) {
-        if (isFunction) {
-          trampolines.add(TrampolinePatch(unmangledName, symbolVirtualAddress));
-        } else {
-          throw Exception('Symbol already defined in base executable: $unmangledName');
-        }
+        throw Exception('Symbol already defined in base executable: $unmangledName');
       }
     
       symbolAddresses[name] = symbolVirtualAddress;
@@ -183,15 +183,30 @@ Future<void> main(List<String> args) async {
   }
 
   // Patch in trampolines
+  //
+  // Rewrite base executable functions into a single jump to a hook function defined
+  // by one of the input object files
   final baseExeData = ByteData.sublistView(baseExeBytes);
-  for (final trampoline in trampolines) {
-    final funcVA = rw.symbols[trampoline.functionName]!;
+  for (final hook in rwmod.hooks.entries) {
+    final baseFuncName = hook.key;
+    final hookFuncName = hook.value;
+
+    final funcVA = rw.symbols[baseFuncName];
+    if (funcVA == null) {
+      throw Exception('Cannot create hook from non-existent function: $baseFuncName');
+    }
+
     final funcPA = funcVA - imageBase;
 
-    print('Converting base executable function ${trampoline.functionName} into trampoline.');
+    print('Creating trampoline: $baseFuncName -> $hookFuncName');
+
+    final hookVA = symbolAddresses['_$hookFuncName'];
+    if (hookVA == null) {
+      throw Exception('Cannot create hook to non-existent function: $hookFuncName');
+    }
 
     // Encode as near rel32 jump
-    final operand = trampoline.targetVirtualAddress - funcVA - 5;
+    final operand = hookVA - funcVA - 5;
     baseExeData.setUint8(funcPA, 0xE9);
     baseExeData.setUint32(funcPA + 1, operand, Endian.little);
   }
@@ -272,15 +287,6 @@ class MappedSection {
   MappedSection(this.coff, this.section, this.sectionIndex, this.mappedOffset);
 }
 
-/// Record to patch a base executable function into a trampoline that jumps to another virtual address
-/// instead of continuing with the original function code.
-class TrampolinePatch {
-  final String functionName;
-  final int targetVirtualAddress;
-
-  TrampolinePatch(this.functionName, this.targetVirtualAddress);
-}
-
 void _relocateSection(
     {required Uint8List bytes,
     required Section section,
@@ -294,14 +300,19 @@ void _relocateSection(
     final symbol = coff.symbolTable![reloc.symbolTableIndex]!;
     assert(symbol.storageClass != 104);
 
-    final symbolName = symbol.name.shortName ??
-        coff.stringTable!.strings[symbol.name.offset!]!;
-    
-    final symbolAddress = newSymbols[symbolName] ?? rw.symbols[unmangle(symbolName)];
+    final int? symbolAddress;
+    if (symbol.sectionNumber == -1) {
+      symbolAddress = symbol.value;
+    } else {
+      final symbolName = symbol.name.shortName ??
+          coff.stringTable!.strings[symbol.name.offset!]!;
+      
+      symbolAddress = newSymbols[symbolName] ?? rw.symbols[unmangle(symbolName)];
 
-    if (symbolAddress == null) {
-      final virtualAddress = sectionVirtualAddress + reloc.virtualAddress;
-      throw Exception('Unknown symbol: $symbolName @ 0x${virtualAddress.toRadixString(16)}');
+      if (symbolAddress == null) {
+        final virtualAddress = sectionVirtualAddress + reloc.virtualAddress;
+        throw Exception('Unknown symbol: $symbolName @ 0x${virtualAddress.toRadixString(16)}');
+      }
     }
 
     final physicalAddress = reloc.virtualAddress;

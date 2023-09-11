@@ -8,6 +8,10 @@ set shell := ["powershell.exe", "-c"]
 @configure:
     dart run ../tools/rw_mod/bin/configure.dart --decomp-root=../ --mod-root=./
 
+# extract function clone binary
+@extract:
+    dart run ../tools/rw_mod/bin/extract.dart --decomp-root=../ --mod-root=./ --capstone=../tools/capstone.dll
+
 # build new patched exe
 [no-exit-message]
 @build:
@@ -27,6 +31,11 @@ set shell := ["powershell.exe", "-c"]
     if (Test-Path build.ninja -PathType Leaf) { Remove-Item build.ninja -Force }
     if (Test-Path .ninja_log -PathType Leaf) { Remove-Item .ninja_log -Force }
     if (Test-Path .ninja_deps -PathType Leaf) { Remove-Item .ninja_deps -Force }
+
+# clean build and extract artifacts
+@clean-full:
+    if (Test-Path bin -PathType Container) { Remove-Item bin -Force -Recurse }
+    just clean
 
 # run patched exe
 [no-exit-message]

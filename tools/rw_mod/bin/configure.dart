@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:ninja_syntax/ninja_syntax.dart' as ninja;
+import 'package:rw_mod/rwmod_yaml.dart';
 
 const _vsDir = 'C:\\Program Files (x86)\\Microsoft Visual Studio';
 const _dxDir = 'C:\\dx7sdk';
@@ -18,6 +19,13 @@ Future<void> main(List<String> args) async {
   final String modDir = p.absolute(argResult['mod-root'] ?? p.current);
 
   final modSrcDir = p.join(modDir, 'src');
+
+  // Load rwmod.yaml
+  final rwmod = RealWarModYaml.load(
+      await File(p.join(modDir, 'rwmod.yaml')).readAsString());
+  
+  // Collect list of clone function obj's to link
+  final cloneObjs = rwmod.funcClones.values.toList();
 
   // Collect list of files to compile
   final compilationUnits = <String>[];
@@ -43,6 +51,7 @@ Future<void> main(List<String> args) async {
   writer.variable('VS_DIR', _vsDir);
   writer.variable('DX_DIR', _dxDir);
   writer.variable('DECOMP_DIR', p.normalize(decompDir));
+  writer.variable('BIN_DIR', 'bin');
   writer.variable('SRC_DIR', 'src');
   writer.variable('BUILD_DIR', 'build');
   writer.variable('ORIG_GAME_DIR', p.normalize(p.join(decompDir, 'game')));
@@ -67,8 +76,12 @@ Future<void> main(List<String> args) async {
 
   writer.newline();
   writer.comment('Tools');
-  writer.variable('CL', r'$DECOMP_DIR/tools/rw_decomp/build/cl_wrapper.exe --vsdir="$VS_DIR" --asmfuncdir="$DECOMP_DIR\bin\_funcs"');
-  writer.variable('RWPATCH', r'dart run $DECOMP_DIR/tools/rw_mod/bin/rwpatch.dart --rwyaml="$DECOMP_DIR\rw.yaml" --baseexe="$ORIG_GAME_DIR\RealWar.exe"');
+  writer.variable('CL', r'$DECOMP_DIR/tools/rw_decomp/build/cl_wrapper.exe --vsdir="$VS_DIR"');
+  writer.variable('RWPATCH', 
+      r'dart run $DECOMP_DIR/tools/rw_mod/bin/rwpatch.dart '
+      r'--rwyaml="$DECOMP_DIR\rw.yaml" '
+      r'--rwmodyaml="rwmod.yaml" '
+      r'--baseexe="$ORIG_GAME_DIR\RealWar.exe"');
   
   writer.newline();
   writer.comment('Rules');
@@ -84,11 +97,22 @@ Future<void> main(List<String> args) async {
     final normalizedName = p.normalize(name);
     writer.build('\$BUILD_DIR\\obj\\$normalizedName.obj', 'cl', inputs: '\$SRC_DIR\\$normalizedName.c');
   }
+  
+  if (cloneObjs.isNotEmpty) {
+    writer.newline();
+    writer.comment('Cloned function phony rules');
+    for (final name in cloneObjs) {
+      writer.build('\$BIN_DIR\\$name.obj', 'phony');
+    }
+  }
 
   writer.newline();
   writer.comment('Patching');
   writer.build(r'$OUT_GAME_DIR\RealWar.exe', 'rwpatch', 
-      inputs: compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'));
+      inputs: [
+        ...compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'),
+        ...cloneObjs.map((n) => '\$BIN_DIR\\$n.obj')
+      ]);
 
   // Write file
   final buildFile = File(p.join(modDir, 'build.ninja'));

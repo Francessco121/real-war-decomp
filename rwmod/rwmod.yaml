@@ -1,0 +1,13 @@
+# Extracts functions from the base executable into .bin files that can
+# be included into source code via #pragma ASM_FUNC
+#
+# base exe symbol name -> cloned symbol name
+func_clones:
+  read_data_file: _read_data_file_base
+# Hooks into base executable functions by converting the base executable
+# function into a trampoline that jumps to a custom hook function.
+#
+# base exe symbol name -> rwmod symbol name
+hooks:
+  cd_check: cd_check_hook
+  read_data_file: read_data_file_hook

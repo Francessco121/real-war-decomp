@@ -5,6 +5,9 @@ game/*
 # Build artifacts
 build/
 
+# Extracted binary
+/bin/
+
 # Ninja build
 build.ninja
 .ninja_log
