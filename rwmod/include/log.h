@@ -5,13 +5,12 @@
 /**
  * Gets the address of the caller to the current function.
  * 
- * MUST be the first line of the function (after variable declarations).
- * Assumes that [esp+8] is the caller return address.
+ * Offset depends on function this is used in.
  * Assumes that the calling instruction was 5-bytes long.
  */
-#define GET_CALLER_ADDRESS(variable)    \
-    __asm mov eax, [esp+8]              \
-    __asm sub eax, 5                    \
+#define GET_CALLER_ADDRESS(variable, offset)    \
+    __asm mov eax, [esp+(offset)]               \
+    __asm sub eax, 5                            \
     __asm mov (variable), eax             
 
 /**

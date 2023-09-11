@@ -17,7 +17,7 @@ void log_printlnf(char *format, ...) {
     int length;
     int caller;
 
-    GET_CALLER_ADDRESS(caller);
+    GET_CALLER_ADDRESS(caller, 8);
 
     if (logTxtFile == NULL) {
         logTxtFile = fopen("modlog.txt", "w");

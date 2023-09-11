@@ -8,7 +8,7 @@
 
 void cd_check_hook() {
     int caller;
-    GET_CALLER_ADDRESS(caller);
+    GET_CALLER_ADDRESS(caller, 8);
 
     log_printlnf("skipping CD check from %x", caller);
 }
