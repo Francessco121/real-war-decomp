@@ -38,6 +38,9 @@ segments:
   - [0x401210, bin, null]
   - [0x4620f0, c, cd_check]
   - [0x4621a0, bin, null]
+  - [0x4b92e0, c, timers]
+  - [0x4b9610, bin, rdtsc] # this might be assembler output, not c code
+  - [0x4b9660, bin, null]
   - [0x4c49a0, c, segment_4c49a0]
   - [0x4c4a20, bin, null]
   - [0x4d2050, c, sound]
@@ -61,15 +64,19 @@ segments:
 
 # Map of symbol names to their base exe virtual address
 symbols:
-  # Globals/Statics
+  # Globals/Statics (.rdata)
   VirtualFree: 0x4e904c
   VirtualAlloc: 0x4e9050
+  GetTickCount: 0x4e9058
   GetKeyState: 0x4e9154
   IID_IDirect3D: 0x4e9e98
+  # Globals/Statics (.data)
+  gTimerStrings: 0x5144e8
   gADPCMIndexTable: 0x51702c
   gADPCMStepsizeTable: 0x51706c
   gWindowFocused: 0x5171d0
   lpD3D__try_find_valid_d3d_device: 0x51adb8
+  # Globals/Statics (.bss)
   gEnableRwMap: 0x51b8d8
   sBigFileEntryCount: 0x51b8ec
   gSoundSystemInitialized: 0x51b8f0
@@ -96,6 +103,15 @@ symbols:
   gVirtualMemoryBuffers: 0x594f60
   gVirtualMemorySizes: 0x59cf80 
   sAbsolutePathTempString: 0x5f0a60
+  gTimerValues: 0x5fa260
+  gClockCycleDeltas: 0x5fa380
+  gTimerCounters: 0x5fa4a0
+  gTimerTempString: 0x5fa5c0
+  gClockCycleCounters: 0x5fa6c0
+  DAT_005fa7c0: 0x5fa7c0
+  DAT_005fa7c4: 0x5fa7c4
+  DAT_005fa7c8: 0x5fa7c8
+  DAT_005fa7cc: 0x5fa7cc
   gTempString: 0xef6fc0
   gD3DDeviceCounter: 0x1b2ea38
   gSelectedD3DDevice: 0x1b2ea3c
@@ -112,6 +128,11 @@ symbols:
   str_please_insert_the_cd: 0x50a7a4
   str_pct_intro_mpg: 0x50a7f4
   str_pct_s_2: 0x50a840
+  str_pct24s_ddd: 0x5155e8
+  str_pct24s_dd: 0x5155fc
+  str_pct24s_d: 0x51560c
+  str_resolution_per_frame: 0x515614
+  str_clockers: 0x51562c
   str_bad_or_missing_adpcm_file: 0x5172d8
   str_couldnt_malloc_adpcm_buf: 0x5172f8
   str_memory_map_file: 0x517474
@@ -590,7 +611,7 @@ symbols:
   FUN_00462200: 0x462200
   FUN_00462580: 0x462580
   FUN_004626c0: 0x4626c0
-  FUN_00462980: 0x462980
+  parse_script_file: 0x462980
   FUN_00466cf0: 0x466cf0
   FUN_00468ab0: 0x468ab0
   FUN_00468df0: 0x468df0
@@ -1030,20 +1051,20 @@ symbols:
   FUN_004b9260: 0x4b9260
   FUN_004b9280: 0x4b9280
   FUN_004b92c0: 0x4b92c0
-  zero_mem_2: 0x4b92e0
-  FUN_004b9300: 0x4b9300
-  FUN_004b9330: 0x4b9330
-  FUN_004b9370: 0x4b9370
-  FUN_004b9390: 0x4b9390
-  FUN_004b93b0: 0x4b93b0
-  FUN_004b93c0: 0x4b93c0
-  FUN_004b93d0: 0x4b93d0
-  FUN_004b9430: 0x4b9430
-  FUN_004b9460: 0x4b9460
-  FUN_004b9490: 0x4b9490
-  FUN_004b9570: 0x4b9570
-  FUN_004b9610: 0x4b9610
-  FUN_004b9630: 0x4b9630
+  init_timers: 0x4b92e0
+  set_timer_label: 0x4b9300
+  set_timer_label_and_update_cycle_counter: 0x4b9330
+  update_timer_cycle_counter: 0x4b9370
+  update_timer_cycle_delta: 0x4b9390
+  set_timer_cycle_delta: 0x4b93b0
+  get_timer_cycle_delta: 0x4b93c0
+  increment_timer_total_for_avg: 0x4b93d0
+  reset_all_timer_cycle_counters: 0x4b9430
+  reset_timer_cycle_counter: 0x4b9460
+  timer_tostring: 0x4b9490
+  calculate_timer_resolution: 0x4b9570
+  rdtsc: 0x4b9610
+  rdtsc_delta: 0x4b9630
   FUN_004b9660: 0x4b9660
   FUN_004bc3f0: 0x4bc3f0
   FUN_004bd840: 0x4bd840

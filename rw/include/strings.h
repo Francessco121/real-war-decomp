@@ -19,6 +19,13 @@ extern char str_wb[]; // "wb"
 extern char str_pct_s[]; // "%s"
 extern char str_pct_s_2[]; // "%s"
 
+extern char str_pct24s_ddd[]; // "%24s %d,%03d,%03d"
+extern char str_pct24s_dd[]; // "%24s %d,%03d"
+extern char str_pct24s_d[]; // "%24s %d"
+
+extern char str_resolution_per_frame[]; // "Resolution Per Frame"
+extern char str_clockers[]; // "Clockers"
+
 extern char str_bad_or_missing_adpcm_file[]; // "Bad or Missing Adpcm file.\n%s"
 extern char str_couldnt_malloc_adpcm_buf[]; // "Could not Malloc Adpcm Sound Buffer."
 
