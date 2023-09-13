@@ -1,4 +1,4 @@
-#include "WINDOWS.H"
+#include <WINDOWS.H>
 
 /**
  * Decodes a run-length encoded string.

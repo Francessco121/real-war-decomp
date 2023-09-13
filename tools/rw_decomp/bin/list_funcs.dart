@@ -7,6 +7,7 @@ import 'package:pe_coff/coff.dart';
 Future<void> main(List<String> args) async {
   if (args.isEmpty) {
     print('usage: list_funcs.dart <path/to/objfile>');
+    exit(1);
   }
 
   final file = File(args[0]);
