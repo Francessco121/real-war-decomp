@@ -76,7 +76,7 @@ FUN_0040b8d0	0040b8d0	undefined FUN_0040b8d0(undefined4 param_1, undefined4 para
 FUN_0040b950	0040b950	undefined FUN_0040b950(undefined4 param_1, undefined4 param_2)	151
 FUN_0040b9f0	0040b9f0	undefined FUN_0040b9f0(undefined4 param_1)	279
 FUN_0040bb10	0040bb10	undefined FUN_0040bb10(undefined4 param_1)	65
-FUN_0040bb60	0040bb60	undefined FUN_0040bb60()	5
+set_fpu_to_single_precision	0040bb60	undefined set_fpu_to_single_precision()	5
 FUN_0040bb90	0040bb90	undefined FUN_0040bb90()	139
 FUN_0040bc20	0040bc20	undefined FUN_0040bc20(undefined4 param_1, undefined4 param_2)	2488
 FUN_0040c5e0	0040c5e0	undefined FUN_0040c5e0(undefined4 param_1)	356
@@ -283,7 +283,7 @@ FUN_00449dd0	00449dd0	undefined FUN_00449dd0()	40
 FUN_00449e00	00449e00	undefined FUN_00449e00(undefined4 param_1, undefined4 param_2)	1927
 FUN_0044a590	0044a590	undefined FUN_0044a590()	172
 FUN_0044a640	0044a640	undefined FUN_0044a640()	276
-FUN_0044a760	0044a760	undefined FUN_0044a760(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5)	211
+FUN_0044a760	0044a760	undefined FUN_0044a760(undefined4 param_1, undefined4 x, undefined4 y, undefined4 param_4, undefined4 param_5)	211
 FUN_0044a840	0044a840	undefined FUN_0044a840(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5)	225
 FUN_0044a930	0044a930	undefined FUN_0044a930()	39
 FUN_0044a960	0044a960	undefined FUN_0044a960(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	241
@@ -455,7 +455,7 @@ FUN_004621a0	004621a0	undefined FUN_004621a0(undefined4 param_1, undefined4 para
 FUN_00462200	00462200	undefined FUN_00462200(undefined4 param_1, undefined4 param_2)	881
 FUN_00462580	00462580	undefined FUN_00462580(undefined4 param_1, undefined4 param_2)	310
 FUN_004626c0	004626c0	undefined FUN_004626c0(undefined4 param_1)	698
-FUN_00462980	00462980	undefined FUN_00462980()	17257
+parse_script_file	00462980	undefined parse_script_file()	17257
 FUN_00466cf0	00466cf0	undefined FUN_00466cf0()	7615
 FUN_00468ab0	00468ab0	undefined FUN_00468ab0()	824
 FUN_00468df0	00468df0	undefined FUN_00468df0(undefined4 param_1)	220
@@ -895,20 +895,20 @@ FUN_004b9140	004b9140	undefined FUN_004b9140(undefined4 param_1)	281
 FUN_004b9260	004b9260	undefined FUN_004b9260(undefined param_1, undefined4 param_2)	29
 FUN_004b9280	004b9280	undefined FUN_004b9280(undefined4 param_1)	50
 FUN_004b92c0	004b92c0	undefined FUN_004b92c0()	20
-zero_mem_2	004b92e0	undefined zero_mem_2()	29
-FUN_004b9300	004b9300	undefined FUN_004b9300(undefined4 param_1, undefined4 param_2)	33
-FUN_004b9330	004b9330	undefined FUN_004b9330(undefined4 param_1, undefined4 param_2)	57
-FUN_004b9370	004b9370	undefined FUN_004b9370(undefined4 param_1)	19
-FUN_004b9390	004b9390	undefined FUN_004b9390(undefined4 param_1)	29
-FUN_004b93b0	004b93b0	undefined FUN_004b93b0(undefined4 param_1, undefined4 param_2)	16
-FUN_004b93c0	004b93c0	undefined FUN_004b93c0(undefined4 param_1)	12
-FUN_004b93d0	004b93d0	undefined FUN_004b93d0(undefined4 param_1)	86
-FUN_004b9430	004b9430	undefined FUN_004b9430()	39
-FUN_004b9460	004b9460	undefined FUN_004b9460(undefined4 param_1)	35
-FUN_004b9490	004b9490	undefined FUN_004b9490(undefined4 param_1)	223
-FUN_004b9570	004b9570	undefined FUN_004b9570()	156
-FUN_004b9610	004b9610	undefined FUN_004b9610(undefined4 param_1)	30
-FUN_004b9630	004b9630	undefined FUN_004b9630(undefined4 param_1, undefined4 param_2)	38
+init_timers	004b92e0	undefined init_timers()	29
+set_timer_label	004b9300	void set_timer_label(int timer, char * label)	33
+set_timer_label_and_update_cycle_counter	004b9330	void set_timer_label_and_update_cycle_counter(int timer, char * label)	57
+update_timer_cycle_counter	004b9370	undefined update_timer_cycle_counter(undefined4 timer)	19
+update_timer_cycle_delta	004b9390	undefined update_timer_cycle_delta(undefined4 timer)	29
+set_timer_cycle_delta	004b93b0	undefined set_timer_cycle_delta(undefined4 timer, undefined4 delta)	16
+get_timer_cycle_delta	004b93c0	undefined get_timer_cycle_delta(undefined4 timer)	12
+increment_timer_total_for_avg	004b93d0	undefined increment_timer_total_for_avg(undefined4 timer)	86
+reset_all_timer_cycle_counters	004b9430	undefined reset_all_timer_cycle_counters()	39
+reset_timer_cycle_counter	004b9460	undefined reset_timer_cycle_counter(undefined4 timer)	35
+timer_tostring	004b9490	char * timer_tostring(int timerIdx)	223
+calculate_timer_resolution	004b9570	undefined calculate_timer_resolution()	156
+rdtsc	004b9610	void rdtsc(longlong * outValue)	30
+rdtsc_delta	004b9630	void rdtsc_delta(longlong * since, longlong * outDelta)	38
 FUN_004b9660	004b9660	undefined FUN_004b9660(undefined4 param_1)	11653
 FUN_004bc3f0	004bc3f0	undefined FUN_004bc3f0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	4985
 FUN_004bd840	004bd840	undefined FUN_004bd840(undefined4 param_1)	137
@@ -930,7 +930,7 @@ FUN_004bfea0	004bfea0	undefined FUN_004bfea0()	246
 FUN_004bffa0	004bffa0	undefined FUN_004bffa0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	251
 FUN_004c00a0	004c00a0	undefined FUN_004c00a0()	566
 FUN_004c02e0	004c02e0	undefined FUN_004c02e0(undefined4 param_1)	110
-FUN_004c0350	004c0350	undefined FUN_004c0350(undefined4 path, undefined4 param_2)	880
+load_targa_file	004c0350	undefined load_targa_file(undefined4 path, undefined4 param_2)	880
 FUN_004c06c0	004c06c0	undefined FUN_004c06c0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	937
 FUN_004c0a70	004c0a70	undefined FUN_004c0a70(undefined4 param_1)	415
 FUN_004c0c10	004c0c10	undefined FUN_004c0c10(undefined4 param_1, undefined4 param_2)	92
@@ -953,11 +953,11 @@ FUN_004c2520	004c2520	undefined FUN_004c2520(undefined4 param_1, undefined4 para
 FUN_004c2590	004c2590	undefined FUN_004c2590(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7)	278
 FUN_004c26b0	004c26b0	undefined FUN_004c26b0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7)	280
 FUN_004c27d0	004c27d0	undefined FUN_004c27d0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7)	1571
-FUN_004c2e00	004c2e00	undefined FUN_004c2e00(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7, undefined4 param_8)	2173
+FUN_004c2e00	004c2e00	undefined FUN_004c2e00(char * str, int param_2, int param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7, undefined4 param_8)	2173
 FUN_004c3680	004c3680	undefined FUN_004c3680(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7, undefined4 param_8)	711
 FUN_004c3950	004c3950	undefined FUN_004c3950(undefined4 param_1, undefined4 param_2, undefined4 param_3)	71
 FUN_004c39a0	004c39a0	undefined FUN_004c39a0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	66
-FUN_004c39f0	004c39f0	undefined FUN_004c39f0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	71
+FUN_004c39f0	004c39f0	undefined FUN_004c39f0(char * str, int param_2, int param_3)	71
 FUN_004c3a40	004c3a40	undefined FUN_004c3a40(undefined4 param_1, undefined4 param_2, undefined4 param_3)	71
 FUN_004c3a90	004c3a90	undefined FUN_004c3a90(undefined4 param_1)	41
 FUN_004c3ac0	004c3ac0	undefined FUN_004c3ac0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	80
@@ -977,7 +977,7 @@ FUN_004c4370	004c4370	undefined FUN_004c4370(undefined4 param_1, undefined4 para
 FUN_004c4780	004c4780	undefined FUN_004c4780(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6)	41
 FUN_004c47b0	004c47b0	undefined FUN_004c47b0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	457
 FUN_004c4980	004c4980	undefined FUN_004c4980(undefined4 param_1, undefined4 param_2)	23
-FUN_004c49a0	004c49a0	undefined FUN_004c49a0(ushort * in, ushort * out)	127
+rle_decode	004c49a0	void rle_decode(ushort * in, ushort * out)	127
 FUN_004c4a20	004c4a20	undefined FUN_004c4a20()	45
 FUN_004c4a50	004c4a50	undefined FUN_004c4a50()	45
 FUN_004c4a80	004c4a80	undefined FUN_004c4a80(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7)	616
@@ -1062,18 +1062,18 @@ FUN_004d1e80	004d1e80	undefined FUN_004d1e80(undefined4 param_1)	87
 FUN_004d1ee0	004d1ee0	undefined FUN_004d1ee0(undefined4 param_1)	82
 FUN_004d1f40	004d1f40	undefined FUN_004d1f40(undefined4 param_1)	82
 FUN_004d1fa0	004d1fa0	undefined FUN_004d1fa0(undefined4 param_1)	165
-FUN_004d2050	004d2050	undefined FUN_004d2050(undefined4 param_1, undefined param_2, undefined4 param_3)	161
-FUN_004d2100	004d2100	undefined FUN_004d2100(undefined4 param_1, undefined param_2, undefined param_3, undefined4 param_4, undefined4 param_5)	406
-FUN_004d22a0	004d22a0	undefined FUN_004d22a0(undefined4 param_1)	12
-FUN_004d22b0	004d22b0	undefined FUN_004d22b0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	282
-FUN_004d23d0	004d23d0	undefined FUN_004d23d0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	520
-FUN_004d25e0	004d25e0	undefined FUN_004d25e0(undefined4 param_1)	209
+write_bytes_to_sound_buffer	004d2050	void write_bytes_to_sound_buffer(IDirectSoundBuffer * soundBuffer, void * data, DWORD length)	161
+FUN_004d2100	004d2100	void FUN_004d2100(IDirectSoundBuffer * soundBuffer1, IDirectSoundBuffer * soundBuffer2, char * adpcmBytes, int adpcmByteLengthTimes4, int isStereo)	406
+display_message_and_exit_2	004d22a0	void display_message_and_exit_2(char * message)	12
+adpcm_decompress	004d22b0	void adpcm_decompress(char * input, short * output, int length)	282
+adpcm_decompress_stereo	004d23d0	void adpcm_decompress_stereo(char * adpcm, undefined2 * out1, undefined2 * out2, int length)	520
+read_adpcm_file	004d25e0	char * read_adpcm_file(char * file_path)	209
 FUN_004d26c0	004d26c0	undefined FUN_004d26c0(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	845
-FUN_004d2a10	004d2a10	undefined FUN_004d2a10(undefined4 param_1, undefined4 param_2)	648
+FUN_004d2a10	004d2a10	void FUN_004d2a10(undefined4 idx, uint sampleRate, int channels)	648
 FUN_004d2ca0	004d2ca0	undefined FUN_004d2ca0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	1075
-FUN_004d30e0	004d30e0	undefined FUN_004d30e0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	1208
+FUN_004d30e0	004d30e0	void FUN_004d30e0(char * audio_file_path, int param_2, int param_3)	1208
 FUN_004d35a0	004d35a0	undefined FUN_004d35a0(undefined4 param_1)	1022
-FUN_004d39a0	004d39a0	undefined FUN_004d39a0(undefined4 param_1, undefined4 param_2)	566
+FUN_004d39a0	004d39a0	void FUN_004d39a0(char * kvagBytes, int bufferIdx)	566
 FUN_004d3be0	004d3be0	undefined FUN_004d3be0()	157
 FUN_004d3c80	004d3c80	undefined FUN_004d3c80()	165
 FUN_004d3d30	004d3d30	undefined FUN_004d3d30(undefined4 param_1)	182
@@ -1083,7 +1083,7 @@ FUN_004d3f60	004d3f60	undefined FUN_004d3f60()	116
 FUN_004d3fe0	004d3fe0	undefined FUN_004d3fe0(undefined4 param_1)	126
 FUN_004d4060	004d4060	undefined FUN_004d4060()	39
 FUN_004d4090	004d4090	undefined FUN_004d4090()	156
-FUN_004d4130	004d4130	undefined FUN_004d4130(undefined4 param_1)	89
+free_audio_struct_buffer	004d4130	undefined free_audio_struct_buffer(undefined4 idx)	89
 FUN_004d4190	004d4190	undefined FUN_004d4190(undefined4 param_1, undefined4 param_2, undefined4 param_3)	223
 FUN_004d4270	004d4270	undefined FUN_004d4270(undefined4 param_1, undefined4 param_2, undefined4 param_3)	249
 FUN_004d4370	004d4370	undefined FUN_004d4370(undefined4 param_1)	62
@@ -1119,16 +1119,16 @@ FUN_004d59f0	004d59f0	undefined FUN_004d59f0(undefined4 param_1, undefined4 para
 FUN_004d5a20	004d5a20	undefined FUN_004d5a20()	693
 FUN_004d5ce0	004d5ce0	undefined FUN_004d5ce0()	376
 setup_virtual_memory_buffers	004d5e60	undefined setup_virtual_memory_buffers()	34
-FUN_004d5e90	004d5e90	undefined FUN_004d5e90()	11
-FUN_004d5ea0	004d5ea0	undefined FUN_004d5ea0()	59
-FUN_004d5ee0	004d5ee0	undefined FUN_004d5ee0()	197
-FUN_004d5fb0	004d5fb0	undefined FUN_004d5fb0(undefined4 param_1)	378
+skip_virtual_memory_rwmap_record	004d5e90	undefined skip_virtual_memory_rwmap_record()	11
+start_rwmap	004d5ea0	undefined start_rwmap()	59
+end_rwmap	004d5ee0	void end_rwmap(void)	197
+record_virtual_memory_to_rwmap	004d5fb0	undefined record_virtual_memory_to_rwmap(undefined4 param_1)	378
 custom_alloc	004d6130	LPVOID custom_alloc(uint bytes)	187
 custom_free	004d61f0	undefined custom_free(undefined4 param_1)	176
-FUN_004d62a0	004d62a0	undefined FUN_004d62a0()	71
-FUN_004d62f0	004d62f0	undefined FUN_004d62f0(undefined4 param_1)	10
-FUN_004d6300	004d6300	undefined FUN_004d6300()	6
-FUN_004d6310	004d6310	undefined FUN_004d6310(undefined4 param_1)	55
+free_all_virtual_memory_buffers	004d62a0	undefined free_all_virtual_memory_buffers()	71
+set_virtual_memory_buffer_number	004d62f0	undefined set_virtual_memory_buffer_number(undefined4 param_1)	10
+get_virtual_memory_buffer_number	004d6300	undefined get_virtual_memory_buffer_number()	6
+free_virtual_memory_buffer_by_number	004d6310	undefined free_virtual_memory_buffer_by_number(undefined4 param_1)	55
 FUN_004d6350	004d6350	undefined FUN_004d6350()	193
 FUN_004d6420	004d6420	undefined FUN_004d6420(undefined param_1, undefined4 param_2, undefined4 param_3, undefined1 param_4)	151
 FUN_004d64c0	004d64c0	undefined FUN_004d64c0()	109
@@ -1142,19 +1142,19 @@ FUN_004d67e0	004d67e0	undefined FUN_004d67e0(undefined4 param_1)	30
 FUN_004d6800	004d6800	undefined FUN_004d6800(undefined4 param_1)	30
 FUN_004d6820	004d6820	undefined FUN_004d6820(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	57
 read_data_file	004d6860	undefined read_data_file(undefined4 path, undefined4 out)	170
-FUN_004d6910	004d6910	undefined FUN_004d6910(undefined4 param_1, undefined4 param_2)	80
-FUN_004d6960	004d6960	undefined FUN_004d6960(undefined4 param_1, undefined4 param_2)	50
-FUN_004d69a0	004d69a0	undefined FUN_004d69a0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	178
+open_data_file_relative	004d6910	FILE * open_data_file_relative(char * param_1, _TSCHAR * param_2)	80
+open_data_file_absolute	004d6960	FILE * open_data_file_absolute(char * param_1, _TSCHAR * param_2)	50
+read_data_file_partial	004d69a0	size_t read_data_file_partial(char * param_1, void * param_2, size_t param_3)	178
 get_data_file_length	004d6a60	long get_data_file_length(char * file_path)	129
-FUN_004d6af0	004d6af0	undefined FUN_004d6af0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	69
-FUN_004d6b40	004d6b40	char * FUN_004d6b40(byte * param_1, uint * param_2)	133
-some_kind_of_string_hash?	004d6bd0	undefined some_kind_of_string_hash?(undefined4 param_1)	49
+write_bytes_to_file	004d6af0	size_t write_bytes_to_file(char * filename, void * ptr, int length)	69
+pack_dword_for_bigfile_path_hash	004d6b40	char * pack_dword_for_bigfile_path_hash(byte * param_1, uint * param_2)	133
+xor_hash_bigfile_entry_path	004d6bd0	undefined xor_hash_bigfile_entry_path(undefined4 param_1)	49
 load_bigfile_header	004d6c10	undefined load_bigfile_header(char * path)	309
 find_bigfile_entry_by_path	004d6d50	int find_bigfile_entry_by_path(char * path)	212
-FUN_004d6e30	004d6e30	undefined FUN_004d6e30(undefined4 param_1, undefined4 param_2)	119
-FUN_004d6eb0	004d6eb0	undefined FUN_004d6eb0(undefined4 param_1, undefined4 param_2)	193
-FUN_004d6f80	004d6f80	undefined FUN_004d6f80(undefined4 param_1)	81
-FUN_004d6fe0	004d6fe0	undefined FUN_004d6fe0(undefined4 param_1, undefined4 param_2, undefined4 param_3)	110
+read_data_file_internal	004d6e30	undefined read_data_file_internal(undefined4 param_1, undefined4 param_2)	119
+open_data_file	004d6eb0	undefined open_data_file(undefined4 param_1, undefined4 param_2)	193
+close_data_file	004d6f80	undefined close_data_file(undefined4 param_1)	81
+get_data_file_line	004d6fe0	char * get_data_file_line(_TSCHAR * param_1, int param_2, FILE * param_3)	110
 FUN_004d7050	004d7050	undefined FUN_004d7050(undefined4 param_1, undefined4 param_2)	254
 FUN_004d7150	004d7150	undefined FUN_004d7150(undefined4 param_1, undefined4 param_2)	254
 FUN_004d7250	004d7250	undefined FUN_004d7250(undefined4 param_1)	24
@@ -1231,10 +1231,10 @@ FUN_004e13f0	004e13f0	undefined FUN_004e13f0(undefined4 param_1, undefined4 para
 DirectDrawCreate	004e1500	thunk HRESULT DirectDrawCreate(GUID * param_1, LPDIRECTDRAW * param_2, IUnknown * param_3)	6
 DirectSoundCreate	004e1506	thunk HRESULT DirectSoundCreate(LPGUID lpGuid, pointer ppDS, LPUNKNOWN pUnkOuter)	6
 strstr	004e1510	char * strstr(char * _Str, char * _SubStr)	315
-_FPinit	004e1590	undefined _FPinit()	23
+_fpmath	004e1590	undefined _fpmath()	23
 _cfltcvt_init	004e15a8	undefined _cfltcvt_init()	56
-__ftol	004e15e0	longlong __ftol(float10 param_1)	39
-sprintf	004e1607	undefined sprintf(undefined4 param_1, undefined4 param_2, undefined1 param_3)	82
+_ftol	004e15e0	longlong _ftol(float10 param_1)	39
+sprintf	004e1607	int sprintf(char * str, char * format, ...)	82
 sscanf	004e1659	int sscanf(char * str, char * format, ...)	52
 fgets	004e168d	wchar_t * fgets(_TSCHAR * string, int param_2, FILE * str)	87
 fclose	004e16e4	int fclose(FILE * str)	86
@@ -1242,33 +1242,33 @@ fseek	004e173a	int fseek(FILE * str, long offset, int whence)	140
 fread	004e17c6	size_t fread(void * buffer, size_t size, size_t num, FILE * stream)	232
 free	004e18ae	void free(void * _Memory)	47
 malloc	004e18dd	void * malloc(size_t _Size)	18
-__nh_malloc	004e18ef	void * __nh_malloc(size_t _Size, int _NhFlag)	44
-_heap_alloc_base	004e191b	undefined _heap_alloc_base(undefined4 param_1)	54
-_fwrite_lk	004e1951	undefined _fwrite_lk(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	266
+_nh_malloc	004e18ef	void * _nh_malloc(size_t _Size, int _NhFlag)	44
+_heap_alloc	004e191b	undefined _heap_alloc(undefined4 param_1)	54
+fwrite	004e1951	size_t fwrite(void * ptr, size_t size, size_t nmemb, FILE * stream)	266
 _fsopen	004e1a5b	FILE * _fsopen(_TSCHAR * file, _TSCHAR * mode, int shflag)	32
 fopen	004e1a7b	FILE * fopen(_TSCHAR * file, _TSCHAR * mode)	19
 srand	004e1a8e	void srand(uint _Seed)	10
 rand	004e1a98	int rand(void)	30
 atol	004e1ab6	long atol(char * _Str)	139
 atoi	004e1b41	int atoi(char * _Str)	11
-_unlink	004e1b4c	undefined _unlink(undefined4 param_1)	42
+remove	004e1b4c	undefined remove(undefined4 param_1)	42
 fputs	004e1b76	int fputs(char * string, FILE * stream)	67
 fprintf	004e1bb9	undefined fprintf(undefined4 param_1, undefined4 param_2, undefined1 param_3)	50
-_strncmp	004e1bf0	int _strncmp(char * _Str1, char * _Str2, size_t _MaxCount)	56
+strncmp	004e1bf0	int strncmp(char * _Str1, char * _Str2, size_t _MaxCount)	56
 ftell	004e1c28	long ftell(FILE * str)	344
 strtok	004e1d80	char * strtok(char * _Str, char * _Delim)	156
 _cinit	004e1e1c	void _cinit(void)	45
 exit	004e1e49	void exit(int _Code)	17
-__exit	004e1e5a	void __exit(int _Code)	17
+_exit	004e1e5a	void _exit(int _Code)	17
 doexit	004e1e6b	undefined doexit(undefined4 param_1, undefined4 param_2, undefined4 param_3)	153
 _initterm	004e1f04	undefined _initterm(undefined4 param_1, undefined4 param_2)	26
 vsprintf	004e1f1e	undefined vsprintf(undefined4 param_1, undefined4 param_2, undefined4 param_3)	81
-mainCRTStartup	004e1f6f	void mainCRTStartup(void)	215
-__amsg_exit	004e2065	void __amsg_exit(int param_1)	34
+WinMainCRTStartup	004e1f6f	void WinMainCRTStartup(void)	215
+_amsg_exit	004e2065	void _amsg_exit(int param_1)	34
 fast_error_exit	004e208a	void fast_error_exit(int rterrnum)	35
 rewind	004e2167	void rewind(FILE * param_1)	84
 perror	004e21bb	void perror(char * _ErrMsg)	108
-_realloc_base	004e2227	undefined _realloc_base(undefined4 param_1, undefined4 param_2)	288
+realloc	004e2227	undefined realloc(undefined4 param_1, undefined4 param_2)	288
 _setdefaultprecision	004e241c	undefined _setdefaultprecision()	18
 _ms_p5_test_fdiv	004e242e	undefined _ms_p5_test_fdiv()	62
 _ms_p5_mp_test_fdiv	004e246c	undefined _ms_p5_mp_test_fdiv()	41
@@ -1279,9 +1279,9 @@ _cftof	004e2697	char * _cftof(double * pvalue, char * buf, int ndec)	222
 _cftog	004e2775	undefined _cftog(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	155
 _cftoe_g	004e2810	undefined _cftoe_g(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	39
 _cftof_g	004e2837	undefined _cftof_g(undefined4 param_1, undefined4 param_2, undefined4 param_3)	35
-__cfltcvt	004e285a	errno_t __cfltcvt(double * arg, char * buffer, int format, int precision, int caps)	81
+_cfltcvt	004e285a	errno_t _cfltcvt(double * arg, char * buffer, int format, int precision, int caps)	81
 _shift	004e28ab	void _shift(char * param_1, int param_2)	37
-_putc_lk	004e28d0	int _putc_lk(int ch, FILE * str)	277
+_flsbuf	004e28d0	char _flsbuf(char param1, FILE * file)	277
 _output	004e29e5	int _output(FILE * stream, TCHAR * format, va_list argptr)	1825
 write_char	004e3126	undefined write_char(undefined4 param_1, undefined4 param_2, undefined4 param_3)	53
 write_multi_char	004e315b	undefined write_multi_char(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	49
@@ -1290,19 +1290,19 @@ get_int_arg	004e31c4	undefined4 get_int_arg(int * param_1)	13
 get_int64_arg	004e31d1	undefined8 get_int64_arg(va_list * param_1)	16
 get_short_arg	004e31e1	short get_short_arg(va_list * param_1)	14
 _input	004e31ef	int _input(FILE * stream, char * format, va_list arglist)	2597
-__hextodec	004e3c14	undefined __hextodec(undefined4 param_1)	55
+_hextodec	004e3c14	undefined _hextodec(undefined4 param_1)	55
 _inc	004e3c4b	undefined _inc(undefined4 param_1)	26
 _un_inc	004e3c65	undefined _un_inc(undefined4 param_1, undefined4 param_2)	23
 _whiteout	004e3c7c	undefined _whiteout(undefined4 param_1, undefined4 param_2)	36
 strlen	004e3ca0	size_t strlen(char * _Str)	123
 _filbuf	004e3d1b	undefined _filbuf(undefined4 param_1)	217
 _close	004e3df4	undefined _close(undefined4 param_1)	179
-__freebuf	004e3ea7	void __freebuf(FILE * _File)	43
-_fflush_lk	004e3ed2	undefined _fflush_lk(undefined4 param_1)	59
+_freebuf	004e3ea7	void _freebuf(FILE * _File)	43
+fflush	004e3ed2	undefined fflush(undefined4 param_1)	59
 _flush	004e3f0d	undefined _flush(undefined4 param_1)	92
-_flsall	004e3f72	undefined _flsall(undefined4 param_1)	109
+flsall	004e3f72	undefined flsall(undefined4 param_1)	109
 _lseek	004e3fdf	undefined _lseek(undefined4 param_1, undefined4 param_2, undefined4 param_3)	154
-_read_lk	004e4079	undefined _read_lk(undefined4 param_1, undefined4 param_2, undefined4 param_3)	502
+_read	004e4079	undefined _read(undefined4 param_1, undefined4 param_2, undefined4 param_3)	502
 memcpy	004e4270	void * memcpy(void * _Dst, void * _Src, size_t _Size)	516
 _heap_init	004e45a5	int _heap_init(int mtflag)	60
 __sbh_heap_init	004e45e1	int __sbh_heap_init(void)	62
@@ -1313,11 +1313,11 @@ __sbh_alloc_new_region	004e4c7e	undefined __sbh_alloc_new_region()	177
 __sbh_alloc_new_group	004e4d2f	undefined __sbh_alloc_new_group(undefined4 param_1)	251
 __sbh_resize_block	004e4e2a	undefined __sbh_resize_block(undefined4 param_1, undefined4 param_2, undefined4 param_3)	758
 _callnewh	004e5120	undefined _callnewh(undefined4 param_1)	27
-_write_lk	004e513b	int _write_lk(int param_1, char * param_2, int param_3)	429
+_write	004e513b	int _write(int param_1, char * param_2, int param_3)	429
 _openfile	004e52e8	undefined _openfile(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	368
 _getstream	004e5458	undefined _getstream()	120
 _isctype	004e54d0	int _isctype(int _C, int _Type)	117
-__allmul	004e5550	undefined __allmul(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	52
+_allmul	004e5550	undefined _allmul(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	52
 _dosmaperr	004e5584	undefined _dosmaperr(undefined4 param_1)	103
 _stbuf	004e55eb	int _stbuf(FILE * str)	141
 _ftbuf	004e5678	undefined _ftbuf(undefined4 param_1, undefined4 param_2)	61
@@ -1329,19 +1329,19 @@ _setenvp	004e5a3c	int _setenvp(void)	185
 _setargv	004e5af5	int _setargv(void)	153
 parse_cmdline	004e5b8e	undefined parse_cmdline(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5)	436
 __crtGetEnvironmentStringsA	004e5d42	LPVOID __crtGetEnvironmentStringsA(void)	306
-__global_unwind2	004e5e74	undefined __global_unwind2(undefined4 param_1)	32
-__local_unwind2	004e5eb6	undefined __local_unwind2(undefined4 param_1, undefined4 param_2)	104
-__some_exception_handler_func	004e5f4a	undefined __some_exception_handler_func()	24
-__except_handler3	004e5f6c	undefined __except_handler3(undefined4 param_1, undefined4 param_2, undefined4 param_3)	189
-__seh_longjmp_unwind@4	004e6029	undefined __seh_longjmp_unwind@4(undefined4 param_1)	27
+_global_unwind2	004e5e74	undefined _global_unwind2(undefined4 param_1)	32
+_local_unwind2	004e5eb6	undefined _local_unwind2(undefined4 param_1, undefined4 param_2)	104
+_NLG_Notify	004e5f4a	undefined _NLG_Notify()	24
+_except_handler3	004e5f6c	undefined _except_handler3(undefined4 param_1, undefined4 param_2, undefined4 param_3)	189
+_seh_longjmp_unwind@4	004e6029	undefined _seh_longjmp_unwind@4(undefined4 param_1)	27
 _FF_MSGBANNER	004e6044	void _FF_MSGBANNER(void)	57
 _NMSG_WRITE	004e607d	void _NMSG_WRITE(int rterrnum)	339
 _fcloseall	004e624d	undefined _fcloseall()	88
-_ctrlfp	004e62a5	undefined _ctrlfp(undefined4 param_1, undefined4 param_2)	53
+_control87	004e62a5	undefined _control87(undefined4 param_1, undefined4 param_2)	53
 _controlfp	004e62da	undefined _controlfp(undefined4 param_1, undefined4 param_2)	22
-_get_fpsr	004e62f0	undefined _get_fpsr(undefined4 param_1)	146
-_set_fpsr	004e6382	undefined _set_fpsr(undefined4 param_1)	137
-_tolower_lk	004e640b	undefined _tolower_lk(undefined4 param_1)	203
+_abstract_cw	004e62f0	undefined _abstract_cw(undefined4 param_1)	146
+_hw_cw	004e6382	undefined _hw_cw(undefined4 param_1)	137
+tolower	004e640b	undefined tolower(undefined4 param_1)	203
 _ZeroTail	004e64d6	undefined _ZeroTail(undefined4 param_1, undefined4 param_2)	73
 _IncMan	004e651f	undefined _IncMan(undefined4 param_1, undefined4 param_2)	86
 _RoundMan	004e6575	undefined _RoundMan(undefined4 param_1, undefined4 param_2)	140
@@ -1368,9 +1368,9 @@ wctomb	004e6f68	int wctomb(char * _MbCh, wchar_t _WCh)	104
 __aulldiv	004e6fd0	undefined __aulldiv(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	104
 __aullrem	004e7040	undefined __aullrem(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4)	117
 mbtowc	004e70b5	int mbtowc(wchar_t * _DstCh, char * _SrcCh, size_t _SrcSizeInBytes)	200
-_istspace	004e717d	undefined _istspace(undefined4 param_1)	40
-__allshl	004e71b0	undefined __allshl()	31
-_ungetwc_lk	004e71cf	undefined _ungetwc_lk(undefined4 param_1, undefined4 param_2)	110
+isspace	004e717d	undefined isspace(undefined4 param_1)	40
+_allshl	004e71b0	undefined _allshl()	31
+ungetc	004e71cf	undefined ungetc(undefined4 param_1, undefined4 param_2)	110
 _alloc_osfhnd	004e723d	undefined _alloc_osfhnd()	149
 _set_osfhnd	004e72d2	undefined _set_osfhnd(undefined4 param_1, undefined4 param_2)	119
 _free_osfhnd	004e7349	undefined _free_osfhnd(undefined4 param_1)	122
@@ -1387,7 +1387,7 @@ setSBCS	004e7ab1	undefined setSBCS()	41
 setSBUpLow	004e7ada	undefined setSBUpLow()	389
 __initmbctable	004e7c5f	undefined __initmbctable()	28
 __crtMessageBoxA	004e7c7b	int __crtMessageBoxA(LPCSTR lpText, LPCSTR lpCaption, UINT uType)	137
-_strncpy	004e7d10	char * _strncpy(char * _Dest, char * _Source, size_t _Count)	254
+strncpy	004e7d10	char * strncpy(char * _Dest, char * _Source, size_t _Count)	254
 __crtLCMapStringA	004e7e0e	undefined __crtLCMapStringA(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7, undefined4 param_8)	511
 strncnt	004e8032	undefined strncnt(undefined4 param_1, undefined4 param_2)	43
 __addl	004e805d	undefined __addl(undefined4 param_1, undefined4 param_2, undefined4 param_3)	33
@@ -1397,9 +1397,9 @@ __shr_12	004e810a	undefined __shr_12(undefined4 param_1)	45
 __mtold12	004e8137	undefined __mtold12(undefined4 param_1, undefined4 param_2, undefined4 param_3)	199
 __strgtold12	004e81fe	undefined __strgtold12(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined4 param_5, undefined4 param_6, undefined4 param_7)	1185
 $I10_OUTPUT	004e86cf	undefined $I10_OUTPUT(undefined4 param_1, undefined4 param_2, undefined4 param_3, undefined4 param_4, undefined1 param_5, undefined4 param_6)	659
-_chsize_lk	004e8962	undefined _chsize_lk(undefined4 param_1, undefined4 param_2)	326
-maybe__alloca	004e8b40	void * maybe__alloca(size_t param_1)	47
+_chsize	004e8962	undefined _chsize(undefined4 param_1, undefined4 param_2)	326
+_alloca_probe	004e8b40	void * _alloca_probe(size_t param_1)	47
 __ld12mul	004e8b6f	undefined __ld12mul(undefined4 param_1, undefined4 param_2)	544
 __multtenpow12	004e8d8f	undefined __multtenpow12(undefined4 param_1, undefined4 param_2, undefined4 param_3)	124
-_setmode_lk	004e8e0b	int _setmode_lk(int param_1, int param_2)	118
+_setmode	004e8e0b	int _setmode(int param_1, int param_2)	118
 RtlUnwind	004e8e90	thunk void RtlUnwind(PVOID TargetFrame, PVOID TargetIp, undefined ExceptionRecord, PVOID ReturnValue)	6

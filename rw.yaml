@@ -1386,6 +1386,7 @@ symbols:
   FUN_004e13f0: 0x4e13f0
   DirectDrawCreate: 0x4e1500
   DirectSoundCreate: 0x4e1506
+  # LIBC.LIB
   strstr: 0x4e1510
   _FPinit: 0x4e1590
   _cfltcvt_init: 0x4e15a8
@@ -1398,8 +1399,8 @@ symbols:
   fread: 0x4e17c6
   free: 0x4e18ae
   malloc: 0x4e18dd
-  __nh_malloc: 0x4e18ef
-  _heap_alloc_base: 0x4e191b
+  _nh_malloc: 0x4e18ef
+  _heap_alloc: 0x4e191b
   fwrite: 0x4e1951
   _fsopen: 0x4e1a5b
   fopen: 0x4e1a7b
@@ -1407,10 +1408,10 @@ symbols:
   rand: 0x4e1a98
   atol: 0x4e1ab6
   atoi: 0x4e1b41
-  _unlink: 0x4e1b4c
+  remove: 0x4e1b4c
   fputs: 0x4e1b76
   fprintf: 0x4e1bb9
-  _strncmp: 0x4e1bf0
+  strncmp: 0x4e1bf0
   ftell: 0x4e1c28
   strtok: 0x4e1d80
   _cinit: 0x4e1e1c
@@ -1419,12 +1420,12 @@ symbols:
   doexit: 0x4e1e6b
   _initterm: 0x4e1f04
   vsprintf: 0x4e1f1e
-  mainCRTStartup: 0x4e1f6f
-  __amsg_exit: 0x4e2065
+  WinMainCRTStartup: 0x4e1f6f
+  _amsg_exit: 0x4e2065
   fast_error_exit: 0x4e208a
   rewind: 0x4e2167
   perror: 0x4e21bb
-  _realloc_base: 0x4e2227
+  realloc: 0x4e2227
   _setdefaultprecision: 0x4e241c
   _ms_p5_test_fdiv: 0x4e242e
   _ms_p5_mp_test_fdiv: 0x4e246c
@@ -1437,7 +1438,7 @@ symbols:
   _cftof_g: 0x4e2837
   __cfltcvt: 0x4e285a
   _shift: 0x4e28ab
-  _putc_lk: 0x4e28d0
+  _flsbuf: 0x4e28d0
   _output: 0x4e29e5
   write_char: 0x4e3126
   write_multi_char: 0x4e315b
@@ -1446,19 +1447,19 @@ symbols:
   get_int64_arg: 0x4e31d1
   get_short_arg: 0x4e31e1
   _input: 0x4e31ef
-  __hextodec: 0x4e3c14
+  _hextodec: 0x4e3c14
   _inc: 0x4e3c4b
   _un_inc: 0x4e3c65
   _whiteout: 0x4e3c7c
   strlen: 0x4e3ca0
   _filbuf: 0x4e3d1b
   _close: 0x4e3df4
-  __freebuf: 0x4e3ea7
-  _fflush_lk: 0x4e3ed2
+  _freebuf: 0x4e3ea7
+  fflush: 0x4e3ed2
   _flush: 0x4e3f0d
-  _flsall: 0x4e3f72
+  flsall: 0x4e3f72
   _lseek: 0x4e3fdf
-  _read_lk: 0x4e4079
+  _read: 0x4e4079
   memcpy: 0x4e4270
   _heap_init: 0x4e45a5
   __sbh_heap_init: 0x4e45e1
@@ -1469,11 +1470,11 @@ symbols:
   __sbh_alloc_new_group: 0x4e4d2f
   __sbh_resize_block: 0x4e4e2a
   _callnewh: 0x4e5120
-  _write_lk: 0x4e513b
+  _write: 0x4e513b
   _openfile: 0x4e52e8
   _getstream: 0x4e5458
   _isctype: 0x4e54d0
-  __allmul: 0x4e5550
+  _allmul: 0x4e5550
   _dosmaperr: 0x4e5584
   _stbuf: 0x4e55eb
   _ftbuf: 0x4e5678
@@ -1485,19 +1486,19 @@ symbols:
   _setargv: 0x4e5af5
   parse_cmdline: 0x4e5b8e
   __crtGetEnvironmentStringsA: 0x4e5d42
-  __global_unwind2: 0x4e5e74
-  __local_unwind2: 0x4e5eb6
-  __some_exception_handler_func: 0x4e5f4a
-  __except_handler3: 0x4e5f6c
-  __seh_longjmp_unwind@4: 0x4e6029
+  _global_unwind2: 0x4e5e74
+  _local_unwind2: 0x4e5eb6
+  _NLG_Notify: 0x4e5f4a
+  _except_handler3: 0x4e5f6c
+  _seh_longjmp_unwind@4: 0x4e6029
   _FF_MSGBANNER: 0x4e6044
   _NMSG_WRITE: 0x4e607d
   _fcloseall: 0x4e624d
-  _ctrlfp: 0x4e62a5
+  _control87: 0x4e62a5
   _controlfp: 0x4e62da
-  _get_fpsr: 0x4e62f0
-  _set_fpsr: 0x4e6382
-  _tolower_lk: 0x4e640b
+  _abstract_cw: 0x4e62f0
+  _hw_cw: 0x4e6382
+  tolower: 0x4e640b
   _ZeroTail: 0x4e64d6
   _IncMan: 0x4e651f
   _RoundMan: 0x4e6575
@@ -1524,9 +1525,9 @@ symbols:
   __aulldiv: 0x4e6fd0
   __aullrem: 0x4e7040
   mbtowc: 0x4e70b5
-  _istspace: 0x4e717d
-  __allshl: 0x4e71b0
-  _ungetwc_lk: 0x4e71cf
+  isspace: 0x4e717d
+  _allshl: 0x4e71b0
+  unget: 0x4e71cf
   _alloc_osfhnd: 0x4e723d
   _set_osfhnd: 0x4e72d2
   _free_osfhnd: 0x4e7349
@@ -1543,7 +1544,7 @@ symbols:
   setSBUpLow: 0x4e7ada
   __initmbctable: 0x4e7c5f
   __crtMessageBoxA: 0x4e7c7b
-  _strncpy: 0x4e7d10
+  strncpy: 0x4e7d10
   __crtLCMapStringA: 0x4e7e0e
   strncnt: 0x4e8032
   __addl: 0x4e805d
@@ -1553,9 +1554,9 @@ symbols:
   __mtold12: 0x4e8137
   __strgtold12: 0x4e81fe
   $I10_OUTPUT: 0x4e86cf
-  _chsize_lk: 0x4e8962
-  maybe__alloca: 0x4e8b40
+  _chsize: 0x4e8962
+  _alloca_probe: 0x4e8b40
   __ld12mul: 0x4e8b6f
   __multtenpow12: 0x4e8d8f
-  _setmode_lk: 0x4e8e0b
+  _setmode: 0x4e8e0b
   RtlUnwind: 0x4e8e90

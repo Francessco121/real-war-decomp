@@ -30,7 +30,7 @@ void cd_check() {
             if (file != NULL) {
                 flag = FALSE;
                 fclose(file);
-                _unlink(gTempString);
+                remove(gTempString);
                 display_message(str_please_insert_the_cd);   
             } else if (flag) {
                 return;

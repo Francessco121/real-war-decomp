@@ -3,6 +3,9 @@ import 'dart:typed_data';
 class EndOfFileException implements Exception {}
 
 abstract class StructuredFileReader {
+  /// Gets the current file byte position.
+  int get position;
+  
   /// Creates a new [StructuredFileReader] over a file loaded into memory as a [list].
   factory StructuredFileReader.list(Uint8List list, {Endian endian = Endian.big}) {
     return _ListBasedStructuredFileReader(list, endian: endian);
@@ -48,6 +51,8 @@ abstract class StructuredFileReader {
   double readFloat64([Endian? endian]);
 }
 class _ListBasedStructuredFileReader implements StructuredFileReader {
+  int get position => _offset;
+
   /// Current byte offset.
   int _offset = 0;
 

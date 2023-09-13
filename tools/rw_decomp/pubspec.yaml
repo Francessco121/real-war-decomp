@@ -6,6 +6,7 @@ environment:
 
 dependencies: 
   args: ^2.4.0
+  collection: ^1.18.0
   crypto: ^3.0.2
   ffi: ^2.0.1
   path: ^1.8.2

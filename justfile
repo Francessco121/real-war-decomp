@@ -12,6 +12,10 @@ set shell := ["powershell.exe", "-c"]
 @dump symbol:
     tools/rw_decomp/build/dump.exe {{symbol}}
 
+# find the archive files that define the given symbols
+@libsearch libfile +symbols:
+    dart run tools/rw_decomp/bin/lib_search.dart {{libfile}} {{symbols}}
+
 # split base exe
 @split:
     tools/rw_decomp/build/split.exe

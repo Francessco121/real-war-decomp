@@ -1,4 +1,4 @@
-- compiled with _WINMAIN_, _MBCS, WINHEAP
+- compiled with _WINMAIN_, WINHEAP
 - `.\RealWar.exe -L 1 -G 1` launch model viewer in windowed mode
 - IMAGE_RICH_HEADER (dumped from Ghidra):
     - Unknown Product (c), build 7291
