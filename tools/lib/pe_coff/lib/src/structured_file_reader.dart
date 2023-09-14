@@ -51,6 +51,7 @@ abstract class StructuredFileReader {
   double readFloat64([Endian? endian]);
 }
 class _ListBasedStructuredFileReader implements StructuredFileReader {
+  @override
   int get position => _offset;
 
   /// Current byte offset.
