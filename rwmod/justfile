@@ -58,3 +58,13 @@ set shell := ["powershell.exe", "-c"]
 [no-exit-message]
 @logtail:
     Get-Content game/modlog.txt -Wait -Tail 10
+
+# unpack bigfile.dat
+[no-exit-message]
+@unpack-bigfile:
+    dart run ../tools/rw_assets/bin/bigfile.dart unpack -i game/data/bigfile.dat -o game/bigfile -f
+
+# repack new bigfile.dat
+[no-exit-message]
+@repack-bigfile:
+    dart run ../tools/rw_assets/bin/bigfile.dart pack -i game/bigfile -o game/data/bigfile.dat -f

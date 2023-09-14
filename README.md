@@ -44,4 +44,4 @@ A quick overview of the decompilation process:
 - If the function doesn't match, surround it with `#if NON_MATCHING` and add back its `#pragma ASM_FUNC`
 
 ## Cool Stuff
-- `tools/extract_bigfile.dart` - Unpacks all files in `bigfile.dat` into a directory. 
+- `tools/rw_assets/bin/bigfile.dart` - Unpacks all files in `bigfile.dat` into a directory. 

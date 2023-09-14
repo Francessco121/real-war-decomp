@@ -12,3 +12,6 @@ build/
 build.ninja
 .ninja_log
 .ninja_deps
+
+# Windows registry stuff
+*.reg
