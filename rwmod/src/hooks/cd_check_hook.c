@@ -6,9 +6,13 @@
 
 #include "log.h"
 
+#define LOG_CD_CHECK 0
+
 void cd_check_hook() {
+#if LOG_CD_CHECK
     int caller;
     GET_CALLER_ADDRESS(caller, 8);
 
     log_printlnf("skipping CD check from %x", caller);
+#endif
 }

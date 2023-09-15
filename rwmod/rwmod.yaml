@@ -9,6 +9,7 @@ func_clones:
   open_data_file_relative: _open_data_file_relative_base
   load_bigfile_header: _load_bigfile_header_base
   write_bytes_to_file: _write_bytes_to_file_base
+  draw_frame: _draw_frame_base
 
 # Hooks into base executable functions by converting the base executable
 # function into a trampoline that jumps to a custom hook function.
@@ -22,3 +23,4 @@ hooks:
   open_data_file_relative: open_data_file_relative_hook
   load_bigfile_header: load_bigfile_header_hook
   write_bytes_to_file: write_bytes_to_file_hook
+  draw_frame: draw_frame_hook

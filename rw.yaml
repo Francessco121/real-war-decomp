@@ -1272,7 +1272,7 @@ symbols:
   FUN_004d5990: 0x4d5990
   FUN_004d59d0: 0x4d59d0
   FUN_004d59f0: 0x4d59f0
-  FUN_004d5a20: 0x4d5a20
+  draw_frame: 0x4d5a20
   FUN_004d5ce0: 0x4d5ce0
   setup_virtual_memory_buffers: 0x4d5e60
   skip_virtual_memory_rwmap_record: 0x4d5e90

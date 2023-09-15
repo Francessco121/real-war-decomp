@@ -39,8 +39,8 @@ set shell := ["powershell.exe", "-c"]
 
 # run patched exe
 [no-exit-message]
-@run:
-    cd game; ./RealWar.exe
+@run +args:
+    cd game; ./RealWar.exe {{args}}
 
 # debug patched exe with windows console debugger
 [no-exit-message]
@@ -49,15 +49,15 @@ set shell := ["powershell.exe", "-c"]
 
 # build + run
 [no-exit-message]
-@buildrun:
+@buildrun +args:
     just build
-    just run
+    just run {{args}}
 
 # rebuild + run
 [no-exit-message]
-@rebuildrun:
+@rebuildrun +args:
     just rebuild
-    just run
+    just run {{args}}
 
 # watch modlog.txt
 [no-exit-message]
