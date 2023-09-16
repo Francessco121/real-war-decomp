@@ -39,7 +39,7 @@ set shell := ["powershell.exe", "-c"]
 
 # run patched exe
 [no-exit-message]
-@run +args:
+@run *args:
     cd game; ./RealWar.exe {{args}}
 
 # debug patched exe with windows console debugger
@@ -49,13 +49,13 @@ set shell := ["powershell.exe", "-c"]
 
 # build + run
 [no-exit-message]
-@buildrun +args:
+@buildrun *args:
     just build
     just run {{args}}
 
 # rebuild + run
 [no-exit-message]
-@rebuildrun +args:
+@rebuildrun *args:
     just rebuild
     just run {{args}}
 
@@ -73,3 +73,8 @@ set shell := ["powershell.exe", "-c"]
 [no-exit-message]
 @repack-bigfile:
     dart run ../tools/rw_assets/bin/bigfile.dart pack -i game/bigfile -o game/data/bigfile.dat -f
+
+# work with TGC files
+[no-exit-message]
+@tgc *args:
+    dart run ../tools/rw_assets/bin/tgc.dart {{args}}

@@ -44,7 +44,10 @@ A quick overview of the decompilation process:
 - If the function doesn't match, surround it with `#if NON_MATCHING` and add back its `#pragma ASM_FUNC`
 
 ## Cool Stuff
+
+### Tools
 - `tools/rw_assets/bin/bigfile.dart` - Unpacks all files in `bigfile.dat` into a directory. 
+- `tools/rw_assets/bin/tgc.dart` - Converts to and from Real War's Targa Compressed (TGC) image files. 
 
 ### Game CLI Args
 The game has many undocumented command-line arguments that it will accept. Each argument starts with a `-`, followed by a single uppercase letter. For an argument to actually be recognized by the game, it must have a "value" after it (i.e. `-G 1`) even if the "value" has no effect (i.e. it can be anything, it just needs to be there). Note: There does not need to be a space between the argument name and its value.
@@ -53,7 +56,7 @@ The game has many undocumented command-line arguments that it will accept. Each 
 - `-L 1` - Launch the "model viewer" instead of the game.
     - It seems this can do a little more than just view models. Pressing <kdb>s</kdb> will prompt to save the file in the BSE format.
 - `-E 1` - Launch "editor 1" instead of the game.
-    - The file `data\editor\menu.tgc` must be created or else this will crash (ideally this should be an 800x600 image, for example you can use `data\idc\tgas\backbl.tga` (the main menu background)).
+    - The file `data\editor\menu.tgc` must be created or else this will crash (ideally this should be an 800x600 image, for example you can use `data\idc\tgas\BACKbl.tgc` (the main menu background)).
 - `-E 2` - Launch "editor 2" instead of the game.
     - **NOT RECOMMENDED**: This editor will give you a few hundred error dialog boxes and then crash. Needs to be patched.
 - `-H 1` - Launch the game with hardware acceleration enabled.

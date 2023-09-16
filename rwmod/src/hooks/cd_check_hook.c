@@ -2,7 +2,7 @@
 //
 // The game included this check as a form of DRM but given how insanely trivial it is to
 // fake a CD by mounting the game ISO, it just makes working with the game a pain. Feel
-// free to comment this out if you think it's wrong to patch this. :)
+// free to remove this if you think it's wrong. :)
 
 #include "log.h"
 

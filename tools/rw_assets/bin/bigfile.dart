@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:args/command_runner.dart';
-import 'package:console_bars/console_bars.dart';
 import 'package:path/path.dart' as p;
 import 'package:rw_assets/bigfile.dart';
+import 'package:rw_assets/console_utils.dart';
 
 void main(List<String> args) {
   CommandRunner('bigfile',
@@ -64,17 +64,17 @@ class UnpackCommand extends Command {
       exit(-1);
     }
 
-    final progress = FillingBar(
-        desc: "Unpacking",
-        total: bigfile.entries.length,
-        time: false,
-        percentage: true);
+    final progress = ConsoleProgress()
+      ..label = 'Unpacking'
+      ..timer = true
+      ..barMax = bigfile.entries.length
+      ..barValue = 0
+      ..startTimer()
+      ..startAutoRender();
 
     final paths = <String>{};
     entryLoop:
     for (final entry in bigfile.entries) {
-      progress.increment();
-
       String path = entry.path;
       while (paths.contains(path)) {
         if (ignoreDuplicates) {
@@ -87,7 +87,7 @@ class UnpackCommand extends Command {
 
       final file = File(p.normalize(p.join(outputPath, path)));
       if (file.existsSync() && !force) {
-        _clearConsoleLine();
+        progress.break$();
         print(
             'ERR: File already exists at: ${p.normalize(p.absolute(file.path))}');
         exit(-1);
@@ -96,9 +96,11 @@ class UnpackCommand extends Command {
       file.parent.createSync(recursive: true);
       file.writeAsBytesSync(Uint8List.sublistView(
           bigfileBytes, entry.byteOffset, entry.byteOffset + entry.sizeBytes));
+
+      progress.incrementBar();
     }
 
-    _clearConsoleLine();
+    progress.break$();
     print('Unpacked files to: ${p.normalize(p.absolute(outputPath))}');
     sigintSubscription.cancel();
   }
@@ -136,7 +138,8 @@ class PackCommand extends Command {
 
     final outputFile = File(outputPath);
     if (outputFile.existsSync() && !force) {
-      print('File already exists at: ${p.normalize(p.absolute(outputPath))}');
+      print(
+          'ERR: File already exists at: ${p.normalize(p.absolute(outputPath))}');
       exit(-1);
     }
 
@@ -150,7 +153,13 @@ class PackCommand extends Command {
     final sigintSubscription =
         ProcessSignal.sigint.watch().listen((event) => exit(-1));
 
-    stdout.write('Scanning (1/3)...');
+    final progress = ConsoleProgress()
+      ..label = 'Scanning'
+      ..timer = true
+      ..steps = 3
+      ..step = 1
+      ..startTimer()
+      ..startAutoRender();
 
     final files = <File>[];
     for (final file in inputDir.listSync(recursive: true)) {
@@ -161,20 +170,20 @@ class PackCommand extends Command {
       files.add(file);
     }
 
-    _clearConsoleLine();
-    var progress = FillingBar(
-        desc: "Computing header (2/3)",
-        total: files.length,
-        time: true,
-        percentage: true);
+    progress
+      ..break$()
+      ..barMax = files.length
+      ..barValue = 0
+      ..label = 'Computing header'
+      ..incrementStep()
+      ..restartTimer()
+      ..startAutoRender();
 
     final headerSize = files.length * BigfileEntry.headerSize + 4;
     final entries = <BigfileEntry>[];
     int dataOffset = headerSize;
 
     for (final file in files) {
-      progress.increment();
-
       final fileSize = file.statSync().size;
 
       String path = p.normalize(p.relative(file.path, from: inputPath));
@@ -183,7 +192,7 @@ class PackCommand extends Command {
       path = path.replaceAll(RegExp(r'[/|:]'), '\\').toUpperCase();
 
       if (path.length > BigfileEntry.maxPathLength) {
-        _clearConsoleLine();
+        progress.break$();
         print('ERR: Path $path is too long!');
         exit(-1);
       }
@@ -195,14 +204,19 @@ class PackCommand extends Command {
           sizeBytes: fileSize));
 
       dataOffset += fileSize;
+
+      progress.incrementBar();
     }
 
-    _clearConsoleLine();
-    progress = FillingBar(
-        desc: "Packing (3/3)",
-        total: entries.length,
-        time: true,
-        percentage: true);
+    progress
+      ..break$()
+      ..barMax = entries.length
+      ..barValue = 0
+      ..label = 'Packing'
+      ..incrementStep()
+      ..restartTimer()
+      ..startAutoRender();
+
     int i = 0;
 
     final builder = BytesBuilder(copy: false);
@@ -211,33 +225,27 @@ class PackCommand extends Command {
         .asUint8List());
 
     for (final entry in entries) {
-      if ((i++) % 2 == 0) {
-        progress.increment();
-      }
-
       builder.add(entry.toBytes());
+
+      if ((i++) % 2 == 0) {
+        progress.incrementBar();
+      }
     }
 
     for (final file in files) {
-      if ((i++) % 2 == 0) {
-        progress.increment();
-      }
-
       builder.add(file.readAsBytesSync());
+
+      if ((i++) % 2 == 0) {
+        progress.incrementBar();
+      }
     }
 
     outputFile.parent.createSync(recursive: true);
     outputFile.writeAsBytesSync(builder.takeBytes());
 
-    _clearConsoleLine();
+    progress.break$();
     print('Packed files into: ${p.normalize(p.absolute(outputFile.path))}');
 
     sigintSubscription.cancel();
   }
-}
-
-void _clearConsoleLine() {
-  stdout.writeCharCode(13);
-  stdout.write(' ' * stdout.terminalColumns);
-  stdout.writeCharCode(13);
 }
