@@ -355,21 +355,20 @@ class FromDirCommand extends Command {
 }
 
 Future<void> _tgcToImage(File inputFile, File outputFile) async {
-  final (TgcFile tgc, Uint8List rgbBytes) =
-      readTgc(inputFile.readAsBytesSync());
+  final tgc = readTgc(inputFile.readAsBytesSync());
 
   if (p.extension(outputFile.path).toLowerCase() == '.tga') {
     final imageDataBottomToTop =
-        imageVerticalFlip(rgbBytes, tgc.width, tgc.height);
-    final tga = make16BitTarga(imageDataBottomToTop, tgc.width, tgc.height);
+        imageVerticalFlip(tgc.imageBytes, tgc.header.width, tgc.header.height);
+    final tga = make16BitTarga(imageDataBottomToTop, tgc.header.width, tgc.header.height);
 
     outputFile.writeAsBytesSync(tga);
   } else {
-    final rgba32 = argb1555ToRgba8888(rgbBytes);
+    final rgba32 = argb1555ToRgba8888(tgc.imageBytes);
 
     final image = img.Image.fromBytes(
-        width: tgc.width,
-        height: tgc.height,
+        width: tgc.header.width,
+        height: tgc.header.height,
         bytes: rgba32.buffer,
         format: img.Format.uint8,
         numChannels: 4,
@@ -396,8 +395,8 @@ void _imageToTgc(File inputFile, File outputFile) {
   image.remapChannels(img.ChannelOrder.rgba);
 
   final Uint8List argb1555 = rgba8888ToArgb1555(image.toUint8List());
-  final tgc = TgcFile(image.width, image.height);
-  final tgcBytes = makeTgc(tgc, argb1555);
+  final header = TgcHeader(image.width, image.height);
+  final tgcBytes = makeTgc(header, argb1555);
 
   outputFile.writeAsBytesSync(tgcBytes);
 }

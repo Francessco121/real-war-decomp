@@ -5,7 +5,10 @@ import 'dart:typed_data';
 /// is only 4096.
 const _maxRunLength = 4096;
 
-/// Descriptor for a Targa Compressed (TGC) file.
+/// File pointer to RLE data section of all TGC files.
+const _rleDataOffset = 4;
+
+/// Header for a Targa Compressed (TGC) file.
 /// 
 /// TGC files store 16-bit truecolor pixel data where the R, G, and B
 /// components take up 5-bits each and the highest bit denotes alpha.
@@ -14,49 +17,78 @@ const _maxRunLength = 4096;
 /// 
 /// Pixel format:
 /// ARRRRRGGGGGBBBBB 
-class TgcFile {
-  /// File pointer to run-length encoded 16-bit truecolor ARGB pixel data.
-  static const int rleDataOffset = 4;
-
+class TgcHeader {
   final int width;
   final int height;
 
-  TgcFile(this.width, this.height);
+  TgcHeader(this.width, this.height);
 
-  factory TgcFile.fromBytes(Uint8List bytes) {
+  factory TgcHeader.fromBytes(Uint8List bytes) {
     final data = ByteData.sublistView(bytes);
     
-    return TgcFile(
+    return TgcHeader(
         data.getUint16(0, Endian.little), 
         data.getUint16(2, Endian.little));
   }
 }
 
-/// Makes a TGC file from a [descriptor] and 16-bit [rgbBytes].
+/// A read TGC file with it's image data decoded into ARGB1555.
+class DecodedTgcFile {
+  final TgcHeader header;
+
+  /// ARGB1555 pixel data.
+  final Uint8List imageBytes;
+
+  /// An unknown 32-bit trailer.
+  final int trailer;
+
+  DecodedTgcFile(this.header, this.imageBytes, this.trailer);
+}
+
+/// Makes a TGC file from a [header] and 16-bit [rgbBytes].
 /// 
 /// Pixels must be in top-to-bottom order.
-Uint8List makeTgc(TgcFile descriptor, Uint8List rgbBytes) {
+Uint8List makeTgc(TgcHeader header, Uint8List rgbBytes) {
   final tgcBytes = BytesBuilder(copy: false);
-  tgcBytes.addByte(descriptor.width & 0xFF);
-  tgcBytes.addByte((descriptor.width >> 8) & 0xFF);
-  tgcBytes.addByte(descriptor.height & 0xFF);
-  tgcBytes.addByte((descriptor.height >> 8) & 0xFF);
+  // Header
+  tgcBytes.addByte(header.width & 0xFF);
+  tgcBytes.addByte((header.width >> 8) & 0xFF);
+  tgcBytes.addByte(header.height & 0xFF);
+  tgcBytes.addByte((header.height >> 8) & 0xFF);
+  // RLE image data
   tgcBytes.add(tgcRleEncode(rgbBytes));
+  // Trailer
+  //
+  // It's unknown what this is supposed to be. The game files have a 4 byte trailer
+  // that sometimes is 0 and sometimes not, but the game itself never actually reads
+  // it. So, just write zeroes to be consistent.
+  tgcBytes.addByte(0);
+  tgcBytes.addByte(0);
+  tgcBytes.addByte(0);
+  tgcBytes.addByte(0);
 
   return tgcBytes.takeBytes();
 }
 
 /// Reads a TGC files and decodes its RGB bytes.
-(TgcFile, Uint8List) readTgc(Uint8List tgcBytes) {
-  final descriptor = TgcFile.fromBytes(tgcBytes);
-  final rgbBytes = tgcRleDecode(
-      Uint8List.sublistView(tgcBytes, TgcFile.rleDataOffset));
+DecodedTgcFile readTgc(Uint8List tgcBytes) {
+  final header = TgcHeader.fromBytes(tgcBytes);
+  final (imageBytes, rleByteLength) = tgcRleDecode(
+      Uint8List.sublistView(tgcBytes, _rleDataOffset));
   
-  return (descriptor, rgbBytes);
+  final int trailer;
+  if (_rleDataOffset + rleByteLength + 4 <= tgcBytes.lengthInBytes) {
+    trailer = ByteData.sublistView(tgcBytes, _rleDataOffset + rleByteLength)
+        .getUint32(0, Endian.little);
+  } else {
+    trailer = 0;
+  }
+  
+  return DecodedTgcFile(header, imageBytes, trailer);
 }
 
-/// Decode TGC run-length encoded 16-bit truecolor ARGB pixel data.
-Uint8List tgcRleDecode(Uint8List rleBytes) {
+/// Decode TGC 16-bit run-length encoded image data.
+(Uint8List outBytes, int readBytes) tgcRleDecode(Uint8List rleBytes) {
   assert(rleBytes.lengthInBytes % 2 == 0);
 
   final data = ByteData.sublistView(rleBytes);
@@ -95,9 +127,16 @@ Uint8List tgcRleDecode(Uint8List rleBytes) {
     }
   }
 
-  return out.takeBytes();
+  // Skip 0xFFFFFFFF end marker
+  // (we already parsed the first half, skip the second half if it exists)
+  if (inIdx + 2 <= data.lengthInBytes) {
+    inIdx += 2;
+  }
+
+  return (out.takeBytes(), inIdx);
 }
 
+/// Encode 16-bit image data with run-length encoding.
 Uint8List tgcRleEncode(Uint8List rgbBytes) {
   assert(rgbBytes.lengthInBytes % 2 == 0);
 
@@ -106,8 +145,9 @@ Uint8List tgcRleEncode(Uint8List rgbBytes) {
   final out = BytesBuilder(copy: false);
   int i = 0;
   int runStart = 0;
-  bool? repeatRun;
+  bool repeatRun = false;
   int? lastPixel;
+  int matches = 0;
 
   void writeRepeatRun(int length, int pixel) {
     if (length <= 0) {
@@ -136,22 +176,34 @@ Uint8List tgcRleEncode(Uint8List rgbBytes) {
     final pixel = data.getUint16(i, Endian.little);
     
     if (lastPixel != null) {
-      if (repeatRun == null) {
-        // Start of run, determine type
-        repeatRun = pixel == lastPixel;
-      } else {
-        final runLength = (i - runStart) ~/ 2;
+      final runLength = (i - runStart) ~/ 2;
 
-        if (repeatRun && (runLength >= _maxRunLength || pixel != lastPixel)) {
-          // End of repeat run
-          writeRepeatRun(runLength, lastPixel);
-          runStart = i;
-          repeatRun = null;
-        } else if (!repeatRun && (runLength >= _maxRunLength || pixel == lastPixel)) {
-          // End of literal run
+      if (!repeatRun) {
+        if (matches != -1) {
+          if (pixel == lastPixel) {
+            matches++;
+
+            if (matches >= 3) {
+              // 3 matches at the start of the run, change into a repeat run
+              repeatRun = true;
+            }
+          } else {
+            // Run doesn't start with at least 3 matches, lock out of a repeat run
+            matches = -1;
+          }
+        } else if (pixel == lastPixel || runLength >= _maxRunLength) {
+          // Potential repeat run start or run is too long, break
           writeLiteralRun(runStart, runLength);
           runStart = i;
-          repeatRun = null;
+          matches = 0;
+        }
+      } else {
+        if (pixel != lastPixel || runLength >= _maxRunLength) {
+          // End of repeat run or run is too long, break
+          writeRepeatRun(runLength, lastPixel);
+          runStart = i;
+          repeatRun = false;
+          matches = 0;
         }
       }
     }
@@ -161,7 +213,7 @@ Uint8List tgcRleEncode(Uint8List rgbBytes) {
   }
 
   if (i > runStart) {
-    if (repeatRun == true) {
+    if (repeatRun == true || matches != -1) {
       writeRepeatRun((i - runStart) ~/ 2, lastPixel!);
     } else {
       writeLiteralRun(runStart, (i - runStart) ~/ 2);
@@ -169,6 +221,8 @@ Uint8List tgcRleEncode(Uint8List rgbBytes) {
   }
 
   // End of string marker
+  out.addByte(0xFF);
+  out.addByte(0xFF);
   out.addByte(0xFF);
   out.addByte(0xFF);
 

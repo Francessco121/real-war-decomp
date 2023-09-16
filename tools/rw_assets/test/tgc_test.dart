@@ -11,7 +11,7 @@ void main() {
     final testImageData = _getTgaImageData(testImageFile.readAsBytesSync());
 
     final encoded = tgcRleEncode(testImageData);
-    final decoded = tgcRleDecode(encoded);
+    final (decoded, _) = tgcRleDecode(encoded);
 
     expect(decoded, equals(testImageData));
   });
