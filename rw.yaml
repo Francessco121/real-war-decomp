@@ -36,6 +36,8 @@ segments:
   - [0x401000, bin, null]
   - [0x401150, c, try_find_valid_d3d_device]
   - [0x401210, bin, null]
+  - [0x409b40, c, load_texture]
+  - [0x0409f50, bin , null]
   - [0x4620f0, c, cd_check]
   - [0x4621a0, bin, null]
   - [0x4b92e0, c, timers]
@@ -206,8 +208,8 @@ symbols:
   FUN_00409950: 0x409950
   FUN_00409a50: 0x409a50
   FUN_00409aa0: 0x409aa0
-  FUN_00409b40: 0x409b40
-  FUN_00409b90: 0x409b90
+  bmp_pallete_rgb888_to_rgb1555: 0x409b40
+  load_texture: 0x409b90
   FUN_00409f50: 0x409f50
   FUN_0040a010: 0x40a010
   FUN_0040a0b0: 0x40a0b0
