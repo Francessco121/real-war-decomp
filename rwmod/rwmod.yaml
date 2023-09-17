@@ -24,3 +24,4 @@ hooks:
   load_bigfile_header: load_bigfile_header_hook
   write_bytes_to_file: write_bytes_to_file_hook
   draw_frame: draw_frame_hook
+  game_create_window: game_create_window_hook

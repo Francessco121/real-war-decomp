@@ -47,6 +47,8 @@ segments:
   - [0x4c4a20, bin, null]
   - [0x4d2050, c, sound]
   - [0x4d26c0, bin, null]
+  - [0x4d45c0, c, create_window]
+  - [0x4d4730, bin, null]
   - [0x4d5e60, c, virtual_memory]
   - [0x4d6350, bin, null]
   - [0x4d6860, c, data]
@@ -67,9 +69,18 @@ segments:
 # Map of symbol names to their base exe virtual address
 symbols:
   # Globals/Statics (.rdata)
+  GetStockObject: 0x4e9024
   VirtualFree: 0x4e904c
   VirtualAlloc: 0x4e9050
   GetTickCount: 0x4e9058
+  GetSystemMetrics: 0x4e910c
+  SetFocus: 0x4e9110
+  UpdateWindow: 0x4e9120
+  ShowWindow: 0x4e9124
+  CreateWindowExA: 0x4e9128
+  LoadIconA: 0x4e9130
+  RegisterClassA: 0x4e9134
+  LoadCursorA: 0x4e9138
   GetKeyState: 0x4e9154
   IID_IDirect3D: 0x4e9e98
   # Globals/Statics (.data)
@@ -87,9 +98,11 @@ symbols:
   gADPCMPredictor2: 0x51b8fc
   gADPCMIndex2: 0x51b8fe
   gVirtualMemoryBufferNumber: 0x51b908
+  gLaunchWindowed: 0x51b918
   gTotalVirtualMemoryAllocated: 0x51b92c
   DAT_0051b988: 0x51b988
   sLoadedBigFileHeader: 0x51b98c
+  gWndHandle: 0x51e200
   gKeysTapped: 0x51e220
   sBigFileAbsolutePath: 0x51e340
   gHResult1: 0x51e3c4
@@ -100,6 +113,7 @@ symbols:
   sRwMapTxtFile: 0x567790
   sBigFileEntryPointers: 0x5677a0
   gTempString2: 0x5679a0
+  gCursorTextures: 0x567ac0
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
   gVirtualMemoryBuffers: 0x594f60
@@ -135,6 +149,7 @@ symbols:
   str_pct24s_d: 0x51560c
   str_resolution_per_frame: 0x515614
   str_clockers: 0x51562c
+  str_real_war_v9_dot_25: 0x517018
   str_bad_or_missing_adpcm_file: 0x5172d8
   str_couldnt_malloc_adpcm_buf: 0x5172f8
   str_memory_map_file: 0x517474
