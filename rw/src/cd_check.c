@@ -3,11 +3,7 @@
 
 #include "data.h"
 #include "strings.h"
-
-extern char gTempString[];
-
-extern void display_message(char *format, ...);
-extern void game_exit();
+#include "undefined.h"
 
 void cd_check() {
     int retries = 0;

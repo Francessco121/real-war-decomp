@@ -1,13 +1,7 @@
 #include <WINDOWS.H>
 
 #include "keyboard.h"
-
-extern int gWindowFocused;
-
-// Array for all virtual key codes where a value of 0 is released and 1 is pressed
-extern char gKeysPressed[256];
-// Same as [gKeysPressed] but only remains 1 for one tick 
-extern char gKeysTapped[256];
+#include "undefined.h"
 
 unsigned int is_key_pressed(int nVirtKey) {
     if (gWindowFocused) {

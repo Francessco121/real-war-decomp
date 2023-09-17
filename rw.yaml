@@ -1133,7 +1133,7 @@ symbols:
   FUN_004c4300: 0x4c4300
   FUN_004c4370: 0x4c4370
   FUN_004c4780: 0x4c4780
-  FUN_004c47b0: 0x4c47b0
+  load_spt_file: 0x4c47b0
   FUN_004c4980: 0x4c4980
   rle_decode: 0x4c49a0
   FUN_004c4a20: 0x4c4a20
@@ -1332,7 +1332,7 @@ symbols:
   FUN_004d7dd0: 0x4d7dd0
   FUN_004d7f60: 0x4d7f60
   FUN_004d8010: 0x4d8010
-  FUN_004d8020: 0x4d8020
+  load_cursor_textures: 0x4d8020
   FUN_004d8060: 0x4d8060
   check_window_focus_change: 0x4d8090
   is_key_pressed: 0x4d8140

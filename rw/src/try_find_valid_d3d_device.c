@@ -2,11 +2,11 @@
 #include <d3d.h>
 
 #include "strings.h"
+#include "undefined.h"
 
-extern int gSelectedD3DDevice;
-extern int gD3DDeviceCounter;
+int gSelectedD3DDevice;
+int gD3DDeviceCounter;
 
-extern void display_message(char *format, ...);
 extern HRESULT WINAPI enum_devices_callback
     (LPGUID lpGUID,LPSTR lpszDeviceDesc,LPSTR lpszDeviceName,
     LPD3DDEVICEDESC lpd3dHWDeviceDesc,

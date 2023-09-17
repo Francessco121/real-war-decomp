@@ -3,12 +3,10 @@
 #include <WINDOWS.H>
 
 #include "strings.h"
+#include "undefined.h"
 #include "virtual_memory.h"
 
 #define MAX_VIRTUAL_MEMORY_BUFFERS 8192
-
-extern void display_message(char *format, ...);
-extern void display_message_and_exit(char* message);
 
 extern void* gVirtualMemoryBuffers[MAX_VIRTUAL_MEMORY_BUFFERS];
 extern size_t gVirtualMemorySizes[MAX_VIRTUAL_MEMORY_BUFFERS];
@@ -19,9 +17,6 @@ extern BOOL gEnableRwMap;
 extern int DAT_0051b988;
 extern int DAT_00567788;
 extern FILE* sRwMapTxtFile;
-
-extern char gTempString[];
-extern char gTempString2[];
 
 void setup_virtual_memory_buffers() {
     memset(gVirtualMemoryBuffers, 0, sizeof(gVirtualMemoryBuffers));

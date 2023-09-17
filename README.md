@@ -72,6 +72,6 @@ The game has many undocumented command-line arguments that it will accept. Each 
 - `-S 1` - Launches the game into a new multiplayer lobby.
 - `-C 1` - Unknown.
 - `-B 1` - Unknown.
-- `-N <number?>` - Unknown.
-- `-P <number?>` - Unknown.
+- `-N<string>` - Unknown.
+- `-P<string>` - Unknown.
 - `-F 1` - Recognized by the game, but does nothing.

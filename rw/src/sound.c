@@ -3,6 +3,7 @@
 
 #include "data.h"
 #include "strings.h"
+#include "undefined.h"
 #include "virtual_memory.h"
 
 extern byte gSoundSystemInitialized;
@@ -15,9 +16,6 @@ extern char gADPCMIndex2;
 
 extern HRESULT gHResult1;
 extern HRESULT gHResult2;
-
-extern void display_message(char *format, ...);
-extern void display_message_and_exit(char* message);
 
 /**
  * Decompresses 4-bit ADPCM into 16-bit PCM.
