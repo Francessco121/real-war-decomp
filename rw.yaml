@@ -50,7 +50,7 @@ segments:
   - [0x4d45c0, c, create_window]
   - [0x4d4730, bin, null]
   - [0x4d5e60, c, virtual_memory]
-  - [0x4d6350, bin, null]
+  - [0x4d6350, c, mouse]
   - [0x4d6860, c, data]
   - [0x4d7050, bin, null]
   - [0x4d8140, c, keyboard]
@@ -81,6 +81,10 @@ symbols:
   LoadIconA: 0x4e9130
   RegisterClassA: 0x4e9134
   LoadCursorA: 0x4e9138
+  PeekMessageA: 0x4e913c
+  GetMessageA: 0x4e9144
+  DispatchMessageA: 0x4e9148
+  TranslateMessage: 0x4e914c
   GetKeyState: 0x4e9154
   IID_IDirect3D: 0x4e9e98
   # Globals/Statics (.data)
@@ -100,23 +104,40 @@ symbols:
   gVirtualMemoryBufferNumber: 0x51b908
   gLaunchWindowed: 0x51b918
   gTotalVirtualMemoryAllocated: 0x51b92c
+  gPrevMouseIdx: 0x51b96c
+  gSomeMouseHistoryIdx: 0x51b970
   DAT_0051b988: 0x51b988
   sLoadedBigFileHeader: 0x51b98c
+  gMouseButtonBits: 0x51e0e4
   gWndHandle: 0x51e200
   gKeysTapped: 0x51e220
+  gPrevScrollWheelDelta: 0x51e320
+  gUnusedMouseGlobal1: 0x51e324
+  gUnusedMouseGlobal2: 0x51e328
   sBigFileAbsolutePath: 0x51e340
+  gCursorY2: 0x51e3c0
   gHResult1: 0x51e3c4
+  gCursorX2: 0x51e3c8
   gKeysPressed: 0x53ebe0
+  gPrevMouseButtonBits: 0x53ede0
+  gUnkMouseButtonBits: 0x53edf4
   gVirtualMemoryNumbers: 0x53ee60
   gHResult2: 0x546e74
+  gSomeMoreMouseButtonBits: 0x567784
   DAT_00567788: 0x567788
+  gSomeMouseButtonBits: 0x56778c
   sRwMapTxtFile: 0x567790
   sBigFileEntryPointers: 0x5677a0
   gTempString2: 0x5679a0
   gCursorTextures: 0x567ac0
+  gPrevMouseXs: 0x5713a0
+  gPrevMouseYs: 0x5713c0
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
+  gScrollWheelDelta: 0x5735e4
   gVirtualMemoryBuffers: 0x594f60
+  gCursorX: 0x59cf60
+  gCursorY: 0x59cf64
   gVirtualMemorySizes: 0x59cf80 
   sAbsolutePathTempString: 0x5f0a60
   gTimerValues: 0x5fa260
@@ -1302,12 +1323,12 @@ symbols:
   set_virtual_memory_buffer_number: 0x4d62f0
   get_virtual_memory_buffer_number: 0x4d6300
   free_virtual_memory_buffer_by_number: 0x4d6310
-  FUN_004d6350: 0x4d6350
-  FUN_004d6420: 0x4d6420
-  FUN_004d64c0: 0x4d64c0
-  FUN_004d6530: 0x4d6530
-  FUN_004d65a0: 0x4d65a0
-  FUN_004d6610: 0x4d6610
+  mouse_init: 0x4d6350
+  handle_mouse_move: 0x4d6420
+  handle_m1_down: 0x4d64c0
+  handle_m1_up: 0x4d6530
+  handle_m2_down: 0x4d65a0
+  handle_m2_up: 0x4d6610
   FUN_004d6680: 0x4d6680
   FUN_004d6740: 0x4d6740
   FUN_004d6790: 0x4d6790

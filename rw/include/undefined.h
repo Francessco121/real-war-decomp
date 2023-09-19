@@ -23,3 +23,7 @@ extern void game_exit();
 extern void to_absolute_data_path(char *path);
 extern void to_absolute_data_path2(char *path);
 
+extern int handle_window_focus_change();
+extern int check_window_focus_change(int);
+
+extern int set_cursor_pos(int x, int y);
