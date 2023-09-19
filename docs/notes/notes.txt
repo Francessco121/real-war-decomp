@@ -11,3 +11,6 @@
 - apparently ffmpeg 4.4 can read the .vag audio files
     - ffmpeg -i intro.mpg -i intro.vag intro.mp4
 - seems to be compiled with /ML (single-threaded libc, which is the default)
+- CD retail release claims the game version is "Real War: V9.25" however the patches
+  use the verisons "V1.5" and "V1.6". Version 9.25 was probably an internal version
+  and the actual "release version" was more like "V1.0".

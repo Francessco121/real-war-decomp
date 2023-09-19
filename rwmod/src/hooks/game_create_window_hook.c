@@ -9,7 +9,7 @@ extern int gWindowFocused;
 
 extern LRESULT __stdcall game_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 extern void FUN_004d8010(int);
-extern void FUN_004d8020();
+extern void load_cursor_textures();
 
 static char gameName[] = "Real War: rwmod";
 
@@ -77,7 +77,7 @@ int game_create_window_hook(HINSTANCE hInstance, int nCmdShow) {
 
     memset(&gCursorTextures, 0, 0x98a0);
     
-    FUN_004d8020();
+    load_cursor_textures();
 
     gWindowFocused = 1;
 
