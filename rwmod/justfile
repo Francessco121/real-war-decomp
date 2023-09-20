@@ -78,3 +78,8 @@ set shell := ["powershell.exe", "-c"]
 [no-exit-message]
 @tgc *args:
     dart run ../tools/rw_assets/bin/tgc.dart {{args}}
+
+# work with KVAG files
+[no-exit-message]
+@kvag *args:
+    dart run ../tools/rw_assets/bin/kvag.dart {{args}}

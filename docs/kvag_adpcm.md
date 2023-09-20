@@ -1,9 +1,15 @@
 # KVAG/ADPCM
-Real War stores audio files in the ADPCM format usually in the KVAG container.
+Real War stores audio files in the 4-bit ADPCM format usually in the KVAG container. A couple files do not start with a KVAG header and instead are just raw mono ADPCM with a sample rate of 22050. These files seem to be inspired by Sony's VAG file format, which also uses 4-bit ADPCM.
 
 These are `.VAG` files on disk.
 
-KVAG Format:
+The original game function for reading these files can be found at RAM `0x004d25e0`.
+
+Fun fact: FFmpeg can read/write these files as of this patch: https://ffmpeg.org/pipermail/ffmpeg-devel/2020-February/256626.html
+
+## File Format (with KVAG header)
+All numerics are little-endian and unsigned.
+
 | Offset | Size | Field    | Description |
 |--------|------|----------|-------------|
 | 0x0    | 4    | magic    | The string "KVAG" |
@@ -12,6 +18,7 @@ KVAG Format:
 | 0xC    | 2    | isStereo | 0 (Mono) or 1 (Stereo) |
 | 0xE    | size | adpcmBytes | The actual ADPCM byte data |
 
-The original game function for reading these files can be found at RAM `0x004d25e0`.
+## ADPCM Compression
+For mono, every 4-bits of ADPCM is a single sample. For stereo, every 4-bits is also a single sample but only for one channel (either left or right, alternating). For each byte, the high-nibble is the left channel and the low-nibble is right.
 
-Fun fact: FFMPEG can read/write these files as of this patch: https://ffmpeg.org/pipermail/ffmpeg-devel/2020-February/256626.html
+Each sample can be decompressed using the standard 4-bit ADPCM to 16-bit linear decompression algorithm. For stereo, the emitted decompressed 16-bit samples should alternate between the left and right channels (with the left coming before the right).
