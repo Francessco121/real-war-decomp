@@ -1,0 +1,38 @@
+A,D,W,X  =  Scroll the Map. Q,E =  Goto Next Sector.
+Z,C      =  Goto Next Tile. 1,2 =  Goto Next Object.
+Alt+Z                =  Reset Zoom.
+Control+Left Mouse   =  Place A sector or Tile.
+Control+Right Mouse  =  Pickup A sector or Tile.
+ALT+Left Mouse       =  Place Overlay.
+ALT+Right Mouse      =  Pickup Overlay.
+Right Mouse in Map   =  Move Map Around.
+F+Right Mouse        =  Set Cropping Lines
+Control+C            =  Crop The Map
+L                    =  Load File:.TGA .TIL .OVL .MAP .OCT
+S                    =  Save File:.TIL .OVL .MAP .OCT
+ALT+R                =  Re-Load Sector...           
+ALT+O                =  Re-Load An Object...
+ALT+C                =  Clear All Marked Tiles           
+ALT+P                =  Turn Paths On.
+P,M,G,B+Left Mouse   =  (while in Map Window) Add A Path.
+SHIFT+C              =  Mark All Tiles Within The Current Sector...
+F2                   =  Build Tile Brush from marked tiles.OR Cancel Brush.
+TAB+Right Mouse      =  Build Tile Brush. (Must be pointing within sector) 
+F3+Left Mouse        =  Place Tile Brush into current sector.
+F3+Right Mouse       =  Place Tile Brush into Map.(Builds new sectors)
+F4                   =  Delete Unused Tiles.
+F12                  =  Save Current Sector as .TGA
+DEL                  =  Delete Current Object
+F5,F6                =  Flip Sectors x or y.
+F7,F8                =  Flip Marked Tiles in Sector x or y.
+BACKSPACE            =  Delete the Current Tile.
+
+Tile Attributes:
+SHIFT+Mouse Select  =  Set Current And All Marked Tiles.    
+F1 = Show Color Coded by attributes..                    
+
+File Extension Determines the Action to Take:
+.PRJ = Project File.      .TGA = 16 Bit Targa. (320x320 = Sector)
+.OVL = Overlay Objects.   .OCT = Sector Pieces.
+.TIL = Tile Pieces.       .MAP = Map Data.
+

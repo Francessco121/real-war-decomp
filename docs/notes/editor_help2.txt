@@ -1,0 +1,13 @@
+Features for Mission Editor:
+Resources are Loaded From the Global Resource File "global.res"
+Add a Resource to a mission before trying to Use it.
+
+Control+Left Mouse = Place a Resource in the Map.
+Control+Right Mouse = Remove a Resource in the Map.
+
+Alt+Left Mouse = Parent A Resource.
+Alt+Right Mouse = Un-Parent A Resource.
+
+Use the LEft Mouse Button in the Attributes fields to
+Set the Appropriate attributes.
+
