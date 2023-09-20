@@ -38,8 +38,8 @@ segments:
   - [0x401210, bin, null]
   - [0x409b40, c, load_texture]
   - [0x0409f50, bin , null]
-  - [0x4620f0, c, cd_check]
-  - [0x4621a0, bin, null]
+  - [0x461dd0, c, game_dirs]
+  - [0x4626c0, bin, null]
   - [0x4b92e0, c, timers]
   - [0x4b9610, bin, rdtsc] # this might be assembler output, not c code
   - [0x4b9660, bin, null]
@@ -69,6 +69,10 @@ segments:
 # Map of symbol names to their base exe virtual address
 symbols:
   # Globals/Statics (.rdata)
+  RegCreateKeyExA: 0x4e9000
+  RegSetValueExA: 0x4e9004
+  RegCloseKey: 0x4e9008
+  RegQueryValueExA: 0x4e900c
   GetStockObject: 0x4e9024
   VirtualFree: 0x4e904c
   VirtualAlloc: 0x4e9050
@@ -88,12 +92,18 @@ symbols:
   GetKeyState: 0x4e9154
   IID_IDirect3D: 0x4e9e98
   # Globals/Statics (.data)
+  gVidTree: 0x50a410
+  gDataTree: 0x50a510
+  gCDDataDir: 0x50a610
+  gRegKeyValueDataSize: 0x50a740
   gTimerStrings: 0x5144e8
   gADPCMIndexTable: 0x51702c
   gADPCMStepsizeTable: 0x51706c
   gWindowFocused: 0x5171d0
   lpD3D__try_find_valid_d3d_device: 0x51adb8
+  gDirTree: 0x51affc
   # Globals/Statics (.bss)
+  gRegKeyClass: 0x51b0fc
   gEnableRwMap: 0x51b8d8
   sBigFileEntryCount: 0x51b8ec
   gSoundSystemInitialized: 0x51b8f0
@@ -150,6 +160,12 @@ symbols:
   DAT_005fa7c8: 0x5fa7c8
   DAT_005fa7cc: 0x5fa7cc
   gTempString: 0xef6fc0
+  gRealWarRegKey: 0x1a94964
+  gRegKeyDisposition: 0x1a94d80
+  gRegKeyValueData: 0x1a94da0
+  gSoftwareRegKey: 0x1a94ea0
+  gRegKeyValueType: 0x1a94ea4
+  gDirTreeRegValueData: 0x1a94ec0
   gD3DDeviceCounter: 0x1b2ea38
   gSelectedD3DDevice: 0x1b2ea3c
   # Strings
@@ -160,11 +176,23 @@ symbols:
   str_pct_s: 0x4ec3b0
   str_rb: 0x4ec4c4
   str_wb: 0x4ec808
-  str_vids_slash: 0x50a610
+  str_software: 0x50a710
+  str_realwar: 0x50a720
+  str_pct_s_vids_slash: 0x50a744
+  str_cddatadir: 0x50a74c
+  str_vidtree: 0x50a758
+  str_datatree: 0x50a764
+  str_dirtree: 0x50a770
+  str_gamesave: 0x50a77c
   str_pct_cdtest_txt: 0x50a794
   str_please_insert_the_cd: 0x50a7a4
   str_pct_intro_mpg: 0x50a7f4
+  str_couldnt_open_registry: 0x50a800
+  str_couldnt_create_key: 0x50a818
+  str_created_key: 0x50a830
   str_pct_s_2: 0x50a840
+  str_found_key: 0x50a844
+  str_dirtree_2: 0x50a854
   str_pct24s_ddd: 0x5155e8
   str_pct24s_dd: 0x5155fc
   str_pct24s_d: 0x51560c
@@ -641,13 +669,13 @@ symbols:
   FUN_00461aa0: 0x461aa0
   FUN_00461be0: 0x461be0
   FUN_00461d20: 0x461d20
-  create_registry_keys: 0x461dd0
+  load_game_dirs_from_registry: 0x461dd0
   to_absolute_data_path2: 0x461ea0
   to_absolute_data_path: 0x461fd0
   cd_check: 0x4620f0
-  FUN_004621a0: 0x4621a0
-  FUN_00462200: 0x462200
-  FUN_00462580: 0x462580
+  get_absolute_vid_path: 0x4621a0
+  set_game_registry_value: 0x462200
+  get_game_registry_value: 0x462580
   FUN_004626c0: 0x4626c0
   parse_script_file: 0x462980
   FUN_00466cf0: 0x466cf0

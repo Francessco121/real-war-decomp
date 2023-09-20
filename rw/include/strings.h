@@ -36,10 +36,24 @@ extern char str_creation_of_id3d_failed[]; // "Creation of Direct3D interface fa
 extern char str_enum_of_drivers_failed[]; // "Enumeration of drivers failed."
 extern char str_couldnt_find_compatible_d3d_driver[]; // "Could not find a D3D driver that is compatible with this program."
 
+extern char str_software[]; // "Software"
+extern char str_realwar[]; // "RealWar"
+extern char str_pct_s_vids_slash[]; // "%svids\\"
+extern char str_cddatadir[]; // "CDDATADIR"
+extern char str_vidtree[]; // "VIDTREE"
+extern char str_datatree[]; // "DATATREE"
+extern char str_dirtree[]; // "DIRTREE"
+extern char str_gamesave[]; // "GAMESAVE"
+
 extern char str_pct_intro_mpg[]; // "%sintro.mpg"
-extern char str_vids_slash[]; // "vids\\"
 extern char str_please_insert_the_cd[]; // "Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue."
 extern char str_pct_cdtest_txt[]; // "%scdtest.txt"
+
+extern char str_couldnt_open_registry[]; // "Couldn't Open Registry!"
+extern char str_couldnt_create_key[]; // "Couldn't Create Key %s"
+extern char str_created_key[]; // "Created Key %s"
+extern char str_found_key[]; // "Found Key %s"
+extern char str_dirtree_2[]; // "DirTree"
 
 extern char str_trying_to_allocate_0[]; // "Trying to Allocate 0 Bytes."
 extern char str_no_memory_buffers_left[]; // "No Memory Buffers Left For Allocation."
