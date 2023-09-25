@@ -11,5 +11,6 @@ void main() {
     expect(yaml.config.exePath, 'game/RealWar.exe');
     expect(yaml.segments, isNotEmpty);
     expect(yaml.symbols, isNotEmpty);
+    expect(yaml.strings, isNotEmpty);
   });
 }

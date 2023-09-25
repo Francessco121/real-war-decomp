@@ -34,7 +34,7 @@ void relocateObject(
 
       final symbolName = symbol.name.shortName ??
           coff.stringTable!.strings[symbol.name.offset!]!;
-      final symbolAddress = rw.symbols[unmangle(symbolName)];
+      final symbolAddress = rw.lookupSymbolOrString(unmangle(symbolName));
 
       if (symbolAddress == null) {
         if (allowUnknownSymbols) {

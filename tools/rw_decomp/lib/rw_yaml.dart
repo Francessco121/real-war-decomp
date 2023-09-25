@@ -6,13 +6,20 @@ class RealWarYaml {
     return _addressesToSymbols!;
   }
 
+  Map<int, String> get addressesToStrings {
+    _addressesToStrings ??= strings.map((key, value) => MapEntry(value, key));
+    return _addressesToStrings!;
+  }
+
   Map<int, String>? _addressesToSymbols;
+  Map<int, String>? _addressesToStrings;
 
   final String dir;
   final RealWarYamlConfig config;
   final RealWarYamlExe exe;
   final List<RealWarYamlSegment> segments;
   final Map<String, int> symbols;
+  final Map<String, int> strings;
 
   RealWarYaml._({
     required this.dir,
@@ -20,6 +27,7 @@ class RealWarYaml {
     required this.exe,
     required this.segments,
     required this.symbols,
+    required this.strings,
   });
 
   factory RealWarYaml.load(String contents, {required String dir}) {
@@ -47,13 +55,23 @@ class RealWarYaml {
       symbols[entry.key] = entry.value;
     }
 
+    final strings = <String, int>{};
+    for (final MapEntry entry in yaml['strings'].entries) {
+      strings[entry.key] = entry.value;
+    }
+
     return RealWarYaml._(
       dir: dir,
       config: config,
       exe: exe,
       segments: segments,
       symbols: symbols,
+      strings: strings,
     );
+  }
+
+  int? lookupSymbolOrString(String name) {
+    return symbols[name] ?? strings[name];
   }
 
   RealWarYamlSegment? findSegmentOfAddress(int virtualAddress) {

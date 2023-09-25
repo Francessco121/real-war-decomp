@@ -16,6 +16,10 @@ set shell := ["powershell.exe", "-c"]
 @libsearch libfile +symbols:
     dart run tools/rw_decomp/bin/lib_search.dart {{libfile}} {{symbols}}
 
+# work with the rw.yaml file
+@rwyaml *args:
+    dart run tools/rw_decomp/bin/rwyaml.dart {{args}}
+
 # split base exe
 @split:
     tools/rw_decomp/build/split.exe

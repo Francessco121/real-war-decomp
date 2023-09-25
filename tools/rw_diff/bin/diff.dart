@@ -309,7 +309,7 @@ String _replaceAddressesWithSymbols(String str, RealWarYaml rw) {
     final raw = match.group(1)!;
     final address = int.parse(raw);
 
-    return rw.addressesToSymbols[address] ?? raw;
+    return rw.addressesToSymbols[address] ?? rw.addressesToStrings[address] ?? raw;
   });
 }
 
