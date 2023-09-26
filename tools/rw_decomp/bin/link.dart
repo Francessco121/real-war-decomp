@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,6 +7,7 @@ import 'package:pe_coff/coff.dart';
 import 'package:pe_coff/pe.dart';
 import 'package:rw_decomp/relocate.dart';
 import 'package:rw_decomp/rw_yaml.dart';
+import 'package:rw_decomp/symbol_utils.dart';
 
 /*
 - using rw.yaml segment mapping and files in bin/ and build/obj/, link an actual exe
@@ -23,13 +23,10 @@ void main(List<String> args) {
   final argParser = ArgParser()
       ..addOption('root')
       ..addFlag('no-success-message', defaultsTo: false, 
-          help: 'Don\'t write to stdout on success.')
-      ..addFlag('dump-relocated-code', defaultsTo: false, 
-          help: 'Write relocated code to .relocated files next to object files.');
+          help: 'Don\'t write to stdout on success.');
 
   final argResult = argParser.parse(args);
   final bool noSuccessMessage = argResult['no-success-message'];
-  final bool dumpRelocatedCode = argResult['dump-relocated-code'];
   final String projectDir = p.absolute(argResult['root'] ?? p.current);
 
   // Load project config
@@ -49,13 +46,12 @@ void main(List<String> args) {
 
   // Link
   try {
-    // This lint is just wrong???
-    // ignore: prefer_collection_literals
-    final mapping = LinkedHashMap<int, String>();
-    final builder = BytesBuilder();
+    final segmentMapping = <(int, String)>[];
+    final objCache = ObjectFileCache();
+
+    final builder = BytesBuilder(copy: false);
     final imageBase = rw.exe.imageBase;
 
-    int currentFilePointer = 0;
     Section? section; // start in header
     int nextSectionIndex = 0; 
     Section? nextSection = baseExe.sections[nextSectionIndex];
@@ -74,19 +70,24 @@ void main(List<String> args) {
         nextSection = (nextSectionIndex) == baseExe.sections.length ? null : baseExe.sections[nextSectionIndex];
       }
 
+      final currentFilePointer = builder.length;
+
       // Determine where we *want* to put this segment, where it actually goes might differ
       // due to size differences from previous segments
-      final segmentFilePointer = section == null
+      //
+      // If the expected file position is behind where we are, then do nothing. The executable
+      // was shifted up from a larger previous segment and was already warned.
+      final expectedSegmentFilePointer = section == null
           ? segment.address - imageBase
           : (segment.address - imageBase - section.header.virtualAddress) + section.header.pointerToRawData;
-      final segmentByteSize = i < (rw.segments.length - 1)
+      final expectedSegmentByteSize = i < (rw.segments.length - 1)
           ? rw.segments[i + 1].address - segment.address
           : null;
 
-      if (currentFilePointer < segmentFilePointer) {
+      if (currentFilePointer < expectedSegmentFilePointer) {
         // There's a gap between the last segment and where this segment should go,
         // pad with NOPs...
-        final padding = segmentFilePointer - currentFilePointer;
+        final padding = expectedSegmentFilePointer - currentFilePointer;
         if (i > 0) {
           print('WARN: $padding byte gap between "${rw.segments[i - 1].name}" and "${segment.name}".');
         } else {
@@ -97,45 +98,66 @@ void main(List<String> args) {
         }
       }
 
-      // Get bytes to write
+      // Handle segment
       final String segmentFilePath;
-      final Uint8List bytes;
-      if (segment.type == 'bin') {
-        // .bin
-        final binFile = File(p.join(binDirPath, '${segment.name}.bin'));
-        if (!binFile.existsSync()) {
-          throw LinkException('File doesn\'t exist: ${binFile.path}');
-        }
-        bytes = binFile.readAsBytesSync();
-        segmentFilePath = binFile.path;
-      } else if (segment.type == 'c') {
-        // .obj (.text)
-        final objFile = File(p.join(buildDirPath, 'obj', '${segment.name}.obj'));
-        if (!objFile.existsSync()) {
-          throw LinkException('File doesn\'t exist: ${objFile.path}');
-        }
-        try {
-          bytes = _getRelocatedTextFromObject(objFile.readAsBytesSync(), rw, segment.address);
-        } on RelocationException catch (ex) {
-          throw LinkException('${p.relative(objFile.path, from: projectDir)}: ${ex.message}');
-        }
-        segmentFilePath = objFile.path;
 
-        if (dumpRelocatedCode) {
-          File(p.join(buildDirPath, 'obj', '${segment.name}.obj.relocated')).writeAsBytesSync(bytes);
-        }
-      } else {
-        throw UnimplementedError('Unknown segment type: ${segment.type}');
+      switch (segment.type) {
+        case 'bin':
+          // .bin
+          segmentFilePath = p.join(binDirPath, '${segment.name}.bin');
+
+          // Link bin files as is
+          final binFile = File(segmentFilePath);
+          if (!binFile.existsSync()) {
+            throw LinkException('File doesn\'t exist: ${binFile.path}');
+          }
+
+          builder.add(binFile.readAsBytesSync());
+        case 'c':
+        case 'data':
+        case 'rdata':
+          // .obj (.text, .data, .rdata)
+          // Load object file
+          final objFilePath = p.join(buildDirPath, 'obj', '${segment.name}.obj');
+          final (coff, objBytes) = objCache.get(objFilePath);
+
+          // Relocate sections and concatenate bytes (link each section in order as they appear)
+          final sectionName = switch (segment.type) {
+            'c' => '.text',
+            'data' => '.data',
+            'rdata' => '.rdata',
+            _ => throw UnimplementedError()
+          };
+
+          try {
+            int sectionVirtualAddress = segment.address;
+            for (final (section, secBytes) in _iterateSections(coff, objBytes, sectionName)) {
+              relocateSection(coff, section, secBytes, 
+                  targetVirtualAddress: sectionVirtualAddress, 
+                  symbolLookup: (sym) => rw.lookupSymbolOrString(unmangle(sym)));
+              
+              builder.add(secBytes);
+              
+              sectionVirtualAddress += section.header.sizeOfRawData;
+            }
+          } on RelocationException catch (ex) {
+            throw LinkException('${p.relative(objFilePath, from: projectDir)}: ${ex.message}');
+          }
+
+          segmentFilePath = objFilePath;
+        default:
+          throw UnimplementedError('Unknown segment type: ${segment.type}');
       }
 
-      if (segmentByteSize != null && bytes.lengthInBytes != segmentByteSize) {
-        print('WARN: Segment "${segment.name}" byte size (${bytes.lengthInBytes}) doesn\'t match expected size ($segmentByteSize).');
+      // Verify segment size was as expected
+      final bytesWritten = builder.length - currentFilePointer;
+
+      if (expectedSegmentByteSize != null && bytesWritten != expectedSegmentByteSize) {
+        print('WARN: Segment "${segment.name}" byte size ($bytesWritten) doesn\'t match expected size ($expectedSegmentByteSize).');
       }
 
-      // Add to file
-      mapping[segmentFilePointer] = p.relative(p.normalize(segmentFilePath), from: projectDir);
-      builder.add(bytes);
-      currentFilePointer = segmentFilePointer + bytes.lengthInBytes;
+      // Add mapping entry
+      segmentMapping.add((currentFilePointer, p.relative(p.normalize(segmentFilePath), from: projectDir)));
     }
 
     // Write exe file
@@ -145,9 +167,10 @@ void main(List<String> args) {
     // Write mapping file
     final String outMapFilePath = p.join(projectDir, rw.config.buildDir, 'RealWar.map');
     final strBuffer = StringBuffer();
-    for (final entry in mapping.entries) {
-      strBuffer.write('0x${entry.key.toRadixString(16)}:'.padLeft(10));
-      strBuffer.writeln(' ${entry.value}');
+    segmentMapping.sort((a, b) => a.$1.compareTo(b.$1));
+    for (final entry in segmentMapping) {
+      strBuffer.write('0x${entry.$1.toRadixString(16)}:'.padLeft(10));
+      strBuffer.writeln(' ${entry.$2}');
     }
     File(outMapFilePath).writeAsStringSync(strBuffer.toString());
 
@@ -160,18 +183,39 @@ void main(List<String> args) {
   }
 }
 
-Uint8List _getRelocatedTextFromObject(Uint8List objBytes, RealWarYaml rw, int segmentVirtualAddress) {
-  final coff = CoffFile.fromList(objBytes);
-  relocateObject(objBytes, coff, rw, segmentVirtualAddress);
+class ObjectFileCache {
+  final Map<String, (CoffFile, Uint8List)> _cache = {};
 
-  final builder = BytesBuilder();
+  /// Gets or loads and caches the object file at the given [path].
+  /// 
+  /// Returns the COFF descriptor and raw file bytes.
+  (CoffFile, Uint8List) get(String path) {
+    final cached = _cache[path];
+    if (cached != null) {
+      return cached;
+    }
 
+    final objFile = File(path);
+    if (!objFile.existsSync()) {
+      throw LinkException('File doesn\'t exist: ${objFile.path}');
+    }
+
+    final objBytes = objFile.readAsBytesSync();
+    final coff = CoffFile.fromList(objBytes);
+
+    _cache[path] = (coff, objBytes);
+    
+    return (coff, objBytes);
+  }
+}
+
+Iterable<(Section section, Uint8List)> _iterateSections(CoffFile coff, Uint8List objBytes, String sectionName) sync* {
   for (final section in coff.sections) {
-    if (section.header.name == '.text') {
+    if (section.header.name == sectionName) {
       final filePtr = section.header.pointerToRawData;
-      builder.add(Uint8List.sublistView(objBytes, filePtr, filePtr + section.header.sizeOfRawData));
+      final bytes = Uint8List.sublistView(objBytes, filePtr, filePtr + section.header.sizeOfRawData);
+
+      yield (section, bytes);
     }
   }
-
-  return builder.takeBytes();
 }

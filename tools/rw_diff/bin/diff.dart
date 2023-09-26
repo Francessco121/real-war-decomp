@@ -3,17 +3,19 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:ansicolor/ansicolor.dart';
 import 'package:args/args.dart';
 import 'package:async/async.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_console/dart_console.dart';
-import 'package:rw_diff/rw_diff.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe_coff.dart';
 import 'package:rw_decomp/relocate.dart';
 import 'package:rw_decomp/rw_yaml.dart';
+import 'package:rw_decomp/symbol_utils.dart';
+import 'package:rw_diff/rw_diff.dart';
 import 'package:watcher/watcher.dart';
 import 'package:x86_analyzer/functions.dart';
 
@@ -701,9 +703,27 @@ DisassembledFunction _loadObjFunction(
 
   final int funcFileAddress = textFileAddress + symbol.value;
 
-  // Apply relocations
-  relocateObject(bytes, obj, rw, segmentVirtualAddress, 
-      allowUnknownSymbols: true);
+  // Apply .text relocations
+  //
+  // If this was compiled with COMDATs, we could theoretically just relocate the one function, but
+  // let's not assume for simplicity.
+  int sectionVirtualAddress = segmentVirtualAddress;
+  for (final section in obj.sections) {
+    if (section.header.name != '.text') {
+      continue;
+    }
+
+    final filePtr = section.header.pointerToRawData;
+    final sectionBytes = Uint8List.sublistView(bytes, filePtr, filePtr + section.header.sizeOfRawData);
+
+    relocateSection(obj, section, 
+        sectionBytes, 
+        targetVirtualAddress: sectionVirtualAddress, 
+        symbolLookup: (sym) => rw.lookupSymbolOrString(unmangle(sym)),
+        allowUnknownSymbols: true);
+
+    sectionVirtualAddress += section.header.sizeOfRawData;
+  }
 
   final objData = FileData.fromList(bytes);
 

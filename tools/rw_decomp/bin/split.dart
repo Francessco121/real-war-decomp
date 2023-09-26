@@ -65,7 +65,7 @@ void main(List<String> args) {
         nextSection = (nextSectionIndex) == exe.sections.length ? null : exe.sections[nextSectionIndex];
       }
 
-      if (segment.type == 'bss') {
+      if (segment.type == 'bss' || segment.type == 'data' || segment.type == 'rdata') {
         continue;
       }
 
