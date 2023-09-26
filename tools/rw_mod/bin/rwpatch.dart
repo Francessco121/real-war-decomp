@@ -229,7 +229,10 @@ Future<void> main(List<String> args) async {
       flags: newSection.flags,
     );
 
-    baseExeBytes.setRange(0x00000278 + (i * 40), 0x00000278 + ((i + 1) * 40), _sectionHeaderToBytes(header));
+    baseExeBytes.setRange(
+        0x00000278 + (i * SectionHeader.byteSize), 
+        0x00000278 + ((i + 1) * SectionHeader.byteSize), 
+        header.toBytes());
   }
 
   // Update section count and image size
@@ -257,10 +260,6 @@ Future<void> main(List<String> args) async {
   // Write new exe
   await File(outputPath).writeAsBytes(newExeBytes.takeBytes());
 }
-
-const secContainsCode = 0x00000020;
-const secExecute = 0x20000000;
-const secRead = 0x40000000;
 
 const int32Max = 2147483647;
 const int32Min = -2147483648;
@@ -359,28 +358,4 @@ int _fileAlign(int value, PeFile exe) {
   final fileAlignment = exe.optionalHeader!.windows!.fileAlignment;
   
   return (value / fileAlignment).ceil() * fileAlignment;
-}
-
-Uint8List _sectionHeaderToBytes(SectionHeader header) {
-  final data = ByteData(40);
-  
-  final nameChars = header.name.codeUnits;
-  for (int i = 0; i < 8 && i < nameChars.length; i++) {
-    data.setUint8(i, nameChars[i]);
-  }
-  for (int i = 0; i < (8 - nameChars.length); i++) {
-    data.setUint8(i + nameChars.length, 0);
-  }
-
-  data.setUint32(8, header.virtualSize, Endian.little);
-  data.setUint32(12, header.virtualAddress, Endian.little);
-  data.setUint32(16, header.sizeOfRawData, Endian.little);
-  data.setUint32(20, header.pointerToRawData, Endian.little);
-  data.setUint32(24, header.pointerToRelocations, Endian.little);
-  data.setUint32(28, header.pointerToLineNumbers, Endian.little);
-  data.setUint16(32, header.numberOfRelocations, Endian.little);
-  data.setUint16(34, header.numberOfLineNumbers, Endian.little);
-  data.setUint32(36, header.flags.rawValue, Endian.little);
-
-  return data.buffer.asUint8List();
 }

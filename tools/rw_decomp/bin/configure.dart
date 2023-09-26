@@ -11,15 +11,21 @@ const _dxDir = 'C:\\dx7sdk';
 /// Generates build.ninja for the Real War decompilation project.
 void main(List<String> args) {
   final argParser = ArgParser()
-      ..addOption('root');
+      ..addOption('root')
+      ..addFlag('non-matching', abbr: 'n', 
+          help: 'Build a non-matching executable.', 
+          defaultsTo: false);
 
   final argResult = argParser.parse(args);
   final String projectDir = p.absolute(argResult['root'] ?? p.current);
+  final bool nonMatching = argResult['non-matching'];
 
   // Load project config
   final rw = RealWarYaml.load(
       File(p.join(projectDir, 'rw.yaml')).readAsStringSync(),
       dir: projectDir);
+  
+  final outputExeName = nonMatching ? 'RealWarNonMatching.exe' : 'RealWar.exe';
 
   // Collect list of files to compile
   final compilationUnits = <String>[];
@@ -43,7 +49,7 @@ void main(List<String> args) {
   writer.variable('SRC_DIR', p.normalize(rw.config.srcDir));
   writer.variable('BUILD_DIR', p.normalize(rw.config.buildDir));
   writer.variable('BIN_DIR', p.normalize(rw.config.binDir));
-  writer.variable('OPT_FLAGS', [
+  writer.variable('CL_FLAGS', [
     '/W3', // warning level 3
     '/Og', // global opt
     '/Oi', // intrinsics
@@ -54,6 +60,8 @@ void main(List<String> args) {
     //'/Gf', // eliminate duplicate strings (pool to writable .data) (leave off since
     //          it makes it harder to match data sections and isn't necessary)
     '/Gy', // function-level linking (COMDAT)
+    if (nonMatching)
+      '/DNON_MATCHING',
   ].join(','));
   writer.variable('INCLUDES', [
     '-I "${p.normalize(rw.config.includeDir)}"',
@@ -68,11 +76,11 @@ void main(List<String> args) {
 
   writer.newline();
   writer.comment('Rules');
-  writer.rule('cl', r'$CL $INCLUDES --flag="$OPT_FLAGS" -o $out -i $in',
+  writer.rule('cl', r'$CL $INCLUDES --flag="$CL_FLAGS" -o $out -i $in',
       depfile: r'$out.d', deps: 'gcc', 
       description: r'Compiling $in...');
-  writer.rule('link', r'$LINK --no-success-message', 
-      description: r'Linking $BUILD_DIR\RealWar.exe...');
+  writer.rule('link', '\$LINK --no-success-message${nonMatching ? ' --non-matching' : ''}', 
+      description: 'Linking \$BUILD_DIR\\$outputExeName...');
 
   writer.newline();
   writer.comment('Compilation');
@@ -83,7 +91,7 @@ void main(List<String> args) {
 
   writer.newline();
   writer.comment('Linking');
-  writer.build(r'$BUILD_DIR\RealWar.exe', 'link', 
+  writer.build('\$BUILD_DIR\\$outputExeName', 'link', 
       implicit: [
         ...compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'),
         ...binarySegments.map((n) => '\$BIN_DIR\\${p.normalize(n)}.bin')

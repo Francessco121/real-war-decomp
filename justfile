@@ -25,8 +25,8 @@ set shell := ["powershell.exe", "-c"]
     tools/rw_decomp/build/split.exe
 
 # recreate build.ninja
-@configure:
-    tools/rw_decomp/build/configure.exe
+@configure *args:
+    tools/rw_decomp/build/configure.exe {{args}}
 
 # compile a single source file (name should not have an extension)
 cl name:
@@ -39,9 +39,9 @@ cl name:
 
 # clean + build
 [no-exit-message]
-@rebuild:
+@rebuild *args:
     just clean
-    just configure
+    just configure {{args}}
     ninja
 
 # verify that the linked exe matches the original base exe

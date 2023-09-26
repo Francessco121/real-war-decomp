@@ -26,7 +26,7 @@ void main(List<String> args) {
 int _check(String expectedMd5, String filePath, String projectDir) {
   final file = File(p.join(projectDir, filePath));
   if (!file.existsSync()) {
-    print('Could not find $file');
+    print('Could not find ${file.path}');
     return -1;
   }
 

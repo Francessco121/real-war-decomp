@@ -47,7 +47,11 @@ Future<void> main(List<String> args) async {
   
   final AsmFuncInfo? asmFuncInfo;
   if (asmfuncdir != null) {
-    final asmFuncs = _scanAsmFuncPragmas(inputLines);
+    final defines = flags
+        .where((f) => f.startsWith('/D'))
+        .map((f) => f.substring(2))
+        .toSet();
+    final asmFuncs = _scanAsmFuncPragmas(inputLines, defines);
 
     // If we need to, preprocess the input file for ASM_FUNC
     if (asmFuncs.isNotEmpty) {
@@ -99,7 +103,8 @@ Future<void> main(List<String> args) async {
     final inputName = p.basenameWithoutExtension(input);
     final lineNumberRegex = RegExp('$inputName\\.preprocessed\\.c\\(([0-9]+)\\)');
     stdoutStr = stdoutStr.replaceAllMapped(lineNumberRegex, (match) {
-      final srcLineNumber = asmFuncInfo!.lineNumberMap[int.parse(match.group(1)!)];
+      final preprocessedLineNumber = int.parse(match.group(1)!);
+      final srcLineNumber = asmFuncInfo!.lineNumberMap[preprocessedLineNumber];
       return '$inputName.c($srcLineNumber)';
     });
   }
@@ -125,7 +130,7 @@ Future<void> main(List<String> args) async {
   _writeDepsFile(output, deps);
 
   // Stitch in actual function assembly for ASM_FUNCs
-  if (asmFuncInfo != null && asmFuncInfo.asmFuncs.isNotEmpty) {
+  if (asmFuncInfo != null && asmFuncInfo.asmFuncs.isNotEmpty && asmFuncInfo.asmFuncs.any((f) => !f.skipped)) {
     _stitchInAsmFuncs(asmFuncInfo.asmFuncs, asmFuncInfo.asmFuncBytes, output);
   }
 }
@@ -142,8 +147,9 @@ class AsmFuncInfo {
 class AsmFuncPragma {
   final int lineIndex;
   final String funcName;
+  final bool skipped;
 
-  AsmFuncPragma(this.lineIndex, this.funcName);
+  AsmFuncPragma(this.lineIndex, this.funcName, this.skipped);
 }
 
 final _pragmaAsmFuncRegex = RegExp(r'^#pragma(?:\s+)ASM_FUNC(?:\s+)(\S+)');
@@ -160,6 +166,10 @@ void _stitchInAsmFuncs(
 
   // Replace each ASM_FUNC function
   for (final asmFuncPragma in asmFuncs) {
+    if (asmFuncPragma.skipped) {
+      continue;
+    }
+
     final mangledFuncName = '_${asmFuncPragma.funcName}';
 
     final SymbolTableEntry symbol = obj.symbolTable!.values.firstWhere((sym) {
@@ -196,6 +206,12 @@ Future<AsmFuncInfo> _asmFuncPreprocess(
   final Map<int, int> lineNumberMap = {};
 
   for (final asmFuncPragma in asmFuncs) {
+    if (asmFuncPragma.skipped) {
+      // Skipped, just remove the #pragma
+      inputLines[asmFuncPragma.lineIndex] = '';
+      continue;
+    }
+
     final funcBinFile = File(p.join(asmfuncdir, '${asmFuncPragma.funcName}.bin'));
     if (!funcBinFile.existsSync()) {
       stderr.writeln(
@@ -230,23 +246,81 @@ Future<AsmFuncInfo> _asmFuncPreprocess(
     .close();
   
   const newlineChar = 10;
-  int preprocessedLine = 0;
-  for (int i = 0; i < inputLines.length; i++, preprocessedLine++) {
-    lineNumberMap[preprocessedLine] = i;
-    preprocessedLine += inputLines[i].codeUnits
+  int preprocessedLine = 1;
+  for (int i = 0; i < inputLines.length; i++) {
+    final newLineCount = inputLines[i].codeUnits
         .fold(0, (sum, c) => c == newlineChar ? (sum + 1) : sum);
+    
+    for (int j = 0; j < (newLineCount + 1); j++) {
+      lineNumberMap[preprocessedLine++] = i + 1;
+    }
   }
 
   return AsmFuncInfo(asmFuncs, preprocessedInput, asmFuncBytes, lineNumberMap);
 }
 
-List<AsmFuncPragma> _scanAsmFuncPragmas(List<String> lines) {
+List<AsmFuncPragma> _scanAsmFuncPragmas(List<String> lines, Set<String> defines) {
   final asmFuncs = <AsmFuncPragma>[];
 
+  List<bool> skipStack = [];
+  bool skipping = false;
+
+  bool evaluate(String expr) {
+    final number = int.tryParse(expr);
+    if (number != null) {
+      return number != 0;
+    }
+
+    return defines.contains(expr);
+  }
+
+  String arg(String line, int idx) {
+    final parts = line.split(' ');
+    if ((idx + 1) < parts.length) {
+      return parts[idx + 1];
+    } else {
+      return '';
+    }
+  }
+
+  String rest(String line) {
+    final spaceIdx = line.indexOf(' ');
+    if (spaceIdx < 0) {
+      return '';
+    } else {
+      return line.substring(spaceIdx + 1);
+    }
+  }
+
+  void push(bool skip) {
+    skipStack.add(skipping);
+    skipping = skip;
+  }
+
+  void pop() {
+    skipping = skipStack.removeLast();
+  }
+
   for (int i = 0; i < lines.length; i++) {
-    final asmFunc = _pragmaAsmFuncRegex.firstMatch(lines[i].trimLeft())?.group(1);
-    if (asmFunc != null) {
-      asmFuncs.add(AsmFuncPragma(i, asmFunc));
+    final line = lines[i].trim();
+    if (line.startsWith('#if')) {
+      push(!evaluate(rest(line)));
+    } else if (line.startsWith('#ifdef')) {
+      push(!defines.contains(arg(line, 0)));
+    } else if (line.startsWith('#ifndef')) {
+      push(defines.contains(arg(line, 0)));
+    } else if (line.startsWith('#elif')) {
+      pop();
+      push(!evaluate(rest(line)));
+    } else if (line.startsWith('#else')) {
+      skipping = !skipping;
+    } else if (line.startsWith('#endif')) {
+      pop();
+    } else {
+      final asmFunc = _pragmaAsmFuncRegex.firstMatch(line)?.group(1);
+      if (asmFunc != null) {
+        asmFuncs.add(AsmFuncPragma(i, asmFunc, skipping));
+      }
     }
   }
 

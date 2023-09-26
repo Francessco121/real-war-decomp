@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'line_numbers.dart';
 import 'relocations.dart';
 import 'section_flags.dart';
@@ -25,6 +27,8 @@ class Section {
 }
 
 class SectionHeader {
+  static const int byteSize = 40;
+
   /// The name of the section.
   final String name;
 
@@ -103,5 +107,29 @@ class SectionHeader {
       numberOfLineNumbers: numberOfLineNumbers,
       flags: SectionFlags(flags),
     );
+  }
+
+  Uint8List toBytes() {
+    final data = ByteData(byteSize);
+    
+    final nameChars = name.codeUnits;
+    for (int i = 0; i < 8 && i < nameChars.length; i++) {
+      data.setUint8(i, nameChars[i]);
+    }
+    for (int i = 0; i < (8 - nameChars.length); i++) {
+      data.setUint8(i + nameChars.length, 0);
+    }
+
+    data.setUint32(8, virtualSize, Endian.little);
+    data.setUint32(12, virtualAddress, Endian.little);
+    data.setUint32(16, sizeOfRawData, Endian.little);
+    data.setUint32(20, pointerToRawData, Endian.little);
+    data.setUint32(24, pointerToRelocations, Endian.little);
+    data.setUint32(28, pointerToLineNumbers, Endian.little);
+    data.setUint16(32, numberOfRelocations, Endian.little);
+    data.setUint16(34, numberOfLineNumbers, Endian.little);
+    data.setUint32(36, flags.rawValue, Endian.little);
+
+    return data.buffer.asUint8List();
   }
 }

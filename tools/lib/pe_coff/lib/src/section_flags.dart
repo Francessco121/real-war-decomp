@@ -1,5 +1,62 @@
 // https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#section-flags
 
+class SectionFlagValues {
+  /// Obsolete.
+  static const typeNoPad = 0x00000008;
+  /// The section contains executable code. 
+  static const cntCode = 0x00000020;
+  /// The section contains initialized data. 
+  static const cntInitializedData = 0x00000040;
+  /// The section contains uninitialized data. 
+  static const cntUninitializedData = 0x00000080;
+  /// Reserved.
+  static const lnkOther = 0x00000100;
+  /// The section contains comments or other information.
+  static const lnkInfo = 0x00000200;
+  /// The section will not become part of the image.
+  static const lnkRemove = 0x00000800;
+  /// The section contains COMDAT data. 
+  static const lnkComdat = 0x00001000;
+  /// The section contains data referenced through the global pointer (GP).
+  static const gprel = 0x00008000;
+  /// Reserved.
+  static const memPurgeable = 0x00020000;
+  /// Reserved.
+  static const memLocked = 0x00040000;
+  /// Reserved.
+  static const memPreload = 0x00080000;
+  static const align1Bytes = 0x00100000;
+  static const align2Bytes = 0x00200000;
+  static const align4Bytes = 0x00300000;
+  static const align8Bytes = 0x00400000;
+  static const align16Bytes = 0x00500000;
+  static const align32Bytes = 0x00600000;
+  static const align64Bytes = 0x00700000;
+  static const align128Bytes = 0x00800000;
+  static const align256Bytes = 0x00900000;
+  static const align512Bytes = 0x00A00000;
+  static const align1024Bytes = 0x00B00000;
+  static const align2048Bytes = 0x00C00000;
+  static const align4096Bytes = 0x00D00000;
+  static const align8192Bytes = 0x00E00000;
+  /// The section contains extended relocations. 
+  static const lnkNrelocOvfl = 0x01000000;
+  /// The section can be discarded as needed. 
+  static const memDiscardable = 0x02000000;
+  /// The section cannot be cached. 
+  static const memNotCached = 0x04000000;
+  /// The section is not pageable. 
+  static const memNotPaged = 0x08000000;
+  /// The section can be shared in memory. 
+  static const memShared = 0x10000000;
+  /// The section can be executed as code. 
+  static const memExecute = 0x20000000;
+  /// The section can be read. 
+  static const memRead = 0x40000000;
+  /// The section can be written to. 
+  static const memWrite = 0x80000000;
+}
+
 class SectionFlags {
   /// Obsolete.
   bool get typeNoPad => (rawValue & 0x00000008) != 0;

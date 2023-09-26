@@ -65,8 +65,7 @@ void display_message_and_exit_2(char* message) {
 }
 
 // idk why this doesn't match, it should be logically correct...
-#pragma ASM_FUNC adpcm_decompress
-#if NON_MATCHING
+#ifdef NON_MATCHING
 void adpcm_decompress(char *input, short *output, int length) {
     int index;
     int step;
@@ -134,10 +133,11 @@ void adpcm_decompress(char *input, short *output, int length) {
     gADPCMPredictor = predictor;
     gADPCMIndex = index;
 }
+#else
+#pragma ASM_FUNC adpcm_decompress
 #endif
 
-#pragma ASM_FUNC adpcm_decompress_stereo
-#if NON_MATCHING
+#ifdef NON_MATCHING
 void adpcm_decompress_stereo(char *input, short *output1, short *output2, int length) {
     int index1;
     int index2;
@@ -234,6 +234,8 @@ void adpcm_decompress_stereo(char *input, short *output1, short *output2, int le
     gADPCMPredictor2 = predictor2;
     gADPCMIndex2 = index2;
 }
+#else
+#pragma ASM_FUNC adpcm_decompress_stereo
 #endif
 
 /**
