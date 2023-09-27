@@ -66,7 +66,7 @@ class FunctionDisassembler {
   }
 
   DisassembledFunction disassembleFunction(FileData data, int offset,
-      {required int address, required String name}) {
+      {required int address, required String name, int? endAddress}) {
     _codePtr.value = Pointer<Uint8>.fromAddress(data.data.address + offset);
     _sizePtr.value = data.size - offset;
     _addressPtr.value = address;
@@ -89,21 +89,23 @@ class FunctionDisassembler {
         }
       }
 
-
       final inst = Instruction.fromCapstone(_instPtr.ref);
       insts.add(inst);
 
       size += inst.bytes.lengthInBytes;
 
       if (inst.isLocalBranch) {
-        // Local branch
+        // Possibly local branch, check if the target address is in bounds (if available)
         final target = inst.operands[0].imm!;
-        if (branchTargetSet.add(target)) {
-          branchTargets.add(target);
-        }
+        if (endAddress == null || target < endAddress) {
+          // Local branch
+          if (branchTargetSet.add(target)) {
+            branchTargets.add(target);
+          }
 
-        if (furthestBranchEnd == null || target > furthestBranchEnd) {
-          furthestBranchEnd = target;
+          if (furthestBranchEnd == null || target > furthestBranchEnd) {
+            furthestBranchEnd = target;
+          }
         }
       }
 

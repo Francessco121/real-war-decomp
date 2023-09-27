@@ -5,12 +5,12 @@ set shell := ["powershell.exe", "-c"]
     just --list -u
 
 # recreate build.ninja
-@configure:
-    dart run ../tools/rw_mod/bin/configure.dart --decomp-root=../ --mod-root=./
+@configure *args:
+    dart run ../tools/rw_mod/bin/configure.dart --decomp-root=../ --mod-root=./ {{args}}
 
 # extract function clone binary
-@extract:
-    dart run ../tools/rw_mod/bin/extract.dart --decomp-root=../ --mod-root=./ --capstone=../tools/capstone.dll
+@extract *args:
+    dart run ../tools/rw_mod/bin/extract.dart --decomp-root=../ --mod-root=./ --capstone=../tools/capstone.dll {{args}}
 
 # build new patched exe
 [no-exit-message]
@@ -19,9 +19,9 @@ set shell := ["powershell.exe", "-c"]
 
 # clean + build
 [no-exit-message]
-@rebuild:
+@rebuild  *args:
     just clean
-    just configure
+    just configure {{args}}
     ninja
 
 # clean build artifacts

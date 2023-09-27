@@ -212,6 +212,7 @@ Future<void> main(List<String> args) async {
   }
 
   // Write new section headers
+  final newSectionsBaseOffset = 0x000001D8 + (baseExe.sections.length * SectionHeader.byteSize);
   final newSectionList = newSections.values.toList();
   for (int i = 0; i < newSectionList.length; i++) {
     final newSection = newSectionList[i];
@@ -230,8 +231,8 @@ Future<void> main(List<String> args) async {
     );
 
     baseExeBytes.setRange(
-        0x00000278 + (i * SectionHeader.byteSize), 
-        0x00000278 + ((i + 1) * SectionHeader.byteSize), 
+        newSectionsBaseOffset + (i * SectionHeader.byteSize), 
+        newSectionsBaseOffset + ((i + 1) * SectionHeader.byteSize), 
         header.toBytes());
   }
 

@@ -12,11 +12,15 @@ const _dxDir = 'C:\\dx7sdk';
 Future<void> main(List<String> args) async {
   final argParser = ArgParser()
       ..addOption('decomp-root', help: 'Path to the root of the decomp project.')
-      ..addOption('mod-root', help: 'Path to the root of the mod project. Should contain a src directory.');
+      ..addOption('mod-root', help: 'Path to the root of the mod project. Should contain a src directory.')
+      ..addFlag('non-matching', abbr: 'n', 
+          help: 'Whether to use a non-matching build as the base executable.', 
+          defaultsTo: false);
   
   final argResult = argParser.parse(args);
   final String decompDir = p.absolute(argResult['decomp-root'] ?? p.current);
   final String modDir = p.absolute(argResult['mod-root'] ?? p.current);
+  final bool nonMatching = argResult['non-matching'];
 
   final modSrcDir = p.join(modDir, 'src');
 
@@ -54,7 +58,9 @@ Future<void> main(List<String> args) async {
   writer.variable('BIN_DIR', 'bin');
   writer.variable('SRC_DIR', 'src');
   writer.variable('BUILD_DIR', 'build');
-  writer.variable('ORIG_GAME_DIR', p.normalize(p.join(decompDir, 'game')));
+  writer.variable('BASE_EXE', nonMatching
+      ? p.normalize(p.join(decompDir, 'build', 'RealWarNonMatching.exe'))
+      : p.normalize(p.join(decompDir, 'game', 'RealWar.exe')));
   writer.variable('OUT_GAME_DIR', 'game');
   writer.variable('OPT_FLAGS', [
     '/W3', // warning level 3
@@ -81,7 +87,7 @@ Future<void> main(List<String> args) async {
       r'dart run $DECOMP_DIR/tools/rw_mod/bin/rwpatch.dart '
       r'--rwyaml="$DECOMP_DIR\rw.yaml" '
       r'--rwmodyaml="rwmod.yaml" '
-      r'--baseexe="$ORIG_GAME_DIR\RealWar.exe"');
+      r'--baseexe="$BASE_EXE"');
   
   writer.newline();
   writer.comment('Rules');
@@ -102,7 +108,9 @@ Future<void> main(List<String> args) async {
     writer.newline();
     writer.comment('Cloned function phony rules');
     for (final name in cloneObjs) {
-      writer.build('\$BIN_DIR\\$name.obj', 'phony');
+      writer.build(
+          nonMatching ? '\$BIN_DIR\\nonmatching\\$name.obj' : '\$BIN_DIR\\$name.obj', 
+          'phony');
     }
   }
 
@@ -111,7 +119,7 @@ Future<void> main(List<String> args) async {
   writer.build(r'$OUT_GAME_DIR\RealWar.exe', 'rwpatch', 
       inputs: [
         ...compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'),
-        ...cloneObjs.map((n) => '\$BIN_DIR\\$n.obj')
+        ...cloneObjs.map((n) => nonMatching ? '\$BIN_DIR\\nonmatching\\$n.obj' : '\$BIN_DIR\\$n.obj')
       ]);
 
   // Write file

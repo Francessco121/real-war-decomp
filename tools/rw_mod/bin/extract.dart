@@ -14,12 +14,16 @@ void main(List<String> args) {
   final argParser = ArgParser()
       ..addOption('decomp-root', mandatory: true, help: 'Path to the root of the decomp project.')
       ..addOption('mod-root', mandatory: true, help: 'Path to the root of the mod project.')
-      ..addOption('capstone', help: 'Path to capstone.dll.');
+      ..addOption('capstone', help: 'Path to capstone.dll.')
+      ..addFlag('non-matching', abbr: 'n', 
+          help: 'Whether to extract functions from a non-matching build.', 
+          defaultsTo: false);
 
   final argResult = argParser.parse(args);
   final String decompDir = p.absolute(argResult['decomp-root'] ?? p.current);
   final String modDir = p.absolute(argResult['mod-root'] ?? p.current);
   final String? capstonePath = argResult['capstone'];
+  final bool nonMatching = argResult['non-matching'];
 
   // Load configs
   final rw = RealWarYaml.load(
@@ -34,12 +38,13 @@ void main(List<String> args) {
   final disassembler = FunctionDisassembler.init(capstoneDll);
   
   // Parse exe
-  final String exeFilePath = p.join(decompDir, rw.config.exePath);
+  final String exeFilePath = p.join(decompDir, 
+      nonMatching ? p.join(rw.config.buildDir, 'RealWarNonMatching.exe') : rw.config.exePath);
   final exeBytes = File(exeFilePath).readAsBytesSync();
   final exe = PeFile.fromList(exeBytes);
 
   // Setup
-  final String binDirPath = p.join(modDir, 'bin');
+  final String binDirPath = nonMatching ? p.join(modDir, 'bin', 'nonmatching') : p.join(modDir, 'bin');
   Directory(binDirPath).createSync();
 
   // Extract
@@ -47,7 +52,9 @@ void main(List<String> args) {
   final textSection = exe.sections.firstWhere((s) => s.header.name == '.text');
   final textVA = textSection.header.virtualAddress;
   final textPA = textSection.header.pointerToRawData;
-  final exeData = FileData.fromList(exeBytes);
+  final textSize = textSection.header.sizeOfRawData;
+  final textData = FileData.fromList(
+      Uint8List.sublistView(exeBytes, textPA, textPA + textSize));
 
   for (final clone in rwmod.funcClones.entries) {
     final baseFuncName = clone.key;
@@ -58,11 +65,16 @@ void main(List<String> args) {
       throw Exception('Cannot clone/extract non-existent function: $baseFuncName');
     }
 
-    final funcPA = textPA + (funcVA - textVA - imageBase);
+    final funcRelativePA = funcVA - textVA - imageBase;
+    final funcPA = textPA + funcRelativePA;
     
     // Determine function size
     final func = disassembler.disassembleFunction(
-        exeData, funcPA, address: funcVA, name: baseFuncName);
+          textData, 
+          funcRelativePA, 
+          address: funcVA,
+          name: baseFuncName, 
+          endAddress: imageBase + textVA + textSize);
 
     // Create symbol for function
     final strings = StringTableBuilder();
@@ -149,7 +161,7 @@ class StringTableBuilder {
   }
 
   StringTable build() {
-    return StringTable(size: _size, strings: _strings);
+    return StringTable(size: _size + 4, strings: _strings);
   }
 }
 
@@ -257,8 +269,12 @@ void _generateRelocations(DisassembledFunction func,
     List<SymbolTableEntry> symbols,
     StringTableBuilder strings,
     int funcVA) {
-  for (final inst in func.instructions) {
-    if (inst.mnemonic == 'call' && inst.bytes[0] == 0xE8) {
+  for (final (i, inst) in func.instructions.indexed) {
+    // Note: If the first instruction is a jmp then this is probably a trampoline, so
+    // we need to add a relocation for it as well. If it's actually a local branch this
+    // should still be harmless to process.
+    if ((inst.mnemonic == 'call' && inst.bytes[0] == 0xE8)
+        || (i == 0 && inst.mnemonic == 'jmp' && inst.bytes[0] == 0xE9)) {
       // Add REL32 relocation such that the relocated value plus the address
       // that's already in the asm equals a displacement to the target func
       final symTableIndex = symbols.length;

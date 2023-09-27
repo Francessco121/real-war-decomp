@@ -196,8 +196,7 @@ void main(List<String> args) {
 
                 if (secBytes.lengthInBytes > expectedFuncSize) {
                   // Function is too big, move it into the non-matching .text section
-                  print('${functionNames[funcIdx]} is too big');
-                  final movedVA = nonMatchingBaseVA + nonMatchingTextBuilder.length;
+                  final movedVA = nonMatchingBaseVA + imageBase + nonMatchingTextBuilder.length;
                   relocateSection(coff, coffSection, secBytes, 
                       targetVirtualAddress: movedVA, 
                       symbolLookup: (sym) => rw.lookupSymbolOrString(unmangle(sym)));
@@ -211,7 +210,8 @@ void main(List<String> args) {
                   jumpInst.setUint32(1, operand, Endian.little);
 
                   builder.add(jumpInst.buffer.asUint8List());
-                  for (int i = 0; i < (expectedFuncSize - 5); i++) {
+                  builder.addByte(0xC3); // unreachable RET to help disassemblers detect the function end
+                  for (int i = 0; i < (expectedFuncSize - 6); i++) {
                     builder.addByte(0x90); // 0x90 = x86 1-byte NOP
                   }
                 } else {
@@ -265,6 +265,10 @@ void main(List<String> args) {
     final nonMatchingTextSize = nonMatchingTextBuilder.length;
     if (nonMatching) {
       builder.add(nonMatchingTextBuilder.takeBytes());
+
+      final expectedTextEnd = _fileAlign(builder.length, baseExe);
+      final padding = expectedTextEnd - builder.length;
+      builder.add(Uint8List(padding));
     }
 
     final exeBytes = builder.takeBytes();
@@ -385,4 +389,10 @@ int _sectionAlign(int value, PeFile exe) {
   final sectionAlignment = exe.optionalHeader!.windows!.sectionAlignment;
   
   return (value / sectionAlignment).ceil() * sectionAlignment;
+}
+
+int _fileAlign(int value, PeFile exe) {
+  final fileAlignment = exe.optionalHeader!.windows!.fileAlignment;
+  
+  return (value / fileAlignment).ceil() * fileAlignment;
 }
