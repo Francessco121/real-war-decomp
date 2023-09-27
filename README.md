@@ -4,7 +4,7 @@ A work in progress decompilation of the PC game [Real War (2001) by Rival Intera
 ## Prerequisites
 > **Note:** This decomp assumes you are running on Windows, but theoretically it could be tweaked to run on Linux/macOS.
 
-- A legitimate copy of the game.
+- A legitimate copy of the game (CD version "9.25").
 - Visual C++ 6.0 Professional/Enterprise (build 8168)
     - Tooling currently assumes that this is installed at the default location:
         - `C:\Program Files (x86)\Microsoft Visual Studio\VC98`
@@ -41,7 +41,8 @@ A quick overview of the decompilation process:
 - If source files are added/renamed/deleted, re-run `just configure`.
 - Use `just diff {function name}` for live function diffing.
 - Once the function matches: rebuild and verify (shortcut: `just check`).
-- If the function doesn't match, surround it with `#if NON_MATCHING` and add back its `#pragma ASM_FUNC`
+- If the function doesn't match, surround it with `#ifdef NON_MATCHING` and add back its `#pragma ASM_FUNC`
+    - If the function isn't even logically the same yet, surround it with `#ifdef NON_EQUIVALENT` instead.
 
 ## Cool Stuff
 

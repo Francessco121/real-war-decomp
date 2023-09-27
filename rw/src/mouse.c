@@ -3,6 +3,8 @@
 
 #define MOUSE_HISTORY_LEN 5
 
+// .bss
+
 unsigned int gMouseButtonBits;
 int gPrevMouseIdx;
 int gSomeMouseHistoryIdx;
@@ -16,6 +18,8 @@ int gPrevScrollWheelDelta;
 
 int gUnusedMouseGlobal1;
 int gUnusedMouseGlobal2;
+
+// .text
 
 void mouse_init() {
     MSG msg;

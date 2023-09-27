@@ -6,10 +6,16 @@
 #include "strings.h"
 #include "undefined.h"
 
+extern char gDirTree[];
+
+// .data
+
 extern char gVidTree[];
 extern char gDataTree[];
 extern char gCDDataDir[];
-extern char gDirTree[];
+extern DWORD gRegKeyValueDataSize; // = 256
+
+// .bss
 
 char gRegKeyClass[16];
 HKEY gSoftwareRegKey;
@@ -17,8 +23,9 @@ HKEY gRealWarRegKey;
 DWORD gRegKeyDisposition;
 DWORD gRegKeyValueType;
 char gRegKeyValueData[256];
-DWORD gRegKeyValueDataSize; // = 256
 char gDirTreeRegValueData[256];
+
+// .text
 
 int get_game_registry_value(char *name, char *outValue);
 

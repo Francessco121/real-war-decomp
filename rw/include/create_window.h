@@ -2,4 +2,4 @@
 
 #include <WINDOWS.H>
 
-HWND gWndHandle;
+extern HWND gWndHandle;

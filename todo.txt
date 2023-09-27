@@ -1,7 +1,0 @@
-- figure out calling convention
-    - CRT uses __cdecl
-    - WinApis use __stdcall
-    - game code *probably* uses __cdecl
-- determine exact version of game, tooling should verify this
-    - could also just md5 hash the exe and data/vids folders
-    - some string claims "Real War: V9.25"

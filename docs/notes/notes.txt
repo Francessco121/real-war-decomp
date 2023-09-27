@@ -14,3 +14,7 @@
 - CD retail release claims the game version is "Real War: V9.25" however the patches
   use the verisons "V1.5" and "V1.6". Version 9.25 was probably an internal version
   and the actual "release version" was more like "V1.0".
+- calling conventions:
+    - LIBC: __cdecl
+    - Win32 APIs: __stdcall
+    - RealWar: mainly __cdecl and __stdcall for callbacks given to Win32 APIs

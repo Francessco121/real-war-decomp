@@ -2,9 +2,9 @@
 
 #include <WINDOWS.H>
 
-int gCursorX;
-int gCursorY;
-int gCursorX2;
-int gCursorY2;
+extern int gCursorX;
+extern int gCursorY;
+extern int gCursorX2;
+extern int gCursorY2;
 
-int gUnkMouseButtonBits;
+extern int gUnkMouseButtonBits;

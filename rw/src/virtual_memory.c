@@ -8,15 +8,19 @@
 
 #define MAX_VIRTUAL_MEMORY_BUFFERS 8192
 
-extern void* gVirtualMemoryBuffers[MAX_VIRTUAL_MEMORY_BUFFERS];
-extern size_t gVirtualMemorySizes[MAX_VIRTUAL_MEMORY_BUFFERS];
-extern int gVirtualMemoryNumbers[MAX_VIRTUAL_MEMORY_BUFFERS];
-extern int gTotalVirtualMemoryAllocated;
+// .bss
 
-extern BOOL gEnableRwMap;
+void* gVirtualMemoryBuffers[MAX_VIRTUAL_MEMORY_BUFFERS];
+size_t gVirtualMemorySizes[MAX_VIRTUAL_MEMORY_BUFFERS];
+int gVirtualMemoryNumbers[MAX_VIRTUAL_MEMORY_BUFFERS];
+int gTotalVirtualMemoryAllocated;
+
+BOOL gEnableRwMap;
 extern int DAT_0051b988;
 extern int DAT_00567788;
-extern FILE* sRwMapTxtFile;
+FILE* sRwMapTxtFile;
+
+// .text
 
 void setup_virtual_memory_buffers() {
     memset(gVirtualMemoryBuffers, 0, sizeof(gVirtualMemoryBuffers));

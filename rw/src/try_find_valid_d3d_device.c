@@ -4,8 +4,12 @@
 #include "strings.h"
 #include "undefined.h"
 
+// .bss
+
 int gSelectedD3DDevice;
 int gD3DDeviceCounter;
+
+// .text
 
 extern HRESULT WINAPI enum_devices_callback
     (LPGUID lpGUID,LPSTR lpszDeviceDesc,LPSTR lpszDeviceName,
