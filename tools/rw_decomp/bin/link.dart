@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:args/args.dart';
@@ -49,7 +50,7 @@ void main(List<String> args) {
 
   // Link
   try {
-    final segmentMapping = <(int, String)>[];
+    final segmentMapping = <MappingEntry>[];
     final objCache = ObjectFileCache();
 
     final builder = BytesBuilder(copy: false);
@@ -260,7 +261,12 @@ void main(List<String> args) {
       }
 
       // Add mapping entry
-      segmentMapping.add((currentFilePointer, p.relative(p.normalize(segmentFilePath), from: projectDir)));
+      segmentMapping.add(MappingEntry(
+          currentFilePointer, 
+          bytesWritten,
+          segment.name,
+          segment.type,
+          p.relative(p.normalize(segmentFilePath), from: projectDir)));
     }
 
     // Build exe bytes
@@ -314,15 +320,10 @@ void main(List<String> args) {
     File(outExeFilePath).writeAsBytesSync(exeBytes);
 
     // Write mapping file
-    final String outMapFilePath = p.join(projectDir, rw.config.buildDir, 
-        nonMatching ? 'RealWarNonMatching.map' : 'RealWar.map');
-    final strBuffer = StringBuffer();
-    segmentMapping.sort((a, b) => a.$1.compareTo(b.$1));
-    for (final entry in segmentMapping) {
-      strBuffer.write('0x${entry.$1.toRadixString(16)}:'.padLeft(10));
-      strBuffer.writeln(' ${entry.$2}');
-    }
-    File(outMapFilePath).writeAsStringSync(strBuffer.toString());
+    _writeMappingFile(
+        File(p.join(projectDir, rw.config.buildDir, 
+          nonMatching ? 'RealWarNonMatching.map' : 'RealWar.map')),
+        segmentMapping);
 
     if (!noSuccessMessage) {
       print('Linked: ${p.relative(outExeFilePath, from: projectDir)}.');
@@ -331,6 +332,50 @@ void main(List<String> args) {
     print('ERR: ${ex.message}');
     exit(-1);
   }
+}
+
+const _asciiSpace = 32;
+
+class MappingEntry {
+  final int physicalAddress;
+  final int size;
+  final String segmentName;
+  final String segmentType;
+  final String srcName;
+
+  MappingEntry(this.physicalAddress, this.size, this.segmentName, this.segmentType, this.srcName);
+}
+
+void _writeMappingFile(File mapFile, List<MappingEntry> segmentMapping) {
+  segmentMapping.sort((a, b) => a.physicalAddress.compareTo(b.physicalAddress));
+
+  final int longestSegmentName = segmentMapping
+      .fold(0, (longest, e) => max(e.segmentName.length, longest));
+  
+  final strBuffer = StringBuffer();
+  strBuffer.write('Offset'.padRight(10));
+  strBuffer.writeCharCode(_asciiSpace);
+  strBuffer.write('Size'.padRight(10));
+  strBuffer.writeCharCode(_asciiSpace);
+  strBuffer.write('Type'.padRight(8));
+  strBuffer.writeCharCode(_asciiSpace);
+  strBuffer.write('Name'.padRight(longestSegmentName));
+  strBuffer.writeCharCode(_asciiSpace);
+  strBuffer.writeln('Source File');
+
+  for (final entry in segmentMapping) {
+    strBuffer.write('0x${entry.physicalAddress.toRadixString(16)}'.padLeft(10));
+    strBuffer.writeCharCode(_asciiSpace);
+    strBuffer.write('0x${entry.size.toRadixString(16)}'.padLeft(10));
+    strBuffer.writeCharCode(_asciiSpace);
+    strBuffer.write(entry.segmentType.padRight(8));
+    strBuffer.writeCharCode(_asciiSpace);
+    strBuffer.write(entry.segmentName.padRight(longestSegmentName));
+    strBuffer.writeCharCode(_asciiSpace);
+    strBuffer.writeln(entry.srcName);
+  }
+
+  mapFile.writeAsStringSync(strBuffer.toString());
 }
 
 class ObjectFileCache {

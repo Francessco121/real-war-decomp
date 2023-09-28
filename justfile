@@ -20,6 +20,10 @@ set shell := ["powershell.exe", "-c"]
 @rwyaml *args:
     dart run tools/rw_decomp/bin/rwyaml.dart {{args}}
 
+# display differing segments between the current build and the base exe
+@finddiffs:
+    dart run tools/rw_decomp/bin/finddiffs.dart
+
 # split base exe
 @split:
     tools/rw_decomp/build/split.exe

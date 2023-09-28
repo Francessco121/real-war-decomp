@@ -37,7 +37,7 @@ segments:
   - [0x401150, c, try_find_valid_d3d_device]
   - [0x401210, bin, null]
   - [0x409b40, c, load_texture]
-  - [0x0409f50, bin , null]
+  - [0x409f50, bin , null]
   - [0x461dd0, c, game_dirs]
   - [0x4626c0, bin, null]
   - [0x4b92e0, c, timers]
