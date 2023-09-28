@@ -54,11 +54,14 @@ segments:
   - [0x4d6860, c, data]
   - [0x4d7050, bin, null]
   - [0x4d8140, c, keyboard]
-  - [0x4d81b0, bin, null]
+  - [0x4d81b0, thunks, null]
+  - [0x4d81c0, bin, null]
+  - [0x4e1500, thunks, null]
   # .text: LIBC.LIB
   - [0x4e1510, bin, _libc]
   # .rdata
-  - [0x4e9000, bin, _rdata]
+  - [0x4e9000, extfuncs, _rdata]
+  - [0x4e9188, bin, _rdata_4e9188]
   # .data (initialized)
   - [0x4ec000, bin, _data_4ec000]
   - [0x5144e8, data, timers]

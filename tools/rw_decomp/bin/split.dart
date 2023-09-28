@@ -79,21 +79,24 @@ void main(List<String> args) {
       final segmentBytes = Uint8ClampedList.sublistView(
           exeBytes, segmentFilePointer, segmentByteSize == null ? null : (segmentFilePointer + segmentByteSize));
       
-      if (segment.type == 'bin') {
-        // bin, dump full segment to file
-        File(p.join(binDirPath, '${segment.name}.bin')).writeAsBytesSync(segmentBytes);
-      } else if (segment.type == 'c') {
-        // c, dump referenced ASM_FUNC functions
-        final cFilePath = p.join(srcDirPath, '${segment.name}.c');
-        _extractCSegment(
-          cFilePath: cFilePath, 
-          asmDirPath: asmDirPath,
-          binDirPath: binDirPath, 
-          rw: rw, 
-          segmentAddress: segment.address, 
-          bytes: segmentBytes, 
-          disassembler: disassembler,
-        );
+      switch (segment.type) {
+        case 'bin':
+        case 'thunks':
+        case 'extfuncs':
+          // bin, dump full segment to file
+          File(p.join(binDirPath, '${segment.name}.bin')).writeAsBytesSync(segmentBytes);
+        case 'c':
+          // c, dump referenced ASM_FUNC functions
+          final cFilePath = p.join(srcDirPath, '${segment.name}.c');
+          _extractCSegment(
+            cFilePath: cFilePath, 
+            asmDirPath: asmDirPath,
+            binDirPath: binDirPath, 
+            rw: rw, 
+            segmentAddress: segment.address, 
+            bytes: segmentBytes, 
+            disassembler: disassembler,
+          );
       }
     }
   } on SplitException catch (ex) {

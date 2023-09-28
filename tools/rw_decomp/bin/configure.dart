@@ -32,10 +32,13 @@ void main(List<String> args) {
   final binarySegments = <String>[];
 
   for (final segment in rw.segments) {
-    if (segment.type == 'c') {
-      compilationUnits.add(segment.name);
-    } else if (segment.type == 'bin') {
-      binarySegments.add(segment.name);
+    switch (segment.type) {
+      case 'c':
+        compilationUnits.add(segment.name);
+      case 'bin':
+      case 'thunks':
+      case 'extfuncs':
+        binarySegments.add(segment.name);
     }
   }
 

@@ -109,6 +109,8 @@ void main(List<String> args) {
 
       switch (segment.type) {
         case 'bin':
+        case 'thunks':
+        case 'extfuncs':
           // .bin
           segmentFilePath = p.join(binDirPath, '${segment.name}.bin');
 
