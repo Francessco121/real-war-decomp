@@ -226,6 +226,12 @@ Future<AsmFuncInfo> _asmFuncPreprocess(
     // same amount of bytes required to fit the actual function assembly, we will stitch in
     // the real bytes after compilation
     final buffer = StringBuffer();
+    // Note: Disable the "function declared with formal parameter list" warning since it's likely
+    // the function prototype we use here doesn't match the real function definition. We need
+    // it to be void (void) so the compiler doesn't add extra instructions and this won't affect
+    // actual calling code since they will use the correct prototype.
+    buffer.writeln('#pragma warning( push )');
+    buffer.writeln('#pragma warning( disable : 4026 )');
     buffer.writeln('void ${asmFuncPragma.funcName}() {');
     buffer.writeln('    __asm');
     buffer.writeln('    {');
@@ -234,7 +240,8 @@ Future<AsmFuncInfo> _asmFuncPreprocess(
       buffer.writeln('        NOP');
     }
     buffer.writeln('    }');
-    buffer.write('}');
+    buffer.writeln('}');
+    buffer.write('#pragma warning( pop )');
 
     inputLines[asmFuncPragma.lineIndex] = buffer.toString();
   }
