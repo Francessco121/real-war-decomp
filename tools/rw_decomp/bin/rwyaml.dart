@@ -34,7 +34,11 @@ class AddCommand extends Command {
           help: 'A string literal symbol to add. In the form of [name:]address. '
             'If only an address is given, a default name will be created. '
             'The strings.h header will also be recreated.',
-          splitCommas: true);
+          splitCommas: true)
+      ..addFlag('update', 
+          abbr: 'u', 
+          help: 'Update the name of existing symbols/strings instead of skipping them.',
+          defaultsTo: false);
   }
 
   @override
@@ -42,6 +46,7 @@ class AddCommand extends Command {
     final String projectDir = p.absolute(argResults!['root'] ?? p.current);
     final List<String> symbolsInput = argResults!['sym'];
     final List<String> stringsInput = argResults!['str'];
+    final bool update = argResults!['update'];
 
     if (symbolsInput.isEmpty && stringsInput.isEmpty) {
       print('Nothing to do.');
@@ -62,6 +67,8 @@ class AddCommand extends Command {
     final rwYamlLines = rwYamlFile.readAsLinesSync();
 
     // Add symbols
+    final addedSymbols = <(String, int)>[];
+    final updatedSymbols = <(String, int)>[];
     if (symbolsToAdd.isNotEmpty) {
       // Find start-end of symbols list
       final (symbolsStart, symbolsEnd) = findList(rwYamlLines, 'symbols');
@@ -71,6 +78,7 @@ class AddCommand extends Command {
       for (final sym in symbolsToAdd) {
         // Find slot to insert symbol
         int current = 0;
+        bool alreadyExists = false;
         while (i < symbolsEnd) {
           i += 1;
 
@@ -82,20 +90,36 @@ class AddCommand extends Command {
           current = int.parse(line.split(':')[1].trimLeft());
           if (current < sym.address) {
             insertIdx = i;
+          } else if (current == sym.address) {
+            alreadyExists = true;
+            insertIdx = i;
+            break;
           } else {
             break;
           }
         }
 
-        // Insert
-        final symName = sym.name ?? 'DAT_${sym.address.toRadixString(16).padLeft(8)}';
-        rwYamlLines.insert(insertIdx + 1, '  $symName: 0x${sym.address.toRadixString(16)}');
-        
-        insertIdx += 1;
+        // Make symbol name
+        final symName = sym.name ?? 'DAT_${sym.address.toRadixString(16).padLeft(8, '0')}';
+        final yamlLine = '  $symName: 0x${sym.address.toRadixString(16)}';
+
+        // Insert/update
+        if (alreadyExists) {
+          if (update) {
+            rwYamlLines[insertIdx] = yamlLine;
+            updatedSymbols.add((symName, sym.address));
+          }
+        } else {
+          rwYamlLines.insert(insertIdx + 1, yamlLine);
+          addedSymbols.add((symName, sym.address));
+          insertIdx += 1;
+        }
       }
     }
 
     // Add strings
+    final addedStrings = <(String, int)>[];
+    final updatedStrings = <(String, int)>[];
     if (stringsToAdd.isNotEmpty) {
       // Find start-end of strings list
       final (stringsStart, stringsEnd) = findList(rwYamlLines, 'strings');
@@ -105,6 +129,7 @@ class AddCommand extends Command {
       for (final str in stringsToAdd) {
         // Find slot to insert string
         int current = 0;
+        bool alreadyExists = false;
         while (i < stringsEnd) {
           i += 1;
 
@@ -116,24 +141,84 @@ class AddCommand extends Command {
           current = int.parse(line.split(':')[1].trimLeft());
           if (current < str.address) {
             insertIdx = i;
+          } else if (current == str.address) {
+            alreadyExists = true;
+            insertIdx = i;
+            break;
           } else {
             break;
           }
         }
 
-        // Insert
-        final strName = str.name ?? 'str_${str.address.toRadixString(16).padLeft(8)}';
-        rwYamlLines.insert(insertIdx + 1, '  $strName: 0x${str.address.toRadixString(16)}');
+        // Make string name
+        final strName = str.name ?? 'str_${str.address.toRadixString(16).padLeft(8, '0')}';
+        final yamlLine = '  $strName: 0x${str.address.toRadixString(16)}';
 
-        insertIdx += 1;
+        // Insert/update
+        if (alreadyExists) {
+          if (update) {
+            rwYamlLines[insertIdx] = yamlLine;
+            updatedStrings.add((strName, str.address));
+          }
+        } else {
+          rwYamlLines.insert(insertIdx + 1, yamlLine);
+          addedStrings.add((strName, str.address));
+          insertIdx += 1;
+        }
       }
     }
 
-    // Write new file
+    // Write new rw.yaml
     rwYamlLines.add('');
     rwYamlFile.writeAsStringSync(rwYamlLines.join('\r\n'));
 
+    if (addedSymbols.isNotEmpty) {
+      print('Added symbols:');
+      for (final sym in addedSymbols) {
+        print('${sym.$1}: 0x${sym.$2.toRadixString(16)}');
+      }
+    }
+
+    if (updatedSymbols.isNotEmpty) {
+      if (addedSymbols.isNotEmpty) {
+        print('');
+      }
+      
+      print('Updated symbols:');
+      for (final sym in updatedSymbols) {
+        print('${sym.$1}: 0x${sym.$2.toRadixString(16)}');
+      }
+    }
+
+    if (addedStrings.isNotEmpty) {
+      if (addedSymbols.isNotEmpty || updatedSymbols.isNotEmpty) {
+        print('');
+      }
+      
+      print('Added strings:');
+      for (final str in addedStrings) {
+        print('${str.$1}: 0x${str.$2.toRadixString(16)}');
+      }
+    }
+
+    if (updatedStrings.isNotEmpty) {
+      if (addedSymbols.isNotEmpty || updatedSymbols.isNotEmpty || addedStrings.isNotEmpty) {
+        print('');
+      }
+      
+      print('Updated strings:');
+      for (final str in updatedStrings) {
+        print('${str.$1}: 0x${str.$2.toRadixString(16)}');
+      }
+    }
+
+    if (addedSymbols.isEmpty && updatedSymbols.isEmpty && addedStrings.isEmpty && updatedStrings.isEmpty) {
+      print('All given strings and symbols already exist.');
+    }
+
+    // Regenerate strings.h
     if (stringsToAdd.isNotEmpty) {
+      print('');
       genStringsH(rwYamlFile);
     }
   }
@@ -195,7 +280,9 @@ void genStringsH(File rwYamlFile) {
     buffer.writeln('extern char ${str.key}[]; // "$preview"');
   }
 
-  File(p.join(rw.dir, rw.config.includeDir, 'strings.h')).writeAsStringSync(buffer.toString());
+  final stringsHPath = p.join(rw.dir, rw.config.includeDir, 'strings.h');
+  File(stringsHPath).writeAsStringSync(buffer.toString());
+  print('Regenerated ${p.relative(stringsHPath, from: rw.dir)}');
 }
 
 String _readStringContents(Uint8List bytes, int offset) {
@@ -261,9 +348,13 @@ class SymbolNamePair {
   factory SymbolNamePair.parse(String str) {
     final parts = str.split(':');
     if (parts.length == 1) {
-      return SymbolNamePair(null, int.parse(str));
+      return SymbolNamePair(null, _parseInt(str));
     } else {
-      return SymbolNamePair(parts[0], int.parse(parts[1]));
+      return SymbolNamePair(parts[0], _parseInt(parts[1]));
     }
+  }
+
+  static int _parseInt(String str) {
+    return int.tryParse(str, radix: 16) ?? int.parse(str);
   }
 }

@@ -95,7 +95,9 @@ Future<void> main(List<String> args) async {
       depfile: r'$out.d', deps: 'gcc', 
       description: r'Compiling $in...');
   writer.rule('rwpatch', r'$RWPATCH -o $out $in',
-      description: r'Patching new executable...');
+      description: nonMatching 
+        ? r'Patching new executable from non-matching...' 
+        : r'Patching new executable from base game...');
     
   writer.newline();
   writer.comment('Compilation');
@@ -120,7 +122,8 @@ Future<void> main(List<String> args) async {
       inputs: [
         ...compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'),
         ...cloneObjs.map((n) => nonMatching ? '\$BIN_DIR\\nonmatching\\$n.obj' : '\$BIN_DIR\\$n.obj')
-      ]);
+      ],
+      implicit: nonMatching ? r'$BASE_EXE' : null);
 
   // Write file
   final buildFile = File(p.join(modDir, 'build.ninja'));
