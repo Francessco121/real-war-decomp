@@ -13,15 +13,17 @@ extern int gLaunchWindowed;
 extern int gCursorTextures;
 extern int gWindowFocused;
 
+extern int DAT_00ece464;
+extern int DAT_00945e94;
+extern int DAT_00f0c770;
+extern int DAT_01359b80;
+
 extern void FUN_004d8010(int);
 extern void load_cursor_textures();
 
 extern void display_message(char *format, ...);
 extern void display_message_and_exit(char* message);
 extern void game_exit();
-
-extern void to_absolute_data_path(char *path);
-extern void to_absolute_data_path2(char *path);
 
 extern int handle_window_focus_change();
 extern int check_window_focus_change(int);

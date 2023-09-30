@@ -2,6 +2,7 @@
 #include <WINDOWS.H>
 
 #include "data.h"
+#include "game_dirs.h"
 #include "strings.h"
 #include "undefined.h"
 #include "virtual_memory.h"

@@ -24,6 +24,7 @@ DWORD gRegKeyDisposition;
 DWORD gRegKeyValueType;
 char gRegKeyValueData[256];
 char gDirTreeRegValueData[256];
+char gVidPaths[4][256];
 
 // .text
 
@@ -49,9 +50,91 @@ void load_game_dirs_from_registry() {
     }
 }
 
-#pragma ASM_FUNC to_absolute_data_path2
+#ifdef NON_MATCHING
+void to_absolute_data_path2(char *path) {
+    int pathLen;
+    int i;
+    int dataSlashIdx;
+    char temp[256];
 
+    if (DAT_00ece464 != 0 || DAT_00945e94 != 0 || DAT_00f0c770 != 0 || DAT_01359b80 != 0) {
+        return;
+    }
+
+    pathLen = strlen(path);
+    dataSlashIdx = 0;
+
+    for (i = 0; i < pathLen; i++) {
+        if (path[i] >= 'a' && path[i] <= 'z') {
+            path[i] -= 0x20;
+        }
+
+        if (
+            (path[i + 0] == 'D' || path[i + 0] == 'd') &&
+            (path[i + 1] == 'A' || path[i + 1] == 'a') &&
+            (path[i + 2] == 'T' || path[i + 2] == 't') &&
+            (path[i + 3] == 'A' || path[i + 3] == 'a') &&
+            path[i + 4] == '\\'
+        ) {
+            dataSlashIdx = i + 1;
+        }
+    }
+
+    if (dataSlashIdx == 0) {
+        return;
+    }
+
+    if (strstr(path, str_GAMESAVE) == NULL) {
+        sprintf(temp, str_pct_s, path);
+        sprintf(&temp[dataSlashIdx - 1], str_pct_s_pct_s, gDataTree, &path[dataSlashIdx + 4]);
+        sprintf(path, str_pct_s, temp);
+    }
+}
+#else
+#pragma ASM_FUNC to_absolute_data_path2
+#endif
+
+#ifdef NON_MATCHING
+void to_absolute_data_path(char *path) {
+    int pathLen;
+    int i;
+    int dataSlashIdx;
+    char temp[256];
+
+    if (DAT_00ece464 != 0 || DAT_00945e94 != 0 || DAT_00f0c770 != 0 || DAT_01359b80 != 0) {
+        return;
+    }
+
+    pathLen = strlen(path);
+    dataSlashIdx = 0;
+
+    for (i = 0; i < pathLen; i++) {
+        if (path[i] >= 'a' && path[i] <= 'z') {
+            path[i] -= 0x20;
+        }
+
+        if (
+            (path[i + 0] == 'D' || path[i + 0] == 'd') &&
+            (path[i + 1] == 'A' || path[i + 1] == 'a') &&
+            (path[i + 2] == 'T' || path[i + 2] == 't') &&
+            (path[i + 3] == 'A' || path[i + 3] == 'a') &&
+            path[i + 4] == '\\'
+        ) {
+            dataSlashIdx = i + 1;
+        }
+    }
+
+    if (dataSlashIdx == 0) {
+        return;
+    }
+
+    sprintf(temp, str_pct_s, path);
+    sprintf(&temp[dataSlashIdx - 1], str_pct_s_pct_s, gDataTree, &path[dataSlashIdx + 4]);
+    sprintf(path, str_pct_s, temp);
+}
+#else
 #pragma ASM_FUNC to_absolute_data_path
+#endif
 
 void cd_check() {
     int retries = 0;
@@ -87,7 +170,22 @@ void cd_check() {
     }
 }
 
-#pragma ASM_FUNC get_absolute_vid_path
+char *get_absolute_vid_path(char *path, int idx) {
+    int filenameStart;
+
+    filenameStart = 0;
+
+    while (path[filenameStart] != '.') {
+        filenameStart++;
+    }
+
+    while (path[filenameStart] != '\\' && filenameStart >= 0) {
+        filenameStart--;
+    }
+
+    sprintf(gVidPaths[idx], str_pct_s_pct_s, gVidTree, &path[filenameStart + 1]);
+    return gVidPaths[idx];
+}
 
 void set_game_registry_value(char *name, char *value) {
     LONG result;

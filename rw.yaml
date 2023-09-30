@@ -1582,8 +1582,13 @@ symbols:
   sUnusedTimerGlobal2: 0x5fa7c4
   sUnusedTimerGlobal3: 0x5fa7c8
   sUnusedTimerGlobal4: 0x5fa7cc
+  DAT_00945e94: 0x945e94
+  DAT_00ece464: 0xece464
   gTempString: 0xef6fc0
+  DAT_00f0c770: 0xf0c770
+  DAT_01359b80: 0x1359b80
   gRealWarRegKey: 0x1a94964
+  gVidPaths: 0x1a94980
   gRegKeyDisposition: 0x1a94d80
   gRegKeyValueData: 0x1a94da0
   gSoftwareRegKey: 0x1a94ea0
@@ -1603,6 +1608,7 @@ strings:
   str_dd3d_obj_failed: 0x4ec0c8
   str_pct_s: 0x4ec3b0
   str_rb: 0x4ec4c4
+  str_pct_s_pct_s: 0x4ec704
   str_wb: 0x4ec808
   str_software: 0x50a710
   str_realwar: 0x50a720
@@ -1611,7 +1617,7 @@ strings:
   str_vidtree: 0x50a758
   str_datatree: 0x50a764
   str_dirtree: 0x50a770
-  str_gamesave: 0x50a77c
+  str_GAMESAVE: 0x50a77c
   str_pct_cdtest_txt: 0x50a794
   str_please_insert_the_cd: 0x50a7a4
   str_pct_intro_mpg: 0x50a7f4
