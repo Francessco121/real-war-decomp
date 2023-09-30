@@ -19,6 +19,6 @@ All numerics are little-endian and unsigned.
 | 0xE    | size | adpcmBytes | The actual ADPCM byte data |
 
 ## ADPCM Compression
-For mono, every 4-bits of ADPCM is a single sample. For stereo, every 4-bits is also a single sample but only for one channel (either left or right, alternating). For each byte, the high-nibble is the left channel and the low-nibble is right.
+For mono, every 4-bits of ADPCM is a single sample. For stereo, every 4-bits is also a single sample but only for one channel (either left or right, alternating). For each byte, the low-nibble is the left channel and the high-nibble is right.
 
 Each sample can be decompressed using the standard 4-bit ADPCM to 16-bit linear decompression algorithm. For stereo, the emitted decompressed 16-bit samples should alternate between the left and right channels (with the left coming before the right).

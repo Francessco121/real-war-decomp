@@ -136,8 +136,8 @@ Uint8List _adpcmDecompressStereo(Uint8List adpcm) {
   int i = 0, j = 0;
 
   while (i < adpcm.lengthInBytes) {
-    int nibble1 = adpcm[j] & 0xF; // right channel
-    int nibble2 = (adpcm[j++] >> 4) & 0xF; // left channel
+    int nibble1 = adpcm[j] & 0xF; // left channel
+    int nibble2 = (adpcm[j++] >> 4) & 0xF; // right channel
 
     index1 += _indexTable[nibble1];
     index2 += _indexTable[nibble2];
@@ -178,10 +178,10 @@ Uint8List _adpcmDecompressStereo(Uint8List adpcm) {
     step1 = _stepSizeTable[index1];
     step2 = _stepSizeTable[index2];
 
-    output.addByte(predictor2 & 0xFF);
-    output.addByte((predictor2 >> 8) & 0xFF);
     output.addByte(predictor1 & 0xFF);
     output.addByte((predictor1 >> 8) & 0xFF);
+    output.addByte(predictor2 & 0xFF);
+    output.addByte((predictor2 >> 8) & 0xFF);
     i++;
   }
 
