@@ -45,8 +45,8 @@ segments:
   - [0x4b9660, bin, null]
   - [0x4c49a0, c, segment_4c49a0]
   - [0x4c4a20, bin, null]
-  - [0x4d2050, c, sound]
-  - [0x4d26c0, bin, null]
+  - [0x4d1c90, c, sound]
+  - [0x4d30e0, bin, null]
   - [0x4d45c0, c, create_window]
   - [0x4d4730, bin, null]
   - [0x4d5e60, c, virtual_memory]
@@ -1132,22 +1132,22 @@ symbols:
   FUN_004d1a90: 0x4d1a90
   FUN_004d1c50: 0x4d1c50
   init_sound_system: 0x4d1c90
-  FUN_004d1d50: 0x4d1d50
-  FUN_004d1d90: 0x4d1d90
-  FUN_004d1e60: 0x4d1e60
-  FUN_004d1e80: 0x4d1e80
-  FUN_004d1ee0: 0x4d1ee0
-  FUN_004d1f40: 0x4d1f40
-  FUN_004d1fa0: 0x4d1fa0
+  deinit_sound_system: 0x4d1d50
+  sound_func_004d1d90: 0x4d1d90
+  sound_func_004d1e60: 0x4d1e60
+  is_sound_playing: 0x4d1e80
+  play_sound: 0x4d1ee0
+  play_sound_looping: 0x4d1f40
+  release_sound_buffers: 0x4d1fa0
   write_bytes_to_sound_buffer: 0x4d2050
-  FUN_004d2100: 0x4d2100
+  write_adpcm_to_sound_buffers: 0x4d2100
   display_message_and_exit_2: 0x4d22a0
   adpcm_decompress: 0x4d22b0
   adpcm_decompress_stereo: 0x4d23d0
-  read_adpcm_file: 0x4d25e0
-  FUN_004d26c0: 0x4d26c0
-  FUN_004d2a10: 0x4d2a10
-  FUN_004d2ca0: 0x4d2ca0
+  read_kvag_file: 0x4d25e0
+  sound_func_004d26c0: 0x4d26c0
+  sound_func_004d2a10: 0x4d2a10
+  sound_func_004d2ca0: 0x4d2ca0
   FUN_004d30e0: 0x4d30e0
   FUN_004d35a0: 0x4d35a0
   FUN_004d39a0: 0x4d39a0
@@ -1160,7 +1160,7 @@ symbols:
   FUN_004d3fe0: 0x4d3fe0
   FUN_004d4060: 0x4d4060
   FUN_004d4090: 0x4d4090
-  FUN_004d4130: 0x4d4130
+  free_audio_struct_buffer: 0x4d4130
   FUN_004d4190: 0x4d4190
   FUN_004d4270: 0x4d4270
   FUN_004d4370: 0x4d4370
@@ -1543,6 +1543,7 @@ symbols:
   sLoadedBigFileHeader: 0x51b98c
   gMouseButtonBits: 0x51e0e4
   gWndHandle: 0x51e200
+  sSoundStatus: 0x51e204
   gKeysTapped: 0x51e220
   gPrevScrollWheelDelta: 0x51e320
   gUnusedMouseGlobal1: 0x51e324
@@ -1551,11 +1552,16 @@ symbols:
   gCursorY2: 0x51e3c0
   gHResult1: 0x51e3c4
   gCursorX2: 0x51e3c8
+  DAT_0051e3e0: 0x51e3e0
   gKeysPressed: 0x53ebe0
   gPrevMouseButtonBits: 0x53ede0
   gUnkMouseButtonBits: 0x53edf4
+  gDirectSound: 0x53edf8
+  DAT_0053ee00: 0x53ee00
   gVirtualMemoryNumbers: 0x53ee60
+  DAT_00546e60: 0x546e60
   gHResult2: 0x546e74
+  DAT_00546f80: 0x546f80
   gSomeMoreMouseButtonBits: 0x567784
   DAT_00567788: 0x567788
   gSomeMouseButtonBits: 0x56778c
@@ -1563,15 +1569,23 @@ symbols:
   sBigFileEntryPointers: 0x5677a0
   gTempString2: 0x5679a0
   gCursorTextures: 0x567ac0
+  DAT_0057137c: 0x57137c
   gPrevMouseXs: 0x5713a0
   gPrevMouseYs: 0x5713c0
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
   gScrollWheelDelta: 0x5735e4
+  DAT_00574a00: 0x574a00
+  gSomeAudioStructs: 0x574a20
+  gSoundBuffers2: 0x574ca0
+  sSoundBuffer1: 0x594f40
   gVirtualMemoryBuffers: 0x594f60
   gCursorX: 0x59cf60
   gCursorY: 0x59cf64
+  sSoundBuffer2: 0x59cf68
   gVirtualMemorySizes: 0x59cf80 
+  DAT_005a4f88: 0x5a4f88
+  gSoundBuffers1: 0x5a4fa0
   sAbsolutePathTempString: 0x5f0a60
   sTimerValues: 0x5fa260
   sClockCycleDeltas: 0x5fa380
@@ -1633,6 +1647,7 @@ strings:
   str_resolution_per_frame: 0x515614
   str_clockers: 0x51562c
   str_real_war_v9_dot_25: 0x517018
+  str_SoundSystemNotInitialized: 0x5172b8
   str_bad_or_missing_adpcm_file: 0x5172d8
   str_couldnt_malloc_adpcm_buf: 0x5172f8
   str_memory_map_file: 0x517474
