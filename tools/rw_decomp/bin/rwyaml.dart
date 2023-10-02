@@ -355,6 +355,6 @@ class SymbolNamePair {
   }
 
   static int _parseInt(String str) {
-    return int.tryParse(str, radix: 16) ?? int.parse(str);
+    return int.tryParse(str) ?? int.parse(str, radix: 16);
   }
 }

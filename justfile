@@ -24,6 +24,10 @@ set shell := ["powershell.exe", "-c"]
 @finddiffs:
     dart run tools/rw_decomp/bin/finddiffs.dart
 
+# calculate decomp progress
+@progress *args:
+    dart run tools/rw_decomp/bin/progress.dart {{args}}
+
 # split base exe
 @split:
     tools/rw_decomp/build/split.exe

@@ -147,12 +147,13 @@ class AsmFuncInfo {
 class AsmFuncPragma {
   final int lineIndex;
   final String funcName;
+  final bool hasReturn;
   final bool skipped;
 
-  AsmFuncPragma(this.lineIndex, this.funcName, this.skipped);
+  AsmFuncPragma(this.lineIndex, this.funcName, this.hasReturn, this.skipped);
 }
 
-final _pragmaAsmFuncRegex = RegExp(r'^#pragma(?:\s+)ASM_FUNC(?:\s+)(\S+)');
+final _pragmaAsmFuncRegex = RegExp(r'^#pragma\s+ASM_FUNC\s+(\S+)\s*(\S+)?');
 
 void _stitchInAsmFuncs(
   List<AsmFuncPragma> asmFuncs, 
@@ -232,7 +233,7 @@ Future<AsmFuncInfo> _asmFuncPreprocess(
     // actual calling code since they will use the correct prototype.
     buffer.writeln('#pragma warning( push )');
     buffer.writeln('#pragma warning( disable : 4026 )');
-    buffer.writeln('void ${asmFuncPragma.funcName}() {');
+    buffer.writeln('${asmFuncPragma.hasReturn ? 'int' : 'void'} ${asmFuncPragma.funcName}() {');
     buffer.writeln('    __asm');
     buffer.writeln('    {');
     // Note: The final RET is automatically included by the compiler
@@ -324,9 +325,9 @@ List<AsmFuncPragma> _scanAsmFuncPragmas(List<String> lines, Set<String> defines)
     } else if (line.startsWith('#endif')) {
       pop();
     } else {
-      final asmFunc = _pragmaAsmFuncRegex.firstMatch(line)?.group(1);
-      if (asmFunc != null) {
-        asmFuncs.add(AsmFuncPragma(i, asmFunc, skipping));
+      final asmFunc = _pragmaAsmFuncRegex.firstMatch(line);
+      if (asmFunc != null && asmFunc.group(1) != null) {
+        asmFuncs.add(AsmFuncPragma(i, asmFunc.group(1)!, asmFunc.group(2) == 'hasret', skipping));
       }
     }
   }

@@ -39,6 +39,7 @@ A quick overview of the decompilation process:
 - Decompile functions and place them in `rw/src`.
 - Map files in `rw/src` and symbols to virtual exe addresses in `rw.yaml`.
 - For functions that haven't been decompiled yet but are in the middle of a source file, add a `#pragma ASM_FUNC function_name` line in its place (with `function_name` being the actual name of the function) to let the rest of the file compile correctly.
+    - If the function is not void, add `hasret` after the function name.
 - If segments in `rw.yaml` are updated or new `#pragma ASM_FUNC`s are added, re-run `just split`.
 - If source files are added/renamed/deleted, re-run `just configure`.
 - Use `just diff {function name}` for live function diffing.

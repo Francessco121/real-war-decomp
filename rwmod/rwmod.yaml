@@ -1,5 +1,5 @@
-# Extracts functions from the base executable into .bin files that can
-# be included into source code via #pragma ASM_FUNC
+# Extracts functions from the base executable into .obj files that are
+# automatically linked with the given name.
 #
 # base exe symbol name -> cloned symbol name
 func_clones:
