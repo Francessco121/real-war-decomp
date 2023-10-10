@@ -45,6 +45,7 @@ void main(List<String> args) {
   final String srcDirPath = p.join(projectDir, rw.config.srcDir);
   final String asmDirPath = p.join(projectDir, rw.config.asmDir);
   final String binDirPath = p.join(projectDir, rw.config.binDir);
+  Directory(asmDirPath).createSync();
   Directory(binDirPath).createSync();
   Directory(p.join(binDirPath, '_funcs')).createSync();
 
