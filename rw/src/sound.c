@@ -3,6 +3,7 @@
 
 #include "create_window.h"
 #include "data.h"
+#include "sound.h"
 #include "strings.h"
 #include "undefined.h"
 #include "virtual_memory.h"
@@ -24,7 +25,7 @@ typedef struct {
     /*0x14*/ unsigned int field0x14;
     /*0x18*/ FILE *file;
     // Pointer to KVAG header.
-    /*0x18*/ char *kvagBytes;
+    /*0x18*/ BYTE *kvagBytes;
     // Pointer to KVAG ADPCM bytes.
     /*0x20*/ char *adpcmBytes;
     /*0x24*/ int isStereo;
@@ -36,40 +37,65 @@ typedef struct {
     /*0x138*/ unsigned int field0x138;
 } SomeAudioStruct;
 
-extern byte gSoundSystemInitialized;
+// .data
 
-extern int gADPCMIndexTable[16];
-extern int gADPCMStepsizeTable[89];
-extern short gADPCMPredictor;
-extern char gADPCMIndex;
-extern short gADPCMPredictor2;
-extern char gADPCMIndex2;
+int gADPCMIndexTable[16] = {
+    -1, -1, -1, -1, 2, 4, 6, 8,
+    -1, -1, -1, -1, 2, 4, 6, 8
+};
+int gADPCMStepsizeTable[89] = {
+    7, 8, 9, 10, 11, 12, 13,
+    14, 16, 17, 19, 21, 23, 25, 28,
+    31, 34, 37, 41, 45, 50, 55, 60,
+    66, 73, 80, 88, 97, 107, 118,
+    130, 143, 157, 173, 190, 209, 230,
+    253, 279, 307, 337, 371, 408, 449,
+    494, 544, 598, 658, 724, 796, 876,
+    963, 1060, 1166, 1282, 1411, 1552,
+    1707, 1878, 2066, 2272, 2499, 2749,
+    3024, 3327, 3660, 4026, 4428, 4871,
+    5358, 5894, 6484, 7132, 7845, 8630,
+    9493, 10442, 11487, 12635, 13899,
+    15289, 16818, 18500, 20350, 22385,
+    24623, 27086, 29794, 32767
+};
 
-extern LPDIRECTSOUND gDirectSound;
+// .bss
 
-extern LPDIRECTSOUNDBUFFER gSoundBuffers1[NUM_SOUND_BUFFERS];
-extern LPDIRECTSOUNDBUFFER gSoundBuffers2[NUM_SOUND_BUFFERS];
-extern LPDIRECTSOUNDBUFFER sSoundBuffer1;
-extern LPDIRECTSOUNDBUFFER sSoundBuffer2;
+byte gSoundSystemInitialized;
 
-extern SomeAudioStruct gSomeAudioStructs[2];
+short gADPCMPredictor;
+char gADPCMIndex;
+short gADPCMPredictor2;
+char gADPCMIndex2;
 
-extern char DAT_00574a00[NUM_SOUND_BUFFERS];
-extern int DAT_005a4f88[2];
+LPDIRECTSOUND gDirectSound;
 
-extern unsigned int DAT_0053ee00[NUM_SOUND_BUFFERS];
+LPDIRECTSOUNDBUFFER gSoundBuffers1[NUM_SOUND_BUFFERS];
+LPDIRECTSOUNDBUFFER gSoundBuffers2[NUM_SOUND_BUFFERS];
+LPDIRECTSOUNDBUFFER sSoundBuffer1;
+LPDIRECTSOUNDBUFFER sSoundBuffer2;
 
-extern char DAT_0051e3e0[2][66560];
-extern char DAT_00546f80[2][66560];
+SomeAudioStruct gSomeAudioStructs[2];
 
-extern int DAT_0057137c;
+char DAT_00574a00[NUM_SOUND_BUFFERS];
+int DAT_005a4f88[2];
 
-extern WAVEFORMATEX DAT_00546e60;
+unsigned int DAT_0053ee00[NUM_SOUND_BUFFERS];
 
-extern DWORD sSoundStatus;
+char DAT_0051e3e0[2][66560];
+char DAT_00546f80[2][66560];
 
-extern HRESULT gHResult1;
-extern HRESULT gHResult2;
+int DAT_0057137c;
+
+WAVEFORMATEX DAT_00546e60;
+
+DWORD sSoundStatus;
+
+HRESULT gHResult1;
+HRESULT gHResult2;
+
+// .text
 
 /**
  * Decompresses 4-bit ADPCM into 16-bit PCM.
@@ -583,15 +609,9 @@ void adpcm_decompress_stereo(char *input, short *rightChannelOutput, short *left
     gADPCMIndex2 = index2;
 }
 
-/**
- * Reads KVAG bytes from a file.
- * 
- * The file can either be raw ADPCM bytes or a KVAG container.
- * If the file is just raw ADPCM, a header will be added to the returned bytes.
- */
-char* read_kvag_file(char* filePath) {
+BYTE* read_kvag_file(char* filePath) {
     long fileLength;
-    char *kvagBuf;
+    BYTE *kvagBuf;
     
     if (!gSoundSystemInitialized) {
         return NULL;
@@ -601,7 +621,7 @@ char* read_kvag_file(char* filePath) {
 
     if (fileLength != 0) {
         // Allocate space for the file + KVAG header (in case we need to add our own header)
-        kvagBuf = (char*)custom_alloc(fileLength + 16);
+        kvagBuf = (BYTE*)custom_alloc(fileLength + 16);
         if (kvagBuf == NULL) {
             display_message_and_exit_2(str_couldnt_malloc_adpcm_buf);
         }
@@ -621,10 +641,10 @@ char* read_kvag_file(char* filePath) {
             // read in the file after it
 
             // data size (u32)
-            kvagBuf[4] = (char)fileLength;
-            kvagBuf[5] = (char)(fileLength >> 8);
-            kvagBuf[6] = (char)(fileLength >> 16);
-            kvagBuf[7] = (char)((unsigned long)fileLength >> 24); // why is this SHR and the others SAR?
+            kvagBuf[4] = (BYTE)fileLength;
+            kvagBuf[5] = (BYTE)(fileLength >> 8);
+            kvagBuf[6] = (BYTE)(fileLength >> 16);
+            kvagBuf[7] = (BYTE)((unsigned int)fileLength >> 24); // why is this SHR and the others SAR?
             // sample rate (u32)
             kvagBuf[8] = 0;
             kvagBuf[9] = 0;
@@ -831,7 +851,7 @@ void sound_func_004d2a10(int idx, unsigned int sampleRate, int channels) {
 }
 
 void sound_func_004d2ca0(char *path, int dontStream, int idx) {
-    byte *kvagBytes;
+    BYTE *kvagBytes;
     int isStereo;
     unsigned int sampleRate;
     char temp[4];
@@ -868,7 +888,7 @@ void sound_func_004d2ca0(char *path, int dontStream, int idx) {
         kvagBytes = read_kvag_file(path);
         
         gSomeAudioStructs[idx].kvagBytes = kvagBytes;
-        gSomeAudioStructs[idx].adpcmBytes = gSomeAudioStructs[idx].kvagBytes + KVAG_ADPCM_START;
+        gSomeAudioStructs[idx].adpcmBytes = (char*)(gSomeAudioStructs[idx].kvagBytes + KVAG_ADPCM_START);
         gSomeAudioStructs[idx].file = NULL;
         gSomeAudioStructs[idx].adpcmDataSize = KVAG_ADPCM_LENGTH(kvagBytes);
         
@@ -945,7 +965,7 @@ void sound_func_004d2ca0(char *path, int dontStream, int idx) {
 }
 
 void sound_func_004d30e0(char *path, int dontStream, int idx) {
-    byte *kvagBytes;
+    BYTE *kvagBytes;
     int isStereo;
     unsigned int sampleRate;
     char temp[4];
@@ -1001,7 +1021,7 @@ void sound_func_004d30e0(char *path, int dontStream, int idx) {
         }
 
         gSomeAudioStructs[idx].kvagBytes = kvagBytes;
-        gSomeAudioStructs[idx].adpcmBytes = gSomeAudioStructs[idx].kvagBytes + KVAG_ADPCM_START;
+        gSomeAudioStructs[idx].adpcmBytes = (char*)(gSomeAudioStructs[idx].kvagBytes + KVAG_ADPCM_START);
         gSomeAudioStructs[idx].file = NULL;
         gSomeAudioStructs[idx].adpcmDataSize = KVAG_ADPCM_LENGTH(kvagBytes);
     } else {
@@ -1185,7 +1205,7 @@ void sound_func_004d35a0(int idx) {
     }
 }
 
-void sound_func_004d39a0(byte *kvagBytes, int idx, int volume1, int volume2, int pitch, int playLooping) {
+void sound_func_004d39a0(BYTE *kvagBytes, int idx, int volume1, int volume2, int pitch, int playLooping) {
     unsigned int adpcmByteLength;
     unsigned int sampleRate;
     int isStereo;
@@ -1248,7 +1268,7 @@ void sound_func_004d39a0(byte *kvagBytes, int idx, int volume1, int volume2, int
         write_adpcm_to_sound_buffers(
             gSoundBuffers1[idx], 
             gSoundBuffers2[idx], 
-            kvagBytes + KVAG_ADPCM_START, 
+            (char*)(kvagBytes + KVAG_ADPCM_START), 
             adpcmByteLength * 4, 
             isStereo);
         

@@ -66,6 +66,8 @@ segments:
   - [0x4ec000, bin, _data_4ec000]
   - [0x5144e8, data, timers]
   - [0x5155e8, bin, _data_5155e8]
+  - [0x51702c, data, sound]
+  - [0x5171d0, bin, _data_5171d0]
   # .data (uninitialized)
   - [0x51b000, bss, null]
   # .rsrc
