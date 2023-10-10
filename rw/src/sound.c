@@ -1072,8 +1072,6 @@ void sound_func_004d30e0(char *path, int dontStream, int idx) {
     }
 }
 
-// some confusing control flow here... this is probably pretty close tho
-#ifdef NON_EQUIVALENT
 void sound_func_004d35a0(int idx) {
     DWORD playCursor;
     DWORD writeCursor;
@@ -1108,62 +1106,63 @@ void sound_func_004d35a0(int idx) {
 
         play_sound(DAT_005a4f88[idx]);
 
-        if (gSomeAudioStructs[idx].file == NULL) {
-            return;
+        if (gSomeAudioStructs[idx].file != NULL) {
+            free_audio_struct_buffer(idx);
         }
 
-        free_audio_struct_buffer(idx);
         return;
     }
 
     IDirectSoundBuffer_GetCurrentPosition(gSoundBuffers1[DAT_005a4f88[idx]], &playCursor, &writeCursor);
 
-    if (gSomeAudioStructs[idx].field0xc == gSomeAudioStructs[idx].adpcmDataSize) {
-        if ((gSomeAudioStructs[idx].field0x4 == 1 && playCursor >= gSomeAudioStructs[idx].field0x14 && playCursor < 0x8000)
-            || (gSomeAudioStructs[idx].field0x4 == 0 && playCursor >= gSomeAudioStructs[idx].field0x14 && playCursor >= 0x8000)
-        ) {
-            gSomeAudioStructs[idx].field0x0 = 0;
+    if (gSomeAudioStructs[idx].field0xc == gSomeAudioStructs[idx].adpcmDataSize &&
+        ((gSomeAudioStructs[idx].field0x4 == 1 && playCursor >= gSomeAudioStructs[idx].field0x14 && playCursor < 0x8000) ||
+            (gSomeAudioStructs[idx].field0x4 == 0 && playCursor >= gSomeAudioStructs[idx].field0x14 && playCursor >= 0x8000))
+    ) {
+        gSomeAudioStructs[idx].field0x0 = 0;
             
-            IDirectSoundBuffer_Stop(gSoundBuffers1[DAT_005a4f88[idx]]);
-            if (gSoundBuffers2[DAT_005a4f88[idx]] != NULL) {
-                IDirectSoundBuffer_Stop(gSoundBuffers2[DAT_005a4f88[idx]]);
-            }
+        IDirectSoundBuffer_Stop(gSoundBuffers1[DAT_005a4f88[idx]]);
+        if (gSoundBuffers2[DAT_005a4f88[idx]] != NULL) {
+            IDirectSoundBuffer_Stop(gSoundBuffers2[DAT_005a4f88[idx]]);
+        }
 
-            if (gSomeAudioStructs[idx].file == NULL) {
-                return;
-            }
-
+        if (gSomeAudioStructs[idx].file != NULL) {
             free_audio_struct_buffer(idx);
-            return;
-        }
-    } else if (playCursor >= 0x8000) {
-        if (gSomeAudioStructs[idx].field0x4 != 0) {
-            return;
         }
 
+        return;
+    }
+    
+    if (playCursor >= 0x8000) {
+        if (gSomeAudioStructs[idx].field0x4 == 0) {
+            if (gSomeAudioStructs[idx].field0x138 + gSomeAudioStructs[idx].field0xc < gSomeAudioStructs[idx].adpcmDataSize) {
+                DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], 0x2000);
+                gSomeAudioStructs[idx].field0xc += DAT_0057137c;
+            } else {
+                memset(DAT_00546f80[idx], 0, 0x8000);
+                memset(DAT_0051e3e0[idx], 0, 0x8000);
+
+                DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], 
+                    gSomeAudioStructs[idx].adpcmDataSize - gSomeAudioStructs[idx].field0xc);
+
+                gSomeAudioStructs[idx].field0x14 = gSomeAudioStructs[idx].adpcmDataSize - gSomeAudioStructs[idx].field0xc;
+                gSomeAudioStructs[idx].field0xc = gSomeAudioStructs[idx].adpcmDataSize;
+            }
+
+            write_bytes_to_sound_buffer(gSoundBuffers1[DAT_005a4f88[idx]], DAT_00546f80[idx], 0x10000);
+            if (gSomeAudioStructs[idx].isStereo) {
+                write_bytes_to_sound_buffer(gSoundBuffers2[DAT_005a4f88[idx]], DAT_0051e3e0[idx], 0x10000);
+            }
+
+            gSomeAudioStructs[idx].field0x4 = 1;
+        }
+        
+        return;
+    }
+
+    if (gSomeAudioStructs[idx].field0x4 == 1) {
         if (gSomeAudioStructs[idx].field0x138 + gSomeAudioStructs[idx].field0xc < gSomeAudioStructs[idx].adpcmDataSize) {
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], 0x2000);
-            gSomeAudioStructs[idx].field0xc += DAT_0057137c;
-        } else {
-            memset(DAT_00546f80[idx], 0, 0x8000);
-            memset(DAT_0051e3e0[idx], 0, 0x8000);
-
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], 
-                gSomeAudioStructs[idx].adpcmDataSize - gSomeAudioStructs[idx].field0xc);
-
-            gSomeAudioStructs[idx].field0x14 = gSomeAudioStructs[idx].adpcmDataSize - gSomeAudioStructs[idx].field0xc;
-            gSomeAudioStructs[idx].field0xc = gSomeAudioStructs[idx].adpcmDataSize;
-        }
-
-        write_bytes_to_sound_buffer(gSoundBuffers1[DAT_005a4f88[idx]], DAT_00546f80[idx], 0x10000);
-        if (gSomeAudioStructs[idx].isStereo) {
-            write_bytes_to_sound_buffer(gSoundBuffers2[DAT_005a4f88[idx]], DAT_00546f80[idx], 0x10000);
-        }
-
-        gSomeAudioStructs[idx].field0x4 = 1;
-    } else if (gSomeAudioStructs[idx].field0x4 == 1) {
-        if (gSomeAudioStructs[idx].field0x138 + gSomeAudioStructs[idx].field0xc < gSomeAudioStructs[idx].adpcmDataSize) {
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx] + 0x8000, (short*)DAT_0051e3e0[idx] + 0x8000, 0x2000);
+            DAT_0057137c = sound_func_004d26c0(idx, (short*)(DAT_00546f80[idx] + 0x8000), (short*)(DAT_0051e3e0[idx] + 0x8000), 0x2000);
             gSomeAudioStructs[idx].field0xc += DAT_0057137c;
         } else {
             memset(DAT_00546f80[idx] + 0x8000, 0, 0x8000);
@@ -1182,11 +1181,9 @@ void sound_func_004d35a0(int idx) {
         }
 
         gSomeAudioStructs[idx].field0x4 = 0;
+        return;
     }
 }
-#else
-#pragma ASM_FUNC sound_func_004d35a0
-#endif
 
 void sound_func_004d39a0(byte *kvagBytes, int idx, int volume1, int volume2, int pitch, int playLooping) {
     unsigned int adpcmByteLength;
