@@ -46,7 +46,7 @@ segments:
   - [0x4c49a0, c, segment_4c49a0]
   - [0x4c4a20, bin, null]
   - [0x4d1c90, c, sound]
-  - [0x4d30e0, bin, null]
+  - [0x4d4510, bin, null]
   - [0x4d45c0, c, create_window]
   - [0x4d4730, bin, null]
   - [0x4d5e60, c, virtual_memory]
@@ -1148,25 +1148,25 @@ symbols:
   sound_func_004d26c0: 0x4d26c0
   sound_func_004d2a10: 0x4d2a10
   sound_func_004d2ca0: 0x4d2ca0
-  FUN_004d30e0: 0x4d30e0
-  FUN_004d35a0: 0x4d35a0
-  FUN_004d39a0: 0x4d39a0
-  FUN_004d3be0: 0x4d3be0
-  FUN_004d3c80: 0x4d3c80
-  FUN_004d3d30: 0x4d3d30
-  FUN_004d3df0: 0x4d3df0
-  FUN_004d3ea0: 0x4d3ea0
-  FUN_004d3f60: 0x4d3f60
-  FUN_004d3fe0: 0x4d3fe0
-  FUN_004d4060: 0x4d4060
-  FUN_004d4090: 0x4d4090
+  sound_func_004d30e0: 0x4d30e0
+  sound_func_004d35a0: 0x4d35a0
+  sound_func_004d39a0: 0x4d39a0
+  sound_func_004d3be0: 0x4d3be0
+  sound_func_004d3c80: 0x4d3c80
+  sound_func_004d3d30: 0x4d3d30
+  sound_func_004d3df0: 0x4d3df0
+  sound_func_004d3ea0: 0x4d3ea0
+  sound_func_004d3f60: 0x4d3f60
+  sound_func_004d3fe0: 0x4d3fe0
+  sound_func_004d4060: 0x4d4060
+  sound_func_004d4090: 0x4d4090
   free_audio_struct_buffer: 0x4d4130
-  FUN_004d4190: 0x4d4190
-  FUN_004d4270: 0x4d4270
-  FUN_004d4370: 0x4d4370
-  FUN_004d43b0: 0x4d43b0
-  FUN_004d4420: 0x4d4420
-  FUN_004d4490: 0x4d4490
+  sound_set_pan_1: 0x4d4190
+  sound_set_pan_2: 0x4d4270
+  convert_value_to_volume: 0x4d4370
+  sound_set_volume_1: 0x4d43b0
+  sound_set_volume_2: 0x4d4420
+  sound_set_pitch: 0x4d4490
   init_systems: 0x4d4510
   FUN_004d45b0: 0x4d45b0
   game_create_window: 0x4d45c0
@@ -1311,7 +1311,7 @@ symbols:
   strstr: 0x4e1510
   _FPinit: 0x4e1590
   _cfltcvt_init: 0x4e15a8
-  __ftol: 0x4e15e0
+  _ftol: 0x4e15e0
   sprintf: 0x4e1607
   sscanf: 0x4e1659
   fgets: 0x4e168d
