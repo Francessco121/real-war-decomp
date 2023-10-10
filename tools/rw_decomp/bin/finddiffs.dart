@@ -44,9 +44,9 @@ void main(List<String> args) {
   // Figure out first segment that's too big (if any)
   //
   // We can't do a meaningful diff for stuff that got shifted
-  final segmentIdxsByName = {for (final (i, s) in rw.segments.indexed) s.name: i};
+  final segmentIdxsByName = {for (final (i, s) in rw.segments.indexed) '${s.name}_${s.type}': i};
   final firstBigSegment = mappingEntries.firstWhereOrNull((e) {
-    final segIdx = segmentIdxsByName[e.segmentName]!;
+    final segIdx = segmentIdxsByName['${e.segmentName}_${e.segmentType}']!;
     
     if (segIdx >= rw.segments.length - 1) {
       return false;
@@ -93,7 +93,7 @@ void main(List<String> args) {
 
   if (firstBigSegment != null) {
     print(
-      'WARN: Segment ${firstBigSegment.segmentName} is too big! '
+      'WARN: Segment ${firstBigSegment.segmentName} (${firstBigSegment.segmentType}) is too big! '
       'Bytes after this segment are shifted and won\'t be diffed.');
   }
 
