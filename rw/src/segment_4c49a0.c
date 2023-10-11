@@ -1,4 +1,6 @@
-#include <WINDOWS.H>
+#include <STRING.H>
+
+#include "types.h"
 
 /**
  * Decodes a run-length encoded string.
@@ -14,12 +16,12 @@
  * [in] - String to decode.
  * [out] - Decoded output.
  */
-void rle_decode(WORD *in, WORD *out) {
-    WORD ctrl;
-    unsigned int sequenceLen; // in words, not bytes
-    size_t i;
-    int outIdx;
-    int inIdx;
+void rle_decode(const uint16 *in, uint16 *out) {
+    uint16 ctrl;
+    uint32 sequenceLen; // in words, not bytes
+    uint32 i;
+    int32 outIdx;
+    int32 inIdx;
 
     outIdx = 0;
     inIdx = 0;

@@ -6,14 +6,15 @@
 #include "strings.h"
 #include "undefined.h"
 #include "virtual_memory.h"
+#include "warnsuppress.h"
 
 typedef struct BigFileEntry {
     char path[64];
     /// An XOR hash of [path]
-    unsigned int pathHash;
+    uint32 pathHash;
     // File pointer in bigfile.dat
-    unsigned int byteOffset;
-    unsigned int sizeBytes;
+    uint32 byteOffset;
+    uint32 sizeBytes;
 } BigFileEntry;
 
 /**
@@ -23,30 +24,31 @@ typedef struct BigFileEntry {
 typedef struct BigFileEntryPointer {
     FILE *file;
     // Current byte position in the file.
-    int position;
-    int sizeBytes;
+    int32 position;
+    int32 sizeBytes;
     // File pointer in bigfile.dat
-    unsigned int byteOffset;
+    uint32 byteOffset;
 } BigFileEntryPointer;
 
 #define MAX_BIG_FILE_ENTRY_POINTERS 32
 
-// note: these symbols have very different addresses even though they're only 
-// referenced in this file...
-extern int sBigFileEntryCount;
-extern int sLoadedBigFileHeader;
-extern char sBigFileAbsolutePath[128];
-extern BigFileEntryPointer sBigFileEntryPointers[MAX_BIG_FILE_ENTRY_POINTERS];
-extern char sBigFileEntryPointerPaths[MAX_BIG_FILE_ENTRY_POINTERS][256];
-extern BigFileEntry *sBigFileHeader;
-extern char sAbsolutePathTempString[256];
+// .bss
 
-int find_bigfile_entry_by_path(char *path);
-void read_data_file_internal(char *path, void *out);
-FILE *open_data_file(char *path, char *mode);
+int32 sBigFileEntryCount;
+int32 sLoadedBigFileHeader;
+char sBigFileAbsolutePath[128];
+BigFileEntryPointer sBigFileEntryPointers[MAX_BIG_FILE_ENTRY_POINTERS];
+char sBigFileEntryPointerPaths[MAX_BIG_FILE_ENTRY_POINTERS][256];
+BigFileEntry *sBigFileHeader;
+char sAbsolutePathTempString[256];
 
-size_t read_data_file(char *path, void *out) {
-    int index;
+// .text
+
+static int32 find_bigfile_entry_by_path(const char *path);
+static void read_data_file_internal(const char *path, void *out);
+
+size_t read_data_file(const char *path, void *out) {
+    int32 index;
     FILE *file;
     size_t fileSize;
     char absolutePath[256];
@@ -82,8 +84,8 @@ size_t read_data_file(char *path, void *out) {
     // wtf? no return??
 }
 
-FILE *open_data_file_relative(char *path, char *mode) {
-    int index = find_bigfile_entry_by_path(path);
+FILE *open_data_file_relative(const char *path, const char *mode) {
+    int32 index = find_bigfile_entry_by_path(path);
     if (index < 0) {
         // Convert path to an absolute file path
         sprintf(sAbsolutePathTempString, str_pct_s, path);
@@ -95,8 +97,8 @@ FILE *open_data_file_relative(char *path, char *mode) {
     return open_data_file(path, mode);
 }
 
-FILE *open_data_file_absolute(char *path, char *mode) {
-    int index = find_bigfile_entry_by_path(path);
+FILE *open_data_file_absolute(const char *path, const char *mode) {
+    int32 index = find_bigfile_entry_by_path(path);
     if (index < 0) {
         return fopen(path, mode);
     }
@@ -104,8 +106,8 @@ FILE *open_data_file_absolute(char *path, char *mode) {
     return open_data_file(path, mode);
 }
 
-size_t read_data_file_partial(char *path, void *out, size_t length) {
-    int index;
+size_t read_data_file_partial(const char *path, void *out, size_t length) {
+    int32 index;
     FILE *file;
     size_t read;
 
@@ -134,8 +136,8 @@ size_t read_data_file_partial(char *path, void *out, size_t length) {
     return read;
 }
 
-size_t get_data_file_length(char *path) {
-    int index;
+size_t get_data_file_length(const char *path) {
+    int32 index;
     FILE *file;
     size_t length;
 
@@ -163,7 +165,7 @@ size_t get_data_file_length(char *path) {
     return sBigFileHeader[index].sizeBytes;
 }
 
-size_t write_bytes_to_file(const char *filename, const void *ptr, int length) {
+size_t write_bytes_to_file(const char *filename, const void *ptr, size_t length) {
     FILE *file;
     size_t bytesWritten;
 
@@ -180,8 +182,8 @@ size_t write_bytes_to_file(const char *filename, const void *ptr, int length) {
     return bytesWritten;
 }
 
-/*static*/ char *pack_dword_for_bigfile_path_hash(char *str, unsigned int *out) {
-    unsigned int ints[4];
+/*static*/ const char *pack_dword_for_bigfile_path_hash(const char *str, uint32 *out) {
+    uint32 ints[4];
     char c;
     int i;
 
@@ -195,7 +197,7 @@ size_t write_bytes_to_file(const char *filename, const void *ptr, int length) {
         
         // To uppercase
         if (c >= 'a' && c <= 'z') {
-            c = c & 0xdf;
+            c = (char)(c & 0xdf);
         }
 
         // Substitute ':' for '/' and '\'
@@ -210,9 +212,9 @@ size_t write_bytes_to_file(const char *filename, const void *ptr, int length) {
     return str;
 }
 
-/*static*/ unsigned int xor_hash_bigfile_entry_path(char *str) {
-    unsigned int var2;
-    unsigned int var1;
+/*static*/ uint32 xor_hash_bigfile_entry_path(const char *str) {
+    uint32 var2;
+    uint32 var1;
 
     var2 = 0;
     var1 = 0;
@@ -225,7 +227,7 @@ size_t write_bytes_to_file(const char *filename, const void *ptr, int length) {
     return var2;
 }
 
-void load_bigfile_header(char *path) {
+void load_bigfile_header(const char *path) {
     FILE *file;
     int i, j;
     char absolutePath[256];
@@ -260,7 +262,7 @@ void load_bigfile_header(char *path) {
             j = 0;
             while (sBigFileHeader[i].path[j] != '\0') {
                 if (sBigFileHeader[i].path[j] >= 'a' && sBigFileHeader[i].path[j] <= 'z') {
-                    sBigFileHeader[i].path[j] = sBigFileHeader[i].path[j] - 0x20;
+                    sBigFileHeader[i].path[j] = (char)(sBigFileHeader[i].path[j] - 0x20);
                 }
 
                 j++;
@@ -274,11 +276,11 @@ void load_bigfile_header(char *path) {
     }
 }
 
-static int find_bigfile_entry_by_path(char *path) {
+static int32 find_bigfile_entry_by_path(const char *path) {
     char pathCopy[256];
-    int charIndex;
-    int entryIndex;
-    unsigned int hash;
+    int32 charIndex;
+    int32 entryIndex;
+    uint32 hash;
     
     // If the bigfile.dat headers haven't been loaded, then there's nothing to search
     if (sLoadedBigFileHeader == 0) {
@@ -290,7 +292,7 @@ static int find_bigfile_entry_by_path(char *path) {
     charIndex = 0;
     while (pathCopy[charIndex] != '\0') {
         if (pathCopy[charIndex] >= 'a' && pathCopy[charIndex] <= 'z') {
-            pathCopy[charIndex] = pathCopy[charIndex] - 0x20;
+            pathCopy[charIndex] = (char)(pathCopy[charIndex] - 0x20);
         }
         charIndex++;
     }
@@ -325,8 +327,8 @@ static int find_bigfile_entry_by_path(char *path) {
     return entryIndex;
 }
 
-static void read_data_file_internal(char *path, void *out) {
-    int index;
+static void read_data_file_internal(const char *path, void *out) {
+    int32 index;
     FILE *file;
 
     index = find_bigfile_entry_by_path(path);
@@ -343,9 +345,9 @@ static void read_data_file_internal(char *path, void *out) {
     fclose(file);
 }
 
-FILE *open_data_file(char *path, char *mode) {
+FILE *open_data_file(const char *path, const char *mode) {
     int ptrIndex;
-    int index;
+    int32 index;
     int i;
     FILE *file;
 
@@ -406,8 +408,8 @@ void close_data_file(FILE *file) {
     fclose(file);
 }
 
-char *get_data_file_line(char *str, int length, FILE *file) {
-    long filePos;
+char *get_data_file_line(char *str, int32 length, FILE *file) {
+    int32 filePos;
     char *ret;
     int ptrIndex;
 

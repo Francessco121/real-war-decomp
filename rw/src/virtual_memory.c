@@ -3,6 +3,7 @@
 #include <WINDOWS.H>
 
 #include "strings.h"
+#include "types.h"
 #include "undefined.h"
 #include "virtual_memory.h"
 
@@ -12,12 +13,12 @@
 
 void* gVirtualMemoryBuffers[MAX_VIRTUAL_MEMORY_BUFFERS];
 size_t gVirtualMemorySizes[MAX_VIRTUAL_MEMORY_BUFFERS];
-int gVirtualMemoryNumbers[MAX_VIRTUAL_MEMORY_BUFFERS];
-int gTotalVirtualMemoryAllocated;
+int32 gVirtualMemoryNumbers[MAX_VIRTUAL_MEMORY_BUFFERS];
+int32 gTotalVirtualMemoryAllocated;
 
-BOOL gEnableRwMap;
-extern int DAT_0051b988;
-extern int DAT_00567788;
+bool gEnableRwMap;
+int32 DAT_0051b988;
+int32 DAT_00567788;
 FILE* sRwMapTxtFile;
 
 // .text
@@ -42,12 +43,12 @@ void start_rwmap() {
 }
 
 void end_rwmap() {
-    int thousands;
-    int bytesUsed;
-    int millions;
-    int hundreds;
+    int32 bytesUsed;
+    int32 millions;
+    int32 thousands;
+    int32 hundreds;
 
-    if (gEnableRwMap == FALSE) {
+    if (!gEnableRwMap) {
         return;
     }
 
@@ -68,13 +69,13 @@ void end_rwmap() {
     fclose(sRwMapTxtFile);
 }
 
-void record_virtual_memory_to_rwmap(char *str) {
-    int thousands;
-    int bytesUsed;
-    int millions;
-    int hundreds;
+void record_virtual_memory_to_rwmap(const char *str) {
+    int32 bytesUsed;
+    int32 millions;
+    int32 thousands;
+    int32 hundreds;
 
-    if (gEnableRwMap == FALSE) {
+    if (!gEnableRwMap) {
         return;
     }
 
@@ -203,7 +204,7 @@ void free_all_virtual_memory_buffers() {
     }
 }
 
-void set_virtual_memory_buffer_number(int num) {
+void set_virtual_memory_buffer_number(int32 num) {
     gVirtualMemoryBufferNumber = num;
 }
 
@@ -211,7 +212,7 @@ int get_virtual_memory_buffer_number() {
     return gVirtualMemoryBufferNumber;
 }
 
-void free_virtual_memory_buffer_by_number(int num) {
+void free_virtual_memory_buffer_by_number(int32 num) {
     int i;
 
     for (i = 0; i < MAX_VIRTUAL_MEMORY_BUFFERS; i++) {

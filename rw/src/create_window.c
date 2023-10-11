@@ -2,11 +2,12 @@
 
 #include "create_window.h"
 #include "strings.h"
+#include "types.h"
 #include "undefined.h"
 
 extern LRESULT __stdcall game_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-int game_create_window(HINSTANCE hInstance, int nCmdShow) {
+bool game_create_window(HINSTANCE hInstance, int nCmdShow) {
     WNDCLASSA wndClass;
 
     wndClass.style = 0;
@@ -55,7 +56,7 @@ int game_create_window(HINSTANCE hInstance, int nCmdShow) {
     }
 
     if (gWndHandle == NULL) {
-        return 0;
+        return FALSE;
     }
 
     SetFocus(gWndHandle);
@@ -68,5 +69,5 @@ int game_create_window(HINSTANCE hInstance, int nCmdShow) {
 
     gWindowFocused = 1;
 
-    return 1;
+    return TRUE;
 }

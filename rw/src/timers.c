@@ -25,15 +25,15 @@ static char sTimerStrings[NUM_TIMERS][128] = {
 // as 32-bit integers (aside from the indexing being correctly 64-bit). It's just easier to
 // leave them defined as 32-bit integer arrays.
 
-static UINT32 sTimerValues[NUM_TIMERS * 2];
-static UINT32 sClockCycleDeltas[NUM_TIMERS * 2]; 
-static UINT32 sTimerCounters[NUM_TIMERS * 2];
-static UINT32 sClockCycleCounters[NUM_TIMERS * 2];
+static uint32 sTimerValues[NUM_TIMERS * 2];
+static uint32 sClockCycleDeltas[NUM_TIMERS * 2]; 
+static uint32 sTimerCounters[NUM_TIMERS * 2];
+static uint32 sClockCycleCounters[NUM_TIMERS * 2];
 
-static int sUnusedTimerGlobal1;
-static int sUnusedTimerGlobal2;
-static int sUnusedTimerGlobal3;
-static int sUnusedTimerGlobal4;
+static int32 sUnusedTimerGlobal1;
+static int32 sUnusedTimerGlobal2;
+static int32 sUnusedTimerGlobal3;
+static int32 sUnusedTimerGlobal4;
 
 static char sTimerTempString[256];
 
@@ -44,35 +44,35 @@ void init_timers() {
     memset(sTimerCounters, 0, sizeof(sTimerCounters));
 }
 
-void set_timer_label(int timer, char *label) {
+void set_timer_label(int32 timer, const char *label) {
     sprintf(sTimerStrings[timer], str_pct_s, label);
 }
 
-void set_timer_label_and_update_cycle_counter(int timer, char *label) {
+void set_timer_label_and_update_cycle_counter(int32 timer, const char *label) {
     sprintf(sTimerStrings[timer], str_pct_s, label);
 
-    rdtsc((UINT64*)&sClockCycleCounters[timer*2]);
+    rdtsc((uint64*)&sClockCycleCounters[timer*2]);
     sClockCycleCounters[timer*2] = sClockCycleCounters[timer*2] - 100;
 }
 
-void update_timer_cycle_counter(int timer) {
-    rdtsc((UINT64*)&sClockCycleCounters[timer*2]);
+void update_timer_cycle_counter(int32 timer) {
+    rdtsc((uint64*)&sClockCycleCounters[timer*2]);
 }
 
-void update_timer_cycle_delta(int timer) {
-    rdtsc_delta((UINT64*)&sClockCycleCounters[timer*2], (UINT64*)&sClockCycleDeltas[timer*2]);
+void update_timer_cycle_delta(int32 timer) {
+    rdtsc_delta((uint64*)&sClockCycleCounters[timer*2], (uint64*)&sClockCycleDeltas[timer*2]);
 }
 
-void set_timer_cycle_delta(int timer, UINT32 delta) {
+void set_timer_cycle_delta(int32 timer, uint32 delta) {
     sClockCycleDeltas[timer*2] = delta;
 }
 
-UINT32 get_timer_cycle_delta(int timer) {
+uint32 get_timer_cycle_delta(int32 timer) {
     return sClockCycleDeltas[timer*2];
 }
 
-UINT32 increment_timer_total_for_avg(int timer) {
-    UINT32 delta;
+uint32 increment_timer_total_for_avg(int32 timer) {
+    uint32 delta;
 
     delta = sClockCycleDeltas[timer*2];
 
@@ -102,18 +102,18 @@ void reset_all_timer_cycle_counters() {
     }
 }
 
-void reset_timer_cycle_counter(int timer) {
+void reset_timer_cycle_counter(int32 timer) {
     sClockCycleDeltas[timer*2] = 0;
     sClockCycleDeltas[timer*2 + 1] = 0;
     sClockCycleCounters[timer*2] = 0;
     sClockCycleCounters[timer*2 + 1] = 0;
 }
 
-char *timer_tostring(int timer) {
-    int avgDelta;
-    int thousands;
-    int millions;
-    int hundreds;
+const char *timer_tostring(int32 timer) {
+    int32 avgDelta;
+    int32 thousands;
+    int32 millions;
+    int32 hundreds;
 
     if (sTimerCounters[timer*2] != 0) {
         avgDelta = sTimerValues[timer*2] / sTimerCounters[timer*2] + 1;

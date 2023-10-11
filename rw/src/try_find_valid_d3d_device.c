@@ -2,12 +2,13 @@
 #include <d3d.h>
 
 #include "strings.h"
+#include "types.h"
 #include "undefined.h"
 
 // .bss
 
-int gSelectedD3DDevice;
-int gD3DDeviceCounter;
+int32 gSelectedD3DDevice;
+int32 gD3DDeviceCounter;
 
 // .text
 
@@ -16,7 +17,7 @@ extern HRESULT WINAPI enum_devices_callback
     LPD3DDEVICEDESC lpd3dHWDeviceDesc,
     LPD3DDEVICEDESC lpd3dSWDeviceDesc,LPVOID lpUserArg);
 
-int try_find_valid_d3d_device() {
+bool try_find_valid_d3d_device() {
     static LPDIRECT3D lpD3D;
 
     HRESULT result;
@@ -26,14 +27,14 @@ int try_find_valid_d3d_device() {
 
     if (result != S_OK) {
         display_message(str_dd3d_obj_failed);
-        return 0;
+        return FALSE;
     }
 
     result = IDirectDraw_QueryInterface(lpDD, &IID_IDirect3D, &lpD3D);
     
     if (result != S_OK) {
         display_message(str_creation_of_id3d_failed);
-        return 0;
+        return FALSE;
     }
 
     gSelectedD3DDevice = -1;
@@ -41,16 +42,16 @@ int try_find_valid_d3d_device() {
 
     if (result != S_OK) {
         display_message(str_enum_of_drivers_failed);
-        return 0;
+        return FALSE;
     }
 
     if (gD3DDeviceCounter == 0) {
         display_message(str_couldnt_find_compatible_d3d_driver);
-        return 0;
+        return FALSE;
     }
 
     IDirect3D_Release(lpD3D);
     lpD3D = NULL;
 
-    return 1;
+    return TRUE;
 }

@@ -1,12 +1,15 @@
-#include <WINDOWS.H>
 #include <DSOUND.H>
+#include <STDIO.H>
+#include <WINDEF.H>
 
 #include "create_window.h"
 #include "data.h"
 #include "sound.h"
 #include "strings.h"
+#include "types.h"
 #include "undefined.h"
 #include "virtual_memory.h"
+#include "warnsuppress.h"
 
 #define NUM_SOUND_BUFFERS 18
 
@@ -16,34 +19,34 @@
 #define KVAG_IS_STEREO(bytes) ((bytes)[0xd] << 8) + (bytes)[0xc]
 
 typedef struct {
-    /*0x0*/  int field0x0;
-    /*0x4*/  int field0x4;
-    /*0x8*/  int field0x8;
-    /*0xc*/  unsigned int field0xc;
+    /*0x0*/  int32 field0x0;
+    /*0x4*/  int32 field0x4;
+    /*0x8*/  int32 field0x8;
+    /*0xc*/  uint32 field0xc;
     // Byte length of ADPCM data.
-    /*0x10*/ unsigned int adpcmDataSize;
-    /*0x14*/ unsigned int field0x14;
+    /*0x10*/ uint32 adpcmDataSize;
+    /*0x14*/ uint32 field0x14;
     /*0x18*/ FILE *file;
     // Pointer to KVAG header.
-    /*0x18*/ BYTE *kvagBytes;
+    /*0x18*/ uint8 *kvagBytes;
     // Pointer to KVAG ADPCM bytes.
-    /*0x20*/ char *adpcmBytes;
-    /*0x24*/ int isStereo;
-    /*0x28*/ int adpcmIndex1;
-    /*0x2c*/ int adpcmPredictor1;
-    /*0x30*/ int adpcmIndex2;
-    /*0x34*/ int adpcmPredictor2;
+    /*0x20*/ int8 *adpcmBytes;
+    /*0x24*/ int32 isStereo;
+    /*0x28*/ int32 adpcmIndex1;
+    /*0x2c*/ int32 adpcmPredictor1;
+    /*0x30*/ int32 adpcmIndex2;
+    /*0x34*/ int32 adpcmPredictor2;
     /*0x38*/ char filePath[256];
-    /*0x138*/ unsigned int field0x138;
+    /*0x138*/ uint32 field0x138;
 } SomeAudioStruct;
 
 // .data
 
-int gADPCMIndexTable[16] = {
+int32 gADPCMIndexTable[16] = {
     -1, -1, -1, -1, 2, 4, 6, 8,
     -1, -1, -1, -1, 2, 4, 6, 8
 };
-int gADPCMStepsizeTable[89] = {
+int32 gADPCMStepsizeTable[89] = {
     7, 8, 9, 10, 11, 12, 13,
     14, 16, 17, 19, 21, 23, 25, 28,
     31, 34, 37, 41, 45, 50, 55, 60,
@@ -62,12 +65,12 @@ int gADPCMStepsizeTable[89] = {
 
 // .bss
 
-byte gSoundSystemInitialized;
+bool8 gSoundSystemInitialized;
 
-short gADPCMPredictor;
-char gADPCMIndex;
-short gADPCMPredictor2;
-char gADPCMIndex2;
+int16 gADPCMPredictor;
+int8 gADPCMIndex;
+int16 gADPCMPredictor2;
+int8 gADPCMIndex2;
 
 LPDIRECTSOUND gDirectSound;
 
@@ -78,15 +81,15 @@ LPDIRECTSOUNDBUFFER sSoundBuffer2;
 
 SomeAudioStruct gSomeAudioStructs[2];
 
-char DAT_00574a00[NUM_SOUND_BUFFERS];
-int DAT_005a4f88[2];
+int8 DAT_00574a00[NUM_SOUND_BUFFERS];
+int32 DAT_005a4f88[2];
 
-unsigned int DAT_0053ee00[NUM_SOUND_BUFFERS];
+uint32 DAT_0053ee00[NUM_SOUND_BUFFERS];
 
-char DAT_0051e3e0[2][66560];
-char DAT_00546f80[2][66560];
+int8 DAT_0051e3e0[2][66560];
+int8 DAT_00546f80[2][66560];
 
-int DAT_0057137c;
+int32 DAT_0057137c;
 
 WAVEFORMATEX DAT_00546e60;
 
@@ -100,25 +103,20 @@ HRESULT gHResult2;
 /**
  * Decompresses 4-bit ADPCM into 16-bit PCM.
  */
-void adpcm_decompress(char *input, short *output, int length);
+void adpcm_decompress(const int8 *input, int16 *output, int32 length);
 /**
  * Decompresses 4-bit ADPCM into two 16-bit PCM streams.
  */
-void adpcm_decompress_stereo(char *input, short *output1, short *output2, int length);
-void release_sound_buffers(int idx);
-void sound_func_004d35a0(int idx);
-void sound_func_004d3f60();
-void sound_func_004d4060();
+void adpcm_decompress_stereo(const int8 *input, int16 *rightChannelOutput, int16 *leftChannelOutput, int32 length);
+void release_sound_buffers(int32 idx);
+void sound_func_004d35a0(int32 idx);
 void sound_func_004d4090();
-void free_audio_struct_buffer(int idx);
-void sound_set_pan_1(int, int, int);
-void sound_set_volume_1(int, int, int);
-void sound_set_volume_2(int, int, int);
+void free_audio_struct_buffer(int32 idx);
 /**
  * Sets the pitch of a sound on a scale from 0-1024,
  * where 1024 is the normal pitch and 0 is effectively stopped.
  */
-void sound_set_pitch(int pitch, int idx);
+void sound_set_pitch(int32 pitch, int32 idx);
 
 void init_sound_system() {
     int i;
@@ -212,7 +210,7 @@ void sound_func_004d1d90() {
     }
 }
 
-void sound_func_004d1e60(int idx) {
+void sound_func_004d1e60(int32 idx) {
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -220,8 +218,8 @@ void sound_func_004d1e60(int idx) {
     sound_func_004d35a0(idx);
 }
 
-BOOL is_sound_playing(int idx) {
-    int playing;
+bool is_sound_playing(int32 idx) {
+    bool playing;
     
     if (!gSoundSystemInitialized) {
         return TRUE;
@@ -242,7 +240,7 @@ BOOL is_sound_playing(int idx) {
     return playing;
 }
 
-void play_sound(int idx) {
+void play_sound(int32 idx) {
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -261,7 +259,7 @@ void play_sound(int idx) {
     }
 }
 
-void play_sound_looping(int idx) {
+void play_sound_looping(int32 idx) {
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -280,7 +278,7 @@ void play_sound_looping(int idx) {
     }
 }
 
-void release_sound_buffers(int idx) {
+void release_sound_buffers(int32 idx) {
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -310,10 +308,10 @@ void release_sound_buffers(int idx) {
     DAT_00574a00[idx] = 0;
 }
 
-void write_bytes_to_sound_buffer(IDirectSoundBuffer *soundBuffer, char *data, DWORD length) {
-    char *lpvAudioPtr1;
+void write_bytes_to_sound_buffer(IDirectSoundBuffer *soundBuffer, const int8 *data, uint32 length) {
+    LPVOID lpvAudioPtr1;
     DWORD dwAudioBytes1;
-    char *lpvAudioPtr2;
+    LPVOID lpvAudioPtr2;
     DWORD dwAudioBytes2;
     
     if (!gSoundSystemInitialized) {
@@ -345,9 +343,9 @@ void write_bytes_to_sound_buffer(IDirectSoundBuffer *soundBuffer, char *data, DW
 void write_adpcm_to_sound_buffers(
     IDirectSoundBuffer *soundBuffer1, 
     IDirectSoundBuffer *soundBuffer2,
-    char *adpcmBytes,
-    DWORD adpcmLength,
-    int isStereo
+    const int8 *adpcmBytes,
+    uint32 adpcmLength,
+    bool isStereo
 ) {
     LPVOID audioPtr1_1;
     DWORD audioBytes1_1;
@@ -385,15 +383,15 @@ void write_adpcm_to_sound_buffers(
         if (gHResult1 == DS_OK && gHResult2 == DS_OK) {
             adpcm_decompress_stereo(
                 adpcmBytes, 
-                (short*)audioPtr1_1, 
-                (short*)audioPtr1_2, 
+                (int16*)audioPtr1_1, 
+                (int16*)audioPtr1_2, 
                 audioBytes1_1 / 2);
 
             if (audioBytes2_1 != 0) {
                 adpcm_decompress_stereo(
                     adpcmBytes + (audioBytes1_1 / 2), 
-                    (short*)audioPtr2_1, 
-                    (short*)audioPtr2_2, 
+                    (int16*)audioPtr2_1, 
+                    (int16*)audioPtr2_2, 
                     audioBytes2_1 / 2);
             }
 
@@ -411,10 +409,10 @@ void write_adpcm_to_sound_buffers(
             /*dwFlags*/ 0);
         
         if (gHResult1 == DS_OK) {
-            adpcm_decompress(adpcmBytes, (short*)audioPtr1_1, audioBytes1_1 / 2);
+            adpcm_decompress(adpcmBytes, (int16*)audioPtr1_1, audioBytes1_1 / 2);
 
             if (audioBytes2_1 != 0) {
-                adpcm_decompress(adpcmBytes + (audioBytes1_1 / 4), (short*)audioPtr2_1, audioBytes2_1 / 2);
+                adpcm_decompress(adpcmBytes + (audioBytes1_1 / 4), (int16*)audioPtr2_1, audioBytes2_1 / 2);
             }
 
             IDirectSoundBuffer_Unlock(soundBuffer1, audioPtr1_1, audioBytes1_1, audioPtr2_1, audioBytes2_1);
@@ -422,22 +420,21 @@ void write_adpcm_to_sound_buffers(
     }
 }
 
-void display_message_and_exit_2(char* message) {
+void display_message_and_exit_2(const char* message) {
     display_message_and_exit(message);
 }
 
-void adpcm_decompress(char *input, short *output, int length) {
-    int index;
-    int step;
-    int curByte;
-    int nibble;
-    int nibbleIdx;
-    int predictor;
-    int diff;
-    int signBit;
-    char *inputPtr;
-    short *outputPtr;
-    
+void adpcm_decompress(const int8 *input, int16 *output, int32 length) {
+    int32 index;
+    int32 step;
+    int32 curByte;
+    int32 nibble;
+    int32 nibbleIdx;
+    int32 predictor;
+    int32 diff;
+    int32 signBit;
+    const int8 *inputPtr;
+    int16 *outputPtr;
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -489,32 +486,32 @@ void adpcm_decompress(char *input, short *output, int length) {
         }
 
         step = gADPCMStepsizeTable[index];
-        *(outputPtr++) = predictor;
+        *(outputPtr++) = (int16)predictor;
 
         length--;
     }
 
-    gADPCMPredictor = predictor;
-    gADPCMIndex = index;
+    gADPCMPredictor = (int16)predictor;
+    gADPCMIndex = (int8)index;
 }
 
-void adpcm_decompress_stereo(char *input, short *rightChannelOutput, short *leftChannelOutput, int length) {
-    int index1;
-    int index2;
-    int step1;
-    int step2;
-    int nibble;
-    int lowerNibble;
-    int upperNibble;
-    int predictor1;
-    int predictor2;
-    int diff1;
-    int diff2;
-    int signBit1;
-    int signBit2;
-    char *inputPtr;
-    short *rightChannelPtr;
-    short *leftChannelPtr;
+void adpcm_decompress_stereo(const int8 *input, int16 *rightChannelOutput, int16 *leftChannelOutput, int32 length) {
+    int32 index1;
+    int32 index2;
+    int32 step1;
+    int32 step2;
+    int32 nibble;
+    int32 lowerNibble;
+    int32 upperNibble;
+    int32 predictor1;
+    int32 predictor2;
+    int32 diff1;
+    int32 diff2;
+    int32 signBit1;
+    int32 signBit2;
+    const int8 *inputPtr;
+    int16 *rightChannelPtr;
+    int16 *leftChannelPtr;
     
     if (!gSoundSystemInitialized) {
         return;
@@ -596,22 +593,22 @@ void adpcm_decompress_stereo(char *input, short *rightChannelOutput, short *left
         step1 = gADPCMStepsizeTable[index1];
         step2 = gADPCMStepsizeTable[index2];
 
-        *(rightChannelPtr++) = predictor1;
-        *(leftChannelPtr++) = predictor2;
+        *(rightChannelPtr++) = (int16)predictor1;
+        *(leftChannelPtr++) = (int16)predictor2;
 
         length--;
     }
 
-    gADPCMPredictor = predictor1;
-    gADPCMIndex = index1;
+    gADPCMPredictor = (int16)predictor1;
+    gADPCMIndex = (int8)index1;
 
-    gADPCMPredictor2 = predictor2;
-    gADPCMIndex2 = index2;
+    gADPCMPredictor2 = (int16)predictor2;
+    gADPCMIndex2 = (int8)index2;
 }
 
-BYTE* read_kvag_file(char* filePath) {
-    long fileLength;
-    BYTE *kvagBuf;
+uint8* read_kvag_file(const char* filePath) {
+    int32 fileLength;
+    uint8 *kvagBuf;
     
     if (!gSoundSystemInitialized) {
         return NULL;
@@ -621,7 +618,7 @@ BYTE* read_kvag_file(char* filePath) {
 
     if (fileLength != 0) {
         // Allocate space for the file + KVAG header (in case we need to add our own header)
-        kvagBuf = (BYTE*)custom_alloc(fileLength + 16);
+        kvagBuf = (uint8*)custom_alloc(fileLength + 16);
         if (kvagBuf == NULL) {
             display_message_and_exit_2(str_couldnt_malloc_adpcm_buf);
         }
@@ -641,10 +638,10 @@ BYTE* read_kvag_file(char* filePath) {
             // read in the file after it
 
             // data size (u32)
-            kvagBuf[4] = (BYTE)fileLength;
-            kvagBuf[5] = (BYTE)(fileLength >> 8);
-            kvagBuf[6] = (BYTE)(fileLength >> 16);
-            kvagBuf[7] = (BYTE)((unsigned int)fileLength >> 24); // why is this SHR and the others SAR?
+            kvagBuf[4] = (uint8)fileLength;
+            kvagBuf[5] = (uint8)(fileLength >> 8);
+            kvagBuf[6] = (uint8)(fileLength >> 16);
+            kvagBuf[7] = (uint8)((uint32)fileLength >> 24); // why is this SHR and the others SAR?
             // sample rate (u32)
             kvagBuf[8] = 0;
             kvagBuf[9] = 0;
@@ -665,12 +662,12 @@ BYTE* read_kvag_file(char* filePath) {
 }
 
 #ifdef NON_MATCHING
-int sound_func_004d26c0(int idx, short *output1, short *output2, int length) {
+int32 sound_func_004d26c0(int32 idx, int16 *output1, int16 *output2, int32 length) {
     int i;
-    int length2;
-    int ret;
-    int left;
-    char buffer[64*4];
+    int32 length2;
+    int32 ret;
+    int32 left;
+    int8 buffer[64*4];
 
     if (!gSoundSystemInitialized) {
         return 0;
@@ -764,11 +761,11 @@ int sound_func_004d26c0(int idx, short *output1, short *output2, int length) {
     return ret;
 }
 #else
-int sound_func_004d26c0(int idx, short *output1, short *output2, int length);
+int sound_func_004d26c0(int32 idx, int16 *output1, int16 *output2, int32 length);
 #pragma ASM_FUNC sound_func_004d26c0 hasret
 #endif
 
-void sound_func_004d2a10(int idx, unsigned int sampleRate, int channels) {
+void sound_func_004d2a10(int32 idx, uint32 sampleRate, int32 param3) {
     DSBUFFERDESC bufferDesc = {0};
 
     if (!gSoundSystemInitialized) {
@@ -850,11 +847,11 @@ void sound_func_004d2a10(int idx, unsigned int sampleRate, int channels) {
     }
 }
 
-void sound_func_004d2ca0(char *path, int dontStream, int idx) {
-    BYTE *kvagBytes;
-    int isStereo;
-    unsigned int sampleRate;
-    char temp[4];
+void sound_func_004d2ca0(const char *path, bool dontStream, int32 idx) {
+    uint8 *kvagBytes;
+    bool isStereo;
+    uint32 sampleRate;
+    int8 temp[4];
 
     if (!gSoundSystemInitialized) {
         return;
@@ -880,7 +877,7 @@ void sound_func_004d2ca0(char *path, int dontStream, int idx) {
 
     gSomeAudioStructs[idx].adpcmDataSize = get_data_file_length(path);
 
-    if (dontStream != 0 && gSomeAudioStructs[idx].adpcmDataSize != 0) {
+    if (dontStream && gSomeAudioStructs[idx].adpcmDataSize != 0) {
         if (gSomeAudioStructs[idx].kvagBytes != NULL) {
             custom_free(&gSomeAudioStructs[idx].kvagBytes);
         }
@@ -888,7 +885,7 @@ void sound_func_004d2ca0(char *path, int dontStream, int idx) {
         kvagBytes = read_kvag_file(path);
         
         gSomeAudioStructs[idx].kvagBytes = kvagBytes;
-        gSomeAudioStructs[idx].adpcmBytes = (char*)(gSomeAudioStructs[idx].kvagBytes + KVAG_ADPCM_START);
+        gSomeAudioStructs[idx].adpcmBytes = (int8*)(gSomeAudioStructs[idx].kvagBytes + KVAG_ADPCM_START);
         gSomeAudioStructs[idx].file = NULL;
         gSomeAudioStructs[idx].adpcmDataSize = KVAG_ADPCM_LENGTH(kvagBytes);
         
@@ -935,7 +932,7 @@ void sound_func_004d2ca0(char *path, int dontStream, int idx) {
 
         gSomeAudioStructs[idx].field0x138 = (gSomeAudioStructs[idx].isStereo + 1) * 8192;
         if (gSomeAudioStructs[idx].adpcmDataSize > gSomeAudioStructs[idx].field0x138) {
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], 8192);
+            DAT_0057137c = sound_func_004d26c0(idx, (int16*)DAT_00546f80[idx], (int16*)DAT_0051e3e0[idx], 8192);
 
             write_bytes_to_sound_buffer(gSoundBuffers1[DAT_005a4f88[idx]], DAT_00546f80[idx], 65536);
             if (gSomeAudioStructs[idx].isStereo) {
@@ -949,7 +946,7 @@ void sound_func_004d2ca0(char *path, int dontStream, int idx) {
         } else {
             memset(DAT_00546f80[idx], 0, 65536);
 
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], gSomeAudioStructs[idx].adpcmDataSize);
+            DAT_0057137c = sound_func_004d26c0(idx, (int16*)DAT_00546f80[idx], (int16*)DAT_0051e3e0[idx], gSomeAudioStructs[idx].adpcmDataSize);
 
             write_bytes_to_sound_buffer(gSoundBuffers1[DAT_005a4f88[idx]], DAT_00546f80[idx], 65536);
             if (gSomeAudioStructs[idx].isStereo) {
@@ -964,11 +961,11 @@ void sound_func_004d2ca0(char *path, int dontStream, int idx) {
     }
 }
 
-void sound_func_004d30e0(char *path, int dontStream, int idx) {
-    BYTE *kvagBytes;
-    int isStereo;
-    unsigned int sampleRate;
-    char temp[4];
+void sound_func_004d30e0(const char *path, bool dontStream, int32 idx) {
+    uint8 *kvagBytes;
+    bool isStereo;
+    uint32 sampleRate;
+    int8 temp[4];
 
     if (!gSoundSystemInitialized) {
         return;
@@ -1021,7 +1018,7 @@ void sound_func_004d30e0(char *path, int dontStream, int idx) {
         }
 
         gSomeAudioStructs[idx].kvagBytes = kvagBytes;
-        gSomeAudioStructs[idx].adpcmBytes = (char*)(gSomeAudioStructs[idx].kvagBytes + KVAG_ADPCM_START);
+        gSomeAudioStructs[idx].adpcmBytes = (int8*)(gSomeAudioStructs[idx].kvagBytes + KVAG_ADPCM_START);
         gSomeAudioStructs[idx].file = NULL;
         gSomeAudioStructs[idx].adpcmDataSize = KVAG_ADPCM_LENGTH(kvagBytes);
     } else {
@@ -1063,7 +1060,7 @@ void sound_func_004d30e0(char *path, int dontStream, int idx) {
 
         gSomeAudioStructs[idx].field0x138 = (gSomeAudioStructs[idx].isStereo + 1) * 8192;
         if (gSomeAudioStructs[idx].adpcmDataSize > gSomeAudioStructs[idx].field0x138) {
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], 8192);
+            DAT_0057137c = sound_func_004d26c0(idx, (int16*)DAT_00546f80[idx], (int16*)DAT_0051e3e0[idx], 8192);
 
             write_bytes_to_sound_buffer(gSoundBuffers1[DAT_005a4f88[idx]], DAT_00546f80[idx], 65536);
             if (gSomeAudioStructs[idx].isStereo) {
@@ -1077,7 +1074,7 @@ void sound_func_004d30e0(char *path, int dontStream, int idx) {
         } else {
             memset(DAT_00546f80[idx], 0, 65536);
 
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], gSomeAudioStructs[idx].adpcmDataSize);
+            DAT_0057137c = sound_func_004d26c0(idx, (int16*)DAT_00546f80[idx], (int16*)DAT_0051e3e0[idx], gSomeAudioStructs[idx].adpcmDataSize);
 
             write_bytes_to_sound_buffer(gSoundBuffers1[DAT_005a4f88[idx]], DAT_00546f80[idx], 65536);
             if (gSomeAudioStructs[idx].isStereo) {
@@ -1092,7 +1089,7 @@ void sound_func_004d30e0(char *path, int dontStream, int idx) {
     }
 }
 
-void sound_func_004d35a0(int idx) {
+void sound_func_004d35a0(int32 idx) {
     DWORD playCursor;
     DWORD writeCursor;
 
@@ -1156,13 +1153,13 @@ void sound_func_004d35a0(int idx) {
     if (playCursor >= 0x8000) {
         if (gSomeAudioStructs[idx].field0x4 == 0) {
             if (gSomeAudioStructs[idx].field0x138 + gSomeAudioStructs[idx].field0xc < gSomeAudioStructs[idx].adpcmDataSize) {
-                DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], 0x2000);
+                DAT_0057137c = sound_func_004d26c0(idx, (int16*)DAT_00546f80[idx], (int16*)DAT_0051e3e0[idx], 0x2000);
                 gSomeAudioStructs[idx].field0xc += DAT_0057137c;
             } else {
                 memset(DAT_00546f80[idx], 0, 0x8000);
                 memset(DAT_0051e3e0[idx], 0, 0x8000);
 
-                DAT_0057137c = sound_func_004d26c0(idx, (short*)DAT_00546f80[idx], (short*)DAT_0051e3e0[idx], 
+                DAT_0057137c = sound_func_004d26c0(idx, (int16*)DAT_00546f80[idx], (int16*)DAT_0051e3e0[idx], 
                     gSomeAudioStructs[idx].adpcmDataSize - gSomeAudioStructs[idx].field0xc);
 
                 gSomeAudioStructs[idx].field0x14 = gSomeAudioStructs[idx].adpcmDataSize - gSomeAudioStructs[idx].field0xc;
@@ -1182,13 +1179,13 @@ void sound_func_004d35a0(int idx) {
 
     if (gSomeAudioStructs[idx].field0x4 == 1) {
         if (gSomeAudioStructs[idx].field0x138 + gSomeAudioStructs[idx].field0xc < gSomeAudioStructs[idx].adpcmDataSize) {
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)(DAT_00546f80[idx] + 0x8000), (short*)(DAT_0051e3e0[idx] + 0x8000), 0x2000);
+            DAT_0057137c = sound_func_004d26c0(idx, (int16*)(DAT_00546f80[idx] + 0x8000), (int16*)(DAT_0051e3e0[idx] + 0x8000), 0x2000);
             gSomeAudioStructs[idx].field0xc += DAT_0057137c;
         } else {
             memset(DAT_00546f80[idx] + 0x8000, 0, 0x8000);
             memset(DAT_0051e3e0[idx] + 0x8000, 0, 0x8000);
 
-            DAT_0057137c = sound_func_004d26c0(idx, (short*)(DAT_00546f80[idx] + 0x8000), (short*)(DAT_0051e3e0[idx] + 0x8000), 
+            DAT_0057137c = sound_func_004d26c0(idx, (int16*)(DAT_00546f80[idx] + 0x8000), (int16*)(DAT_0051e3e0[idx] + 0x8000), 
                 gSomeAudioStructs[idx].adpcmDataSize - gSomeAudioStructs[idx].field0xc);
             
             gSomeAudioStructs[idx].field0x14 = (gSomeAudioStructs[idx].adpcmDataSize - gSomeAudioStructs[idx].field0xc) + 0x8000;
@@ -1205,10 +1202,10 @@ void sound_func_004d35a0(int idx) {
     }
 }
 
-void sound_func_004d39a0(BYTE *kvagBytes, int idx, int volume1, int volume2, int pitch, int playLooping) {
-    unsigned int adpcmByteLength;
-    unsigned int sampleRate;
-    int isStereo;
+void sound_func_004d39a0(const uint8 *kvagBytes, int32 idx, int32 volume1, int32 volume2, int32 pitch, bool playLooping) {
+    uint32 adpcmByteLength;
+    uint32 sampleRate;
+    bool isStereo;
     DSBUFFERDESC bufferDesc = {0};
 
     if (!gSoundSystemInitialized) {
@@ -1268,7 +1265,7 @@ void sound_func_004d39a0(BYTE *kvagBytes, int idx, int volume1, int volume2, int
         write_adpcm_to_sound_buffers(
             gSoundBuffers1[idx], 
             gSoundBuffers2[idx], 
-            (char*)(kvagBytes + KVAG_ADPCM_START), 
+            (const int8*)(kvagBytes + KVAG_ADPCM_START), 
             adpcmByteLength * 4, 
             isStereo);
         
@@ -1287,8 +1284,8 @@ void sound_func_004d39a0(BYTE *kvagBytes, int idx, int volume1, int volume2, int
     }
 }
 
-unsigned int sound_func_004d3be0() {
-    unsigned int ret;
+uint32 sound_func_004d3be0() {
+    uint32 ret;
     int i;
     
     if (!gSoundSystemInitialized) {
@@ -1348,7 +1345,7 @@ void sound_func_004d3c80() {
     }
 }
 
-void sound_func_004d3d30(int idx) {
+void sound_func_004d3d30(int32 idx) {
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -1409,7 +1406,7 @@ void sound_func_004d3df0() {
     }
 }
 
-void sound_func_004d3ea0(int idx) {
+void sound_func_004d3ea0(int32 idx) {
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -1467,7 +1464,7 @@ void sound_func_004d3f60() {
     }
 }
 
-void sound_func_004d3fe0(int idx) {
+void sound_func_004d3fe0(int32 idx) {
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -1532,7 +1529,7 @@ void sound_func_004d4090() {
     }
 }
 
-void free_audio_struct_buffer(int idx) {
+void free_audio_struct_buffer(int32 idx) {
     if (!gSoundSystemInitialized) {
         return;
     }
@@ -1557,8 +1554,8 @@ param1  param2 pan
 2       1       2000
 10      10      0
 */
-void sound_set_pan_1(int param1, int param2, int idx) {
-    int pan;
+void sound_set_pan_1(int32 param1, int32 param2, int32 idx) {
+    int32 pan;
     
     if (!gSoundSystemInitialized) {
         return;
@@ -1601,8 +1598,8 @@ void sound_set_pan_1(int param1, int param2, int idx) {
     }
 }
 
-void sound_set_pan_2(int param1, int param2, int idx) {
-    int pan;
+void sound_set_pan_2(int32 param1, int32 param2, int32 idx) {
+    int32 pan;
     
     if (!gSoundSystemInitialized) {
         return;
@@ -1653,8 +1650,8 @@ void sound_set_pan_2(int param1, int param2, int idx) {
     8192    -> -5000
     16384   -> 0
 */
-int convert_value_to_volume(int val) {
-    int ret;
+int32 convert_value_to_volume(int32 val) {
+    int32 ret;
     
     if (!gSoundSystemInitialized) {
         return; // another missing return value...
@@ -1670,8 +1667,8 @@ int convert_value_to_volume(int val) {
     return -ret;
 }
 
-void sound_set_volume_1(int param1, int param2, int idx) {
-    int volume;
+void sound_set_volume_1(int32 param1, int32 param2, int32 idx) {
+    int32 volume;
     
     if (!gSoundSystemInitialized) {
         return;
@@ -1694,8 +1691,8 @@ void sound_set_volume_1(int param1, int param2, int idx) {
     }
 }
 
-void sound_set_volume_2(int param1, int param2, int idx) {
-    int volume;
+void sound_set_volume_2(int32 param1, int32 param2, int32 idx) {
+    int32 volume;
     
     if (!gSoundSystemInitialized) {
         return;
@@ -1718,8 +1715,8 @@ void sound_set_volume_2(int param1, int param2, int idx) {
 // the .rdata section and referencing that address via an extern generates different
 // code... We don't have a way to deal with this at the moment. :(
 #ifdef NON_EQUIVALENT
-void sound_set_pitch(int pitch, int idx) {
-    unsigned int frequency;
+void sound_set_pitch(int32 pitch, int32 idx) {
+    uint32 frequency;
     
     if (!gSoundSystemInitialized) {
         return;

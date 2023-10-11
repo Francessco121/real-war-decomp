@@ -2,6 +2,8 @@
 
 #include <STDIO.H>
 
+#include "types.h"
+
 /**
  * @file
  * @brief Functions for reading/writing from/to data files.
@@ -15,29 +17,29 @@
  * Returns the file length if the file was in the data directory. The return value is
  * *undefined* if the file was found in bigfile.dat.
  */
-extern size_t read_data_file(char *path, void *out);
+extern size_t read_data_file(const char *path, void *out);
 
 /**
  * Opens a data file from a relative file path.
  */
-extern FILE *open_data_file_relative(char *path, char *mode);
+extern FILE *open_data_file_relative(const char *path, const char *mode);
 
 /**
  * Opens a data file. The given path will be used as-is.
  */
-extern FILE *open_data_file_absolute(char *path, char *mode);
+extern FILE *open_data_file_absolute(const char *path, const char *mode);
 
 /**
  * Reads the first [length] bytes of a data file.
  */
-extern size_t read_data_file_partial(char *path, void *out, size_t length);
+extern size_t read_data_file_partial(const char *path, void *out, size_t length);
 
 /**
  * Gets the length in bytes of a data file.
  * 
  * If the file was not found, returns 0.
  */
-extern size_t get_data_file_length(char *path);
+extern size_t get_data_file_length(const char *path);
 
 /**
  * Creates/overwrites a file with the given byte data.
@@ -50,17 +52,17 @@ extern size_t get_data_file_length(char *path);
  * 
  * Returns the number of bytes successfully written.
  */
-extern size_t write_bytes_to_file(const char *filename, const void *ptr, int length);
+extern size_t write_bytes_to_file(const char *filename, const void *ptr, size_t length);
 
 /**
  * Loads the headers of bigfile.dat.
  */
-extern void load_bigfile_header(char *path);
+extern void load_bigfile_header(const char *path);
 
 /**
  * Opens a data file.
  */
-extern FILE *open_data_file(char *path, char *mode);
+extern FILE *open_data_file(const char *path, const char *mode);
 
 /**
  * Closes a data file.
@@ -72,4 +74,4 @@ extern void close_data_file(FILE *file);
  * 
  * Returns NULL if the end of the file was reached.
  */
-extern char *get_data_file_line(char *str, int length, FILE *file);
+extern char *get_data_file_line(char *str, int32 length, FILE *file);

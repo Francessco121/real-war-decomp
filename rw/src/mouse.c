@@ -1,23 +1,26 @@
+#include <WINDOWS.H>
+
 #include "mouse.h"
+#include "types.h"
 #include "undefined.h"
 
 #define MOUSE_HISTORY_LEN 5
 
 // .bss
 
-unsigned int gMouseButtonBits;
-int gPrevMouseIdx;
-int gSomeMouseHistoryIdx;
-unsigned int gPrevMouseButtonBits[MOUSE_HISTORY_LEN];
-int gPrevMouseXs[MOUSE_HISTORY_LEN];
-int gPrevMouseYs[MOUSE_HISTORY_LEN];
-unsigned int gSomeMoreMouseButtonBits;
-unsigned int gSomeMouseButtonBits;
-int gScrollWheelDelta;
-int gPrevScrollWheelDelta;
+uint32 gMouseButtonBits;
+int32 gPrevMouseIdx;
+int32 gSomeMouseHistoryIdx;
+uint32 gPrevMouseButtonBits[MOUSE_HISTORY_LEN];
+int32 gPrevMouseXs[MOUSE_HISTORY_LEN];
+int32 gPrevMouseYs[MOUSE_HISTORY_LEN];
+uint32 gSomeMoreMouseButtonBits;
+uint32 gSomeMouseButtonBits;
+int32 gScrollWheelDelta;
+int32 gPrevScrollWheelDelta;
 
-int gUnusedMouseGlobal1;
-int gUnusedMouseGlobal2;
+int32 gUnusedMouseGlobal1;
+int32 gUnusedMouseGlobal2;
 
 // .text
 
@@ -57,7 +60,7 @@ __inline static void _add_mouse_history_entry() {
     }
 }
 
-void handle_mouse_move(HWND hWnd, int mouseX, int mouseY, int modifiers) {
+void handle_mouse_move(HWND hWnd, int32 mouseX, int32 mouseY, int32 modifiers) {
     if (!handle_window_focus_change()) {
         return;
     }
@@ -121,7 +124,7 @@ void handle_m2_up() {
 }
 
 void FUN_004d6680() {
-    unsigned int prevButtons;
+    uint32 prevButtons;
     
     gPrevScrollWheelDelta = 0;
     if (gScrollWheelDelta != 0) {

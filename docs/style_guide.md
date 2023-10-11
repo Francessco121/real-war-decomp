@@ -31,6 +31,11 @@ Forward function declarations *within a source file* don't need the `extern` pre
 ### Header files
 All header files must start with `#pragma once`.
 
+### Types
+Prefer types in `types.h` over standard types (i.e. `int`, `short`). Exceptions: use `char` for strings, use library types when working with library functions (i.e. `WINDEF.h` types when working with Win32 APIs is OK).
+
+Use `const` pointers where possible.
+
 ## Symbols
 
 ### Unknown symbols

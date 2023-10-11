@@ -1,10 +1,10 @@
 #pragma once
 
-#include <WINDOWS.H>
+#include "types.h"
 
-extern int gCursorX;
-extern int gCursorY;
-extern int gCursorX2;
-extern int gCursorY2;
+extern int32 gCursorX;
+extern int32 gCursorY;
+extern int32 gCursorX2;
+extern int32 gCursorY2;
 
-extern int gUnkMouseButtonBits;
+extern int32 gUnkMouseButtonBits;
