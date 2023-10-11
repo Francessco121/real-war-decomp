@@ -53,7 +53,7 @@ void main(List<String> args) {
   writer.variable('BUILD_DIR', p.normalize(rw.config.buildDir));
   writer.variable('BIN_DIR', p.normalize(rw.config.binDir));
   writer.variable('CL_FLAGS', [
-    '/W3', // warning level 3
+    '/W4', // warning level 4
     '/Og', // global opt
     '/Oi', // intrinsics
     '/Ot', // favor fast code
@@ -68,13 +68,14 @@ void main(List<String> args) {
   ].join(','));
   writer.variable('INCLUDES', [
     '-I "${p.normalize(rw.config.includeDir)}"',
-    r'-I "$DX_DIR\include"',
-    r'-I "$VS_DIR\VC98\Include"',
+    r'-L "$DX_DIR\include"',
+    r'-L "$VS_DIR\VC98\Include"',
   ].join(' '));
 
   writer.newline();
   writer.comment('Tools');
-  writer.variable('CL', r'tools/rw_decomp/build/cl_wrapper.exe --vsdir="$VS_DIR" --asmfuncdir="$BIN_DIR\_funcs"');
+  writer.variable('CL', 
+      r'tools/rw_decomp/build/cl_wrapper.exe --vsdir="$VS_DIR" --asmfuncdir="$BIN_DIR\_funcs" --no-library-warnings');
   writer.variable('LINK', 'tools/rw_decomp/build/link.exe');
 
   writer.newline();

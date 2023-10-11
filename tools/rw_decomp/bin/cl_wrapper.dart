@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:args/args.dart';
@@ -20,9 +22,11 @@ Future<void> main(List<String> args) async {
       ..addOption('output', abbr: 'o', mandatory: true, help: 'Output OBJ file.')
       ..addOption('vsdir', mandatory: true, help: 'Visual Studio directory.')
       ..addOption('asmfuncdir', help: 'Directory containing raw function assembly for ASM_FUNC.')
-      ..addMultiOption('include', abbr: 'I', help: 'Include paths.')
+      ..addMultiOption('include', abbr: 'I', help: 'Include paths for application.', defaultsTo: const [])
+      ..addMultiOption('includelib', abbr: 'L', help: 'Include paths for libraries.', defaultsTo: const [])
       ..addOption('deps', abbr: 'd', help: 'Output header dependencies file.')
-      ..addMultiOption('flag', abbr: 'f', help: 'Compiler flags.');
+      ..addMultiOption('flag', abbr: 'f', help: 'Compiler flags.')
+      ..addFlag('library-warnings', help: 'Whether warnings from library includes should be shown.', defaultsTo: true);
   
   if (args.isEmpty) {
     print('cl_wrapper.dart');
@@ -36,14 +40,15 @@ Future<void> main(List<String> args) async {
   final String? asmfuncdir = argResults['asmfuncdir'];
   final String input = argResults['input'];
   final String output = argResults['output'];
-  final List<String> includes = argResults['include'];
+  final List<String> srcIncludes = argResults['include'];
+  final List<String> libIncludes = argResults['includelib'];
   final List<String> flags = argResults['flag'];
+  final bool libraryWarnings = argResults['library-warnings'];
 
   // Analyze input C file (find header dependencies and ASM_FUNC pragmas)
   final inputLines = File(input).readAsLinesSync();
 
-  final deps = _scanIncludes(input, inputLines, 
-      includes.where((i) => !i.startsWith(vsdir)));
+  final deps = _scanIncludes(input, inputLines, srcIncludes);
   
   final AsmFuncInfo? asmFuncInfo;
   if (asmfuncdir != null) {
@@ -76,7 +81,7 @@ Future<void> main(List<String> args) async {
     '/c', // don't link
   ];
 
-  for (final include in includes) {
+  for (final include in srcIncludes.followedBy(libIncludes)) {
     clArgs.add('/I');
     clArgs.add(include);
   }
@@ -94,7 +99,19 @@ Future<void> main(List<String> args) async {
     File(asmFuncInfo.preprocessedInput).deleteSync();
   }
 
+  // Post-process stdout
   var stdoutStr = result.stdout.toString();
+
+  // Nuke library warnings if disabled
+  //
+  // Visual studio and Direct X headers generates a bunch of W4 warnings, so it's nice
+  // to just suppress their output and focus on our code.
+  if (!libraryWarnings) {
+    stdoutStr = LineSplitter.split(stdoutStr)
+      .where((l) => !l.contains(': warning C') || !libIncludes.any((lib) => l.startsWith(lib)))
+      .join('\r\n');
+  }
+
   if (asmFuncInfo != null) {
     // Get rid of the temp path for clarity
     stdoutStr = stdoutStr.replaceAll('${Directory.systemTemp.path}\\', '');
@@ -111,10 +128,13 @@ Future<void> main(List<String> args) async {
   final srcEchoLine = p.basename(asmFuncInfo?.preprocessedInput ?? input);
   if (stdoutStr.startsWith(srcEchoLine)) {
     // CL annoyingly echos the source file name, strip it out
-    stdoutStr = stdoutStr.substring(srcEchoLine.length + 2);
+    stdoutStr = stdoutStr.substring(min(srcEchoLine.length + 2, stdoutStr.length));
   }
 
   stdout.write(stdoutStr);
+  if (stdoutStr.isNotEmpty && stdoutStr.codeUnits.last != 10) { // 10 = newline
+    stdout.writeln();
+  }
   stderr.write(result.stderr);
 
   if (result.exitCode == -1073741515) {
