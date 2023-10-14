@@ -3,21 +3,37 @@
 #include "mouse.h"
 #include "types.h"
 #include "undefined.h"
+#include "warnsuppress.h"
 
 #define MOUSE_HISTORY_LEN 5
 
 // .bss
 
-uint32 gMouseButtonBits;
-int32 gPrevMouseIdx;
-int32 gSomeMouseHistoryIdx;
-uint32 gPrevMouseButtonBits[MOUSE_HISTORY_LEN];
-int32 gPrevMouseXs[MOUSE_HISTORY_LEN];
-int32 gPrevMouseYs[MOUSE_HISTORY_LEN];
-uint32 gSomeMoreMouseButtonBits;
-uint32 gSomeMouseButtonBits;
+// Unbuffered inputs
+
+uint32 gPrevMouseButtonsHeldUnbuffered;
+uint32 gMouseButtonsHeldUnbuffered;
+int32 gCursorUnbufferedX;
+int32 gCursorUnbufferedY;
+int32 gCurrentScrollWheelDelta;
+
+// Buffering history
+
+int32 gMouseHistoryIdx;
+int32 gMouseBufferIdx;
+uint32 gMouseButtonHistory[MOUSE_HISTORY_LEN];
+int32 gMouseXHistory[MOUSE_HISTORY_LEN];
+int32 gMouseYHistory[MOUSE_HISTORY_LEN];
+
+// Current buffered inputs (this frame)
+
+uint32 gMouseButtonsHeld;
 int32 gScrollWheelDelta;
-int32 gPrevScrollWheelDelta;
+int32 gCursorX;
+int32 gCursorY;
+int32 gMouseButtonsClicked;
+
+// Unused
 
 int32 gUnusedMouseGlobal1;
 int32 gUnusedMouseGlobal2;
@@ -27,7 +43,7 @@ int32 gUnusedMouseGlobal2;
 void mouse_init() {
     MSG msg;
 
-    set_cursor_pos(gCursorX2, gCursorY2);
+    set_cursor_pos(gCursorX, gCursorY);
     check_window_focus_change(0);
 
     while (PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
@@ -36,26 +52,27 @@ void mouse_init() {
         DispatchMessageA(&msg);
     }
 
-    gPrevMouseIdx = 0;
-    gSomeMouseHistoryIdx = 0;
-    gMouseButtonBits = 0;
-    gSomeMoreMouseButtonBits = 0;
-    gUnkMouseButtonBits = 0;
+    gMouseHistoryIdx = 0;
+    gMouseBufferIdx = 0;
+    gMouseButtonsHeldUnbuffered = 0;
+    gPrevMouseButtonsHeldUnbuffered = 0;
+    gMouseButtonsClicked = 0;
     gUnusedMouseGlobal1 = 0;
     gUnusedMouseGlobal2 = 0;
-    gCursorX2 = 320;
-    gCursorY2 = 240;
+    gCursorX = 320;
+    gCursorY = 240;
 }
 
 __inline static void _add_mouse_history_entry() {
-    if (gMouseButtonBits != gPrevMouseButtonBits[(gPrevMouseIdx - 1) % MOUSE_HISTORY_LEN]) {
-        gPrevMouseButtonBits[gPrevMouseIdx] = gMouseButtonBits;
-        gPrevMouseXs[gPrevMouseIdx] = gCursorX;
-        gPrevMouseYs[gPrevMouseIdx] = gCursorY;
-        gPrevMouseIdx += 1;
+    if (gMouseButtonsHeldUnbuffered != gMouseButtonHistory[(gMouseHistoryIdx - 1) % MOUSE_HISTORY_LEN]) {
+        gMouseButtonHistory[gMouseHistoryIdx] = gMouseButtonsHeldUnbuffered;
+        gMouseXHistory[gMouseHistoryIdx] = gCursorUnbufferedX;
+        gMouseYHistory[gMouseHistoryIdx] = gCursorUnbufferedY;
 
-        if (gPrevMouseIdx >= MOUSE_HISTORY_LEN) {
-            gPrevMouseIdx = 0;
+        gMouseHistoryIdx += 1;
+
+        if (gMouseHistoryIdx >= MOUSE_HISTORY_LEN) {
+            gMouseHistoryIdx = 0;
         }
     }
 }
@@ -65,19 +82,19 @@ void handle_mouse_move(HWND hWnd, int32 mouseX, int32 mouseY, int32 modifiers) {
         return;
     }
 
-    gCursorX = mouseX;
-    gCursorY = mouseY;
+    gCursorUnbufferedX = mouseX;
+    gCursorUnbufferedY = mouseY;
 
     if (modifiers & MK_LBUTTON) {
-        gMouseButtonBits = gMouseButtonBits | 1;
+        gMouseButtonsHeldUnbuffered = gMouseButtonsHeldUnbuffered | MOUSE_BUTTON_LEFT;
     } else {
-        gMouseButtonBits = gMouseButtonBits & 0xfffffffe;
+        gMouseButtonsHeldUnbuffered = gMouseButtonsHeldUnbuffered & ~MOUSE_BUTTON_LEFT;
     }
 
     if (modifiers & MK_RBUTTON) {
-        gMouseButtonBits = gMouseButtonBits | 2;
+        gMouseButtonsHeldUnbuffered = gMouseButtonsHeldUnbuffered | MOUSE_BUTTON_RIGHT;
     } else {
-        gMouseButtonBits = gMouseButtonBits & 0xfffffffd;
+        gMouseButtonsHeldUnbuffered = gMouseButtonsHeldUnbuffered & ~MOUSE_BUTTON_RIGHT;
     }
 
     _add_mouse_history_entry();
@@ -88,7 +105,7 @@ void handle_m1_down() {
         return;
     }
 
-    gMouseButtonBits |= 1;
+    gMouseButtonsHeldUnbuffered |= MOUSE_BUTTON_LEFT;
 
     _add_mouse_history_entry();
 }
@@ -98,7 +115,7 @@ void handle_m1_up() {
         return;
     }
 
-    gMouseButtonBits &= 0xfffffffe;
+    gMouseButtonsHeldUnbuffered &= ~MOUSE_BUTTON_LEFT;
 
     _add_mouse_history_entry();
 }
@@ -108,7 +125,7 @@ void handle_m2_down() {
         return;
     }
 
-    gMouseButtonBits |= 2;
+    gMouseButtonsHeldUnbuffered |= MOUSE_BUTTON_RIGHT;
 
     _add_mouse_history_entry();
 }
@@ -118,47 +135,120 @@ void handle_m2_up() {
         return;
     }
 
-    gMouseButtonBits &= 0xfffffffd;
+    gMouseButtonsHeldUnbuffered &= ~MOUSE_BUTTON_RIGHT;
 
     _add_mouse_history_entry();
 }
 
-void FUN_004d6680() {
-    uint32 prevButtons;
+void update_mouse_state() {
+    uint32 prevButtonsHeld;
     
-    gPrevScrollWheelDelta = 0;
-    if (gScrollWheelDelta != 0) {
-        gPrevScrollWheelDelta = gScrollWheelDelta;
-    }
+    // Get scroll wheel delta for this frame
     gScrollWheelDelta = 0;
+    if (gCurrentScrollWheelDelta != 0) {
+        gScrollWheelDelta = gCurrentScrollWheelDelta;
+    }
+    gCurrentScrollWheelDelta = 0;
 
-    prevButtons = gSomeMouseButtonBits;
-    gSomeMoreMouseButtonBits = prevButtons;
+    // Save previous buttons held
+    prevButtonsHeld = gMouseButtonsHeld;
+    gPrevMouseButtonsHeldUnbuffered = prevButtonsHeld;
     
-    if (gSomeMouseHistoryIdx != gPrevMouseIdx) {
-        gCursorX2 = gPrevMouseXs[gSomeMouseHistoryIdx];
-        gCursorY2 = gPrevMouseYs[gSomeMouseHistoryIdx];
-        gSomeMouseButtonBits = gPrevMouseButtonBits[gSomeMouseHistoryIdx];
+    if (gMouseBufferIdx != gMouseHistoryIdx) {
+        // Replay buffered mouse inputs until we catch up
+        gCursorX = gMouseXHistory[gMouseBufferIdx];
+        gCursorY = gMouseYHistory[gMouseBufferIdx];
+        gMouseButtonsHeld = gMouseButtonHistory[gMouseBufferIdx];
 
-        gSomeMouseHistoryIdx += 1;
-        if (gSomeMouseHistoryIdx >= 5) {
-            gSomeMouseHistoryIdx = 0;
+        gMouseBufferIdx += 1;
+        if (gMouseBufferIdx >= 5) {
+            gMouseBufferIdx = 0;
         }
     } else {
-        gCursorX2 = gCursorX;
-        gCursorY2 = gCursorY;
-        gSomeMouseButtonBits = gMouseButtonBits;
+        // No buffered inputs to take, use the current mouse inputs
+        gCursorX = gCursorUnbufferedX;
+        gCursorY = gCursorUnbufferedY;
+        gMouseButtonsHeld = gMouseButtonsHeldUnbuffered;
     }
 
-    gUnkMouseButtonBits = (gSomeMouseButtonBits ^ prevButtons) & gSomeMouseButtonBits;
+    // Calculate which buttons were pressed initially on this frame
+    gMouseButtonsClicked = (gMouseButtonsHeld ^ prevButtonsHeld) & gMouseButtonsHeld;
 }
 
-#pragma ASM_FUNC FUN_004d6740
+bool mouse_btns_held_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons) {
+    bool ret;
+    
+    if (!handle_window_focus_change()) {
+        return FALSE;
+    }
 
-#pragma ASM_FUNC FUN_004d6790
+    ret = FALSE;
 
-#pragma ASM_FUNC FUN_004d67e0
+    if (gCursorX >= left && 
+        gCursorX <= right && 
+        gCursorY >= top && 
+        gCursorY <= bottom && 
+        gMouseButtonsHeld & buttons
+    ) {
+        ret = TRUE;
+    }
 
-#pragma ASM_FUNC FUN_004d6800
+    return ret;
+}
 
-#pragma ASM_FUNC FUN_004d6820
+bool mouse_btns_clicked_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons) {
+    bool ret;
+    
+    if (!handle_window_focus_change()) {
+        return FALSE;
+    }
+
+    ret = FALSE;
+
+    if (gCursorX >= left && 
+        gCursorX <= right && 
+        gCursorY >= top && 
+        gCursorY <= bottom && 
+        gMouseButtonsClicked & buttons
+    ) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+int32 force_mouse_btns_clicked(uint32 buttons) {
+    if (handle_window_focus_change()) {
+        gMouseButtonsClicked |= buttons;
+    }
+
+    return 0;
+}
+
+int32 force_mouse_btns_held(uint32 buttons) {
+    if (handle_window_focus_change()) {
+        gMouseButtonsHeld |= buttons;
+    }
+
+    return 0;
+}
+
+bool is_cursor_in_rect(int32 left, int32 top, int32 right, int32 bottom) {
+    bool ret;
+
+    ret = handle_window_focus_change();
+    
+    if (ret) {
+        ret = FALSE;
+
+        if (gCursorX >= left && 
+            gCursorX <= right && 
+            gCursorY >= top && 
+            gCursorY <= bottom
+        ) {
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}

@@ -1214,12 +1214,12 @@ symbols:
   handle_m1_up: 0x4d6530
   handle_m2_down: 0x4d65a0
   handle_m2_up: 0x4d6610
-  FUN_004d6680: 0x4d6680
-  FUN_004d6740: 0x4d6740
-  FUN_004d6790: 0x4d6790
-  FUN_004d67e0: 0x4d67e0
-  FUN_004d6800: 0x4d6800
-  FUN_004d6820: 0x4d6820
+  update_mouse_state: 0x4d6680
+  mouse_btns_held_in_rect: 0x4d6740
+  mouse_btns_clicked_in_rect: 0x4d6790
+  force_mouse_btns_clicked: 0x4d67e0
+  force_mouse_btns_held: 0x4d6800
+  is_cursor_in_rect: 0x4d6820
   read_data_file: 0x4d6860
   open_data_file_relative: 0x4d6910
   open_data_file_absolute: 0x4d6960
@@ -1539,51 +1539,51 @@ symbols:
   gVirtualMemoryBufferNumber: 0x51b908
   gLaunchWindowed: 0x51b918
   gTotalVirtualMemoryAllocated: 0x51b92c
-  gPrevMouseIdx: 0x51b96c
-  gSomeMouseHistoryIdx: 0x51b970
+  gMouseHistoryIdx: 0x51b96c
+  gMouseBufferIdx: 0x51b970
   DAT_0051b988: 0x51b988
   sLoadedBigFileHeader: 0x51b98c
-  gMouseButtonBits: 0x51e0e4
+  gMouseButtonsHeldUnbuffered: 0x51e0e4
   gWndHandle: 0x51e200
   sSoundStatus: 0x51e204
   gKeysTapped: 0x51e220
-  gPrevScrollWheelDelta: 0x51e320
+  gScrollWheelDelta: 0x51e320
   gUnusedMouseGlobal1: 0x51e324
   gUnusedMouseGlobal2: 0x51e328
   sBigFileAbsolutePath: 0x51e340
-  gCursorY2: 0x51e3c0
+  gCursorY: 0x51e3c0
   gHResult1: 0x51e3c4
-  gCursorX2: 0x51e3c8
+  gCursorX: 0x51e3c8
   DAT_0051e3e0: 0x51e3e0
   gKeysPressed: 0x53ebe0
-  gPrevMouseButtonBits: 0x53ede0
-  gUnkMouseButtonBits: 0x53edf4
+  gMouseButtonHistory: 0x53ede0
+  gMouseButtonsClicked: 0x53edf4
   gDirectSound: 0x53edf8
   DAT_0053ee00: 0x53ee00
   gVirtualMemoryNumbers: 0x53ee60
   DAT_00546e60: 0x546e60
   gHResult2: 0x546e74
   DAT_00546f80: 0x546f80
-  gSomeMoreMouseButtonBits: 0x567784
+  gPrevMouseButtonsHeldUnbuffered: 0x567784
   DAT_00567788: 0x567788
-  gSomeMouseButtonBits: 0x56778c
+  gMouseButtonsHeld: 0x56778c
   sRwMapTxtFile: 0x567790
   sBigFileEntryPointers: 0x5677a0
   gTempString2: 0x5679a0
   gCursorTextures: 0x567ac0
   DAT_0057137c: 0x57137c
-  gPrevMouseXs: 0x5713a0
-  gPrevMouseYs: 0x5713c0
+  gMouseXHistory: 0x5713a0
+  gMouseYHistory: 0x5713c0
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
-  gScrollWheelDelta: 0x5735e4
+  gCurrentScrollWheelDelta: 0x5735e4
   DAT_00574a00: 0x574a00
   gSomeAudioStructs: 0x574a20
   gSoundBuffers2: 0x574ca0
   sSoundBuffer1: 0x594f40
   gVirtualMemoryBuffers: 0x594f60
-  gCursorX: 0x59cf60
-  gCursorY: 0x59cf64
+  gCursorUnbufferedX: 0x59cf60
+  gCursorUnbufferedY: 0x59cf64
   sSoundBuffer2: 0x59cf68
   gVirtualMemorySizes: 0x59cf80 
   DAT_005a4f88: 0x5a4f88
