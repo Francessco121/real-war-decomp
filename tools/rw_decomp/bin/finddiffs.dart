@@ -107,7 +107,7 @@ void main(List<String> args) {
           baseExe,
           baseExeBytes,
           rw,
-          rw.segments[segmentIdxsByName[entry.segmentName]!].address);
+          rw.segments[segmentIdxsByName['${entry.segmentName}_${entry.segmentType}']!].address);
       
       for (final func in differingFuncs) {
         print('  $func');
