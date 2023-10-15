@@ -75,6 +75,7 @@ class FunctionDisassembler {
     final branchTargetSet = <int>{};
     final branchTargets = <int>[];
     int? furthestBranchEnd;
+    int? furthestJumpTableAddress;
     int size = 0;
 
     while (true) {
@@ -107,6 +108,22 @@ class FunctionDisassembler {
             furthestBranchEnd = target;
           }
         }
+      } else if (inst.mnemonic == 'jmp' &&
+          inst.operands.length == 1 &&
+          inst.operands[0].type == x86_op_type.X86_OP_MEM) {
+        // Possibly a jump into a switch jump table
+        final targetDisp = inst.operands[0].mem!.disp;
+        if (endAddress == null || targetDisp < endAddress) {
+          if (furthestJumpTableAddress == null ||
+              targetDisp > furthestJumpTableAddress) {
+            furthestJumpTableAddress = targetDisp;
+          }
+        }
+      }
+
+      // Break early if we reach the jump table
+      if (furthestJumpTableAddress != null && (address + size) >= furthestJumpTableAddress) {
+        break;
       }
 
       if (furthestBranchEnd != null && inst.address >= furthestBranchEnd) {
@@ -115,7 +132,9 @@ class FunctionDisassembler {
       }
 
       // Only break on RET if we're outside of all branches in the function
-      if (inst.mnemonic == 'ret' && furthestBranchEnd == null) {
+      //
+      // Don't break on RET if we found a jump table. We'll just disassemble until then instead.
+      if (inst.mnemonic == 'ret' && furthestBranchEnd == null && furthestJumpTableAddress == null) {
         break;
       }
     }

@@ -678,18 +678,13 @@ DisassembledFunction _loadObjFunction(
     String filePath, String symbolName, FunctionDisassembler disassembler, 
     int virtualAddress,
     RealWarYaml rw, int segmentVirtualAddress) {
-  // TODO: support stdcall mangling
-  final symbolNameVariations = [
-    symbolName,
-    '_$symbolName'
-  ];
   final bytes = File(filePath).readAsBytesSync();
   final obj = CoffFile.fromList(bytes);
 
   final SymbolTableEntry? symbol = obj.symbolTable!.values.firstWhereOrNull((sym) {
     final name =
         sym.name.shortName ?? obj.stringTable!.strings[sym.name.offset]!;
-    return symbolNameVariations.contains(name);
+    return symbolName == unmangle(name);
   });
 
   if (symbol == null) {

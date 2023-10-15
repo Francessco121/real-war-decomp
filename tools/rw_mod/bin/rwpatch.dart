@@ -298,7 +298,7 @@ void _relocateSection(
 
   for (final reloc in section.relocations) {
     final symbol = coff.symbolTable![reloc.symbolTableIndex]!;
-    assert(symbol.storageClass != 104);
+    assert(symbol.storageClass != StorageClass.section);
 
     final int? symbolAddress;
     if (symbol.sectionNumber == -1) {

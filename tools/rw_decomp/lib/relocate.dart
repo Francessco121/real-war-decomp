@@ -19,11 +19,20 @@ void relocateSection(CoffFile coff, Section section, Uint8List sectionBytes,
 
   for (final reloc in section.relocations) {
     final symbol = coff.symbolTable![reloc.symbolTableIndex]!;
-    assert(symbol.storageClass != 104);
+    assert(symbol.storageClass != StorageClass.section);
 
     final symbolName = symbol.name.shortName ??
         coff.stringTable!.strings[symbol.name.offset!]!;
-    final symbolAddress = symbolLookup(symbolName);
+    
+    final int? symbolAddress;
+    if (symbol.storageClass == StorageClass.label) {
+      // Defined code label. The relative offset stored in the value field
+      // defines the offset of these symbols
+      assert(coff.sections[symbol.sectionNumber - 1] == section);
+      symbolAddress = targetVirtualAddress + symbol.value;
+    } else {
+      symbolAddress = symbolLookup(symbolName);
+    }
 
     if (symbolAddress == null) {
       if (allowUnknownSymbols) {
