@@ -137,6 +137,14 @@ class FunctionDisassembler {
       if (inst.mnemonic == 'ret' && furthestBranchEnd == null && furthestJumpTableAddress == null) {
         break;
       }
+
+      // Break on NOP
+      //
+      // This usually means the function doesn't have a return (i.e. it calls exit()).
+      if (inst.mnemonic == 'nop') {
+        insts.removeLast();
+        break;
+      }
     }
 
     return DisassembledFunction(
