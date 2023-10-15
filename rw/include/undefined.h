@@ -23,9 +23,11 @@ extern void load_cursor_textures();
 
 extern void display_message(const char *format, ...);
 extern void display_message_and_exit(const char* message);
-extern void game_exit();
+extern int game_exit();
 
 extern int handle_window_focus_change();
 extern int check_window_focus_change(int32);
 
 extern int set_cursor_pos(int32 x, int32 y);
+
+extern void game_main();

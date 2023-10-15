@@ -46,9 +46,8 @@ segments:
   - [0x4c49a0, c, segment_4c49a0]
   - [0x4c4a20, bin, null]
   - [0x4d1c90, c, sound]
-  - [0x4d4510, bin, null]
-  - [0x4d45c0, c, create_window]
-  - [0x4d4730, bin, null]
+  - [0x4d4510, c, window]
+  - [0x4d50f0, bin, null]
   - [0x4d5e60, c, virtual_memory]
   - [0x4d6350, c, mouse]
   - [0x4d6860, c, data]
@@ -593,7 +592,7 @@ symbols:
   FUN_00474ce0: 0x474ce0
   FUN_00474e60: 0x474e60
   FUN_00475330: 0x475330
-  FUN_00475380: 0x475380
+  game_main: 0x475380
   FUN_00476520: 0x476520
   FUN_00479d00: 0x479d00
   FUN_00479e00: 0x479e00
@@ -1186,7 +1185,7 @@ symbols:
   FUN_004d50f0: 0x4d50f0
   set_cursor_pos: 0x4d5100
   FUN_004d5120: 0x4d5120
-  FUN_004d5190: 0x4d5190
+  do_window_paint: 0x4d5190
   FUN_004d5290: 0x4d5290
   FUN_004d52b0: 0x4d52b0
   FUN_004d53c0: 0x4d53c0
@@ -1256,7 +1255,7 @@ symbols:
   load_cursor_textures: 0x4d8020
   FUN_004d8060: 0x4d8060
   check_window_focus_change: 0x4d8090
-  is_key_pressed: 0x4d8140
+  get_key_state: 0x4d8140
   update_keys_pressed: 0x4d8160
   was_key_tapped: 0x4d81a0
   GetSaveFileNameA: 0x4d81b0
@@ -1495,9 +1494,11 @@ symbols:
   GetStockObject: 0x4e9024
   VirtualFree: 0x4e904c
   VirtualAlloc: 0x4e9050
+  GetCommandLineA: 0x4e9054
   GetTickCount: 0x4e9058
   GetSystemMetrics: 0x4e910c
   SetFocus: 0x4e9110
+  ShowCursor: 0x4e9118
   UpdateWindow: 0x4e9120
   ShowWindow: 0x4e9124
   CreateWindowExA: 0x4e9128
@@ -1505,6 +1506,7 @@ symbols:
   RegisterClassA: 0x4e9134
   LoadCursorA: 0x4e9138
   PeekMessageA: 0x4e913c
+  DefWindowProcA: 0x4e9140
   GetMessageA: 0x4e9144
   DispatchMessageA: 0x4e9148
   TranslateMessage: 0x4e914c
@@ -1523,21 +1525,29 @@ symbols:
   gADPCMStepsizeTable: 0x51706c
   gWindowFocused: 0x5171d0
   lpD3D__try_find_valid_d3d_device: 0x51adb8
+  gCmdLineArgB: 0x51ae34
   gDirTree: 0x51affc
   #endregion
   
   #region Uninitialized Data
   ._bss: 0x51b000
   gRegKeyClass: 0x51b0fc
+  gCmdLineArgE: 0x51b1ec
+  gCmdLineArgL: 0x51b1f0
+  gCmdLineArgF: 0x51b20c
+  DAT_0051b418: 0x51b418
   gEnableRwMap: 0x51b8d8
+  gCmdLineArgH: 0x51b8e4
   sBigFileEntryCount: 0x51b8ec
   gSoundSystemInitialized: 0x51b8f0
   gADPCMPredictor: 0x51b8f8
   gADPCMIndex: 0x51b8fa
   gADPCMPredictor2: 0x51b8fc
   gADPCMIndex2: 0x51b8fe
+  gKeyDownHistoryIdx: 0x51b904
   gVirtualMemoryBufferNumber: 0x51b908
   gLaunchWindowed: 0x51b918
+  gWindowStatus: 0x51b928
   gTotalVirtualMemoryAllocated: 0x51b92c
   gMouseHistoryIdx: 0x51b96c
   gMouseBufferIdx: 0x51b970
@@ -1556,6 +1566,7 @@ symbols:
   gCursorX: 0x51e3c8
   DAT_0051e3e0: 0x51e3e0
   gKeysPressed: 0x53ebe0
+  gRegValueTemp: 0x53ece0
   gMouseButtonHistory: 0x53ede0
   gMouseButtonsClicked: 0x53edf4
   gDirectSound: 0x53edf8
@@ -1563,7 +1574,9 @@ symbols:
   gVirtualMemoryNumbers: 0x53ee60
   DAT_00546e60: 0x546e60
   gHResult2: 0x546e74
+  gKeyDownHistory: 0x546e80
   DAT_00546f80: 0x546f80
+  gCmdLineArgT: 0x567780
   gPrevMouseButtonsHeldUnbuffered: 0x567784
   DAT_00567788: 0x567788
   gMouseButtonsHeld: 0x56778c
@@ -1574,12 +1587,17 @@ symbols:
   DAT_0057137c: 0x57137c
   gMouseXHistory: 0x5713a0
   gMouseYHistory: 0x5713c0
+  gKeysDown: 0x5713e0
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
   gCurrentScrollWheelDelta: 0x5735e4
+  gCmdLineArgCount: 0x5735ec
+  gCmdLineArgs: 0x573600
   DAT_00574a00: 0x574a00
   gSomeAudioStructs: 0x574a20
   gSoundBuffers2: 0x574ca0
+  gCmdLineString: 0x574d00
+  gCmdLineToken: 0x574f00
   sSoundBuffer1: 0x594f40
   gVirtualMemoryBuffers: 0x594f60
   gCursorUnbufferedX: 0x59cf60
@@ -1598,16 +1616,22 @@ symbols:
   sUnusedTimerGlobal2: 0x5fa7c4
   sUnusedTimerGlobal3: 0x5fa7c8
   sUnusedTimerGlobal4: 0x5fa7cc
+  gCmdLineArgN: 0x782700
+  gCmdLineArgC: 0x88111c
+  gCmdLineArgM: 0x8f07e0
   DAT_00945e94: 0x945e94
   DAT_00ece464: 0xece464
+  gCmdLineArgP: 0xef6f60
   gTempString: 0xef6fc0
   DAT_00f0c770: 0xf0c770
+  gCmdLineArgS: 0xfe00e0
   DAT_01359b80: 0x1359b80
   gRealWarRegKey: 0x1a94964
   gVidPaths: 0x1a94980
   gRegKeyDisposition: 0x1a94d80
   gRegKeyValueData: 0x1a94da0
   gSoftwareRegKey: 0x1a94ea0
+  DAT_01b18068: 0x1b18068
   gRegKeyValueType: 0x1a94ea4
   gDirTreeRegValueData: 0x1a94ec0
   gD3DDeviceCounter: 0x1b2ea38
@@ -1624,6 +1648,7 @@ strings:
   str_dd3d_obj_failed: 0x4ec0c8
   str_pct_s: 0x4ec3b0
   str_rb: 0x4ec4c4
+  str_pct_d: 0x4ec540
   str_pct_s_pct_s: 0x4ec704
   str_wb: 0x4ec808
   str_software: 0x50a710
@@ -1652,6 +1677,11 @@ strings:
   str_SoundSystemNotInitialized: 0x5172b8
   str_bad_or_missing_adpcm_file: 0x5172d8
   str_couldnt_malloc_adpcm_buf: 0x5172f8
+  str_vidtree_2: 0x517328
+  str_datatree_2: 0x517334
+  str_pct_s_data_slash: 0x517340
+  str_dirtree_3: 0x517348
+  str_space_tab: 0x517354
   str_memory_map_file: 0x517474
   str_rwmap_txt: 0x51748c
   str_pct_newline_newline: 0x517498

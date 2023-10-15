@@ -77,7 +77,7 @@ __inline static void _add_mouse_history_entry() {
     }
 }
 
-void handle_mouse_move(HWND hWnd, int32 mouseX, int32 mouseY, int32 modifiers) {
+void handle_mouse_move(HWND hWnd, int32 mouseX, int32 mouseY, uint32 modifiers) {
     if (!handle_window_focus_change()) {
         return;
     }
@@ -100,7 +100,7 @@ void handle_mouse_move(HWND hWnd, int32 mouseX, int32 mouseY, int32 modifiers) {
     _add_mouse_history_entry();
 }
 
-void handle_m1_down() {
+void handle_m1_down(HWND hWnd, int32 param2, int32 mouseX, int32 mouseY, uint32 modifiers) {
     if (!handle_window_focus_change()) {
         return;
     }
@@ -110,7 +110,7 @@ void handle_m1_down() {
     _add_mouse_history_entry();
 }
 
-void handle_m1_up() {
+void handle_m1_up(HWND hWnd, int32 mouseX, int32 mouseY, uint32 modifiers) {
     if (!handle_window_focus_change()) {
         return;
     }
@@ -120,7 +120,7 @@ void handle_m1_up() {
     _add_mouse_history_entry();
 }
 
-void handle_m2_down() {
+void handle_m2_down(HWND hWnd, int32 param2, int32 mouseX, int32 mouseY, uint32 modifiers) {
     if (!handle_window_focus_change()) {
         return;
     }
@@ -130,7 +130,7 @@ void handle_m2_down() {
     _add_mouse_history_entry();
 }
 
-void handle_m2_up() {
+void handle_m2_up(HWND hWnd, int32 mouseX, int32 mouseY, uint32 modifiers) {
     if (!handle_window_focus_change()) {
         return;
     }

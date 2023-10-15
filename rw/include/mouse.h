@@ -19,13 +19,15 @@ extern int32 gCursorY;
  */
 extern int32 gMouseButtonsClicked;
 
+extern int32 gCurrentScrollWheelDelta;
+
 void mouse_init();
 
-void handle_mouse_move(HWND hWnd, int32 mouseX, int32 mouseY, int32 modifiers);
-void handle_m1_down();
-void handle_m1_up();
-void handle_m2_down();
-void handle_m2_up();
+void handle_mouse_move(HWND hWnd, int32 mouseX, int32 mouseY, uint32 modifiers);
+void handle_m1_down(HWND hWnd, int32 param2, int32 mouseX, int32 mouseY, uint32 modifiers);
+void handle_m1_up(HWND hWnd, int32 mouseX, int32 mouseY, uint32 modifiers);
+void handle_m2_down(HWND hWnd, int32 param2, int32 mouseX, int32 mouseY, uint32 modifiers);
+void handle_m2_up(HWND hWnd, int32 mouseX, int32 mouseY, uint32 modifiers);
 
 /**
  * Updates globals for the current mouse state (cursor position, buttons),
