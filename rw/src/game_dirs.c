@@ -7,6 +7,7 @@
 #include "types.h"
 #include "undefined.h"
 #include "warnsuppress.h"
+#include "window.h"
 
 extern char gDirTree[];
 
@@ -147,7 +148,7 @@ void cd_check() {
         if (get_data_file_length(gTempString)) {
             flag = TRUE;
         } else {
-            display_message(str_please_insert_the_cd);
+            display_messagebox(str_please_insert_the_cd);
         }
 
         if (flag) {
@@ -158,7 +159,7 @@ void cd_check() {
                 flag = FALSE;
                 fclose(file);
                 remove(gTempString);
-                display_message(str_please_insert_the_cd);   
+                display_messagebox(str_please_insert_the_cd);   
             } else if (flag) {
                 return;
             }
@@ -217,7 +218,7 @@ void set_game_registry_value(const char *name, const char *value) {
                             sprintf(gDirTreeRegValueData, str_pct_s, gRegKeyValueData);
                         }
 
-                        display_message(str_found_key, gRegKeyValueData);
+                        display_messagebox(str_found_key, gRegKeyValueData);
                         return;
                     } else {
                         // Value exists but doesn't match, update it
@@ -234,14 +235,14 @@ void set_game_registry_value(const char *name, const char *value) {
                                 sprintf(gDirTreeRegValueData, str_pct_s, gRegKeyValueData);
                             }
 
-                            display_message(str_created_key, gRegKeyValueData);
+                            display_messagebox(str_created_key, gRegKeyValueData);
                             return;
                         }
 
                         RegCloseKey(gRealWarRegKey);
                         RegCloseKey(gSoftwareRegKey);
 
-                        display_message(str_couldnt_create_key, value);
+                        display_messagebox(str_couldnt_create_key, value);
                     }
                 } else {
                     // Value doesn't exist, create it
@@ -258,11 +259,11 @@ void set_game_registry_value(const char *name, const char *value) {
                             sprintf(gDirTreeRegValueData, str_pct_s, gRegKeyValueData);
                         }
 
-                        display_message(str_created_key, gRegKeyValueData);
+                        display_messagebox(str_created_key, gRegKeyValueData);
                         return;
                     }
 
-                    display_message(str_couldnt_create_key, value);
+                    display_messagebox(str_couldnt_create_key, value);
                 }
             } else {
                 // RealWar key didn't exist, so the value definitely doesn't. Create it
@@ -279,19 +280,19 @@ void set_game_registry_value(const char *name, const char *value) {
                         sprintf(gDirTreeRegValueData, str_pct_s, gRegKeyValueData);
                     }
 
-                    display_message(str_created_key, gRegKeyValueData);
+                    display_messagebox(str_created_key, gRegKeyValueData);
                     return;
                 }
 
-                display_message(str_couldnt_create_key, value);
+                display_messagebox(str_couldnt_create_key, value);
             }
         } else {
             RegCloseKey(gRealWarRegKey);
             RegCloseKey(gSoftwareRegKey);
-            display_message(str_couldnt_create_key, value);
+            display_messagebox(str_couldnt_create_key, value);
         }
     } else {
-        display_message(str_couldnt_open_registry);
+        display_messagebox(str_couldnt_open_registry);
     }
 }
 

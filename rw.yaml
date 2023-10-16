@@ -1173,14 +1173,14 @@ symbols:
   game_create_window: 0x4d45c0
   game_wndproc: 0x4d4730
   WinMain: 0x4d4930
-  display_message_and_exit: 0x4d4d30
+  display_messagebox_and_exit: 0x4d4d30
   game_exit: 0x4d4d50
-  display_message: 0x4d4e10
-  FUN_004d4e70: 0x4d4e70
-  FUN_004d4eb0: 0x4d4eb0
-  FUN_004d4ef0: 0x4d4ef0
-  FUN_004d4f00: 0x4d4f00
-  FUN_004d4fa0: 0x4d4fa0
+  display_messagebox: 0x4d4e10
+  display_yesno_messagebox: 0x4d4e70
+  get_next_buffered_key: 0x4d4eb0
+  reset_keydown_buffer: 0x4d4ef0
+  pump_messages_and_update_input_state: 0x4d4f00
+  pump_messages: 0x4d4fa0
   handle_window_focus_change: 0x4d5040
   FUN_004d50f0: 0x4d50f0
   set_cursor_pos: 0x4d5100
@@ -1190,7 +1190,7 @@ symbols:
   FUN_004d52b0: 0x4d52b0
   FUN_004d53c0: 0x4d53c0
   FUN_004d57d0: 0x4d57d0
-  FUN_004d58a0: 0x4d58a0
+  free_graphics_stuff: 0x4d58a0
   FUN_004d5990: 0x4d5990
   FUN_004d59d0: 0x4d59d0
   FUN_004d59f0: 0x4d59f0
@@ -1502,6 +1502,7 @@ symbols:
   UpdateWindow: 0x4e9120
   ShowWindow: 0x4e9124
   CreateWindowExA: 0x4e9128
+  GetFocus: 0x4e912c
   LoadIconA: 0x4e9130
   RegisterClassA: 0x4e9134
   LoadCursorA: 0x4e9138
@@ -1511,7 +1512,10 @@ symbols:
   DispatchMessageA: 0x4e9148
   TranslateMessage: 0x4e914c
   GetKeyState: 0x4e9154
+  GetActiveWindow: 0x4e915c
+  MessageBoxA: 0x4e9168
   IID_IDirect3D: 0x4e9e98
+  GUID_004ea6c8: 0x4ea6c8
   #endregion
   
   #region Initialized Data
@@ -1538,17 +1542,25 @@ symbols:
   DAT_0051b418: 0x51b418
   gEnableRwMap: 0x51b8d8
   gCmdLineArgH: 0x51b8e4
+  gBitmapCreated: 0x51b8e8
   sBigFileEntryCount: 0x51b8ec
   gSoundSystemInitialized: 0x51b8f0
   gADPCMPredictor: 0x51b8f8
   gADPCMIndex: 0x51b8fa
   gADPCMPredictor2: 0x51b8fc
   gADPCMIndex2: 0x51b8fe
+  gKeyDownBufferIdx: 0x51b900
   gKeyDownHistoryIdx: 0x51b904
   gVirtualMemoryBufferNumber: 0x51b908
+  gDontReleaseDirectDraw: 0x51b910
   gLaunchWindowed: 0x51b918
   gWindowStatus: 0x51b928
   gTotalVirtualMemoryAllocated: 0x51b92c
+  gMemoryInUseBytes: 0x51b930
+  gD3DDeviceFound: 0x51b938
+  gDirectDraw4: 0x51b940
+  gDDFrontBuffer: 0x51b944
+  gDDBackBuffer: 0x51b948
   gMouseHistoryIdx: 0x51b96c
   gMouseBufferIdx: 0x51b970
   DAT_0051b988: 0x51b988
@@ -1591,6 +1603,7 @@ symbols:
   sBigFileEntryPointerPaths: 0x5715e0
   sBigFileHeader: 0x5735e0
   gCurrentScrollWheelDelta: 0x5735e4
+  gNCmdShow: 0x5735e8
   gCmdLineArgCount: 0x5735ec
   gCmdLineArgs: 0x573600
   DAT_00574a00: 0x574a00
@@ -1599,11 +1612,13 @@ symbols:
   gCmdLineString: 0x574d00
   gCmdLineToken: 0x574f00
   sSoundBuffer1: 0x594f40
+  gActiveWindow: 0x594f48
   gVirtualMemoryBuffers: 0x594f60
   gCursorUnbufferedX: 0x59cf60
   gCursorUnbufferedY: 0x59cf64
   sSoundBuffer2: 0x59cf68
   gVirtualMemorySizes: 0x59cf80 
+  LPCGUID_005a4f84: 0x5a4f84
   DAT_005a4f88: 0x5a4f88
   gSoundBuffers1: 0x5a4fa0
   sAbsolutePathTempString: 0x5f0a60
@@ -1677,11 +1692,13 @@ strings:
   str_SoundSystemNotInitialized: 0x5172b8
   str_bad_or_missing_adpcm_file: 0x5172d8
   str_couldnt_malloc_adpcm_buf: 0x5172f8
+  str_Start: 0x517320
   str_vidtree_2: 0x517328
   str_datatree_2: 0x517334
   str_pct_s_data_slash: 0x517340
   str_dirtree_3: 0x517348
   str_space_tab: 0x517354
+  str_Message_dotdotdot: 0x517358
   str_memory_map_file: 0x517474
   str_rwmap_txt: 0x51748c
   str_pct_newline_newline: 0x517498

@@ -1,55 +1,80 @@
+#include <DDRAW.H>
 #include <STDIO.H>
 #include <WINDOWS.H>
 #include <WINDOWSX.H>
 
-#include "create_window.h"
 #include "game_dirs.h"
 #include "keyboard.h"
 #include "mouse.h"
+#include "sound.h"
 #include "strings.h"
+#include "timers.h"
 #include "types.h"
 #include "undefined.h"
+#include "virtual_memory.h"
+#include "window.h"
 
 // Not sure why these aren't defined...
 #define WM_MOUSEWHEEL 0x20a
 #define GET_WHEEL_DELTA_WPARAM(wp) ((int)(short)HIWORD(wp))
 
-extern int32 gKeyDownHistoryIdx;
-extern int32 gKeyDownHistory[32];
-extern bool8 gKeysDown[256];
+#define MAX_CMD_LINE_ARGS 20
 
-extern int32 DAT_0051b418;
-extern float32 DAT_01b18068;
-
-extern char gCmdLineArgN[];
-extern int32 gCmdLineArgM;
-extern int32 gCmdLineArgT;
-extern int32 gCmdLineArgC;
-extern int32 gCmdLineArgL;
-extern int32 gCmdLineArgE;
-extern int32 gCmdLineArgB;
-extern int32 gCmdLineArgS;
-extern char gCmdLineArgP[];
-extern int32 gCmdLineArgF;
-extern int32 gCmdLineArgH;
+HWND gWndHandle;
+bool gWindowFocused;
+HWND gActiveWindow;
+int32 gWindowStatus;
 
 char gCmdLineString[512];
 int32 gCmdLineArgCount;
 char *gCmdLineToken;
-char gCmdLineArgs[20][256];
+char gCmdLineArgs[MAX_CMD_LINE_ARGS][256];
 
 char gRegValueTemp[256];
 
-int32 gWindowStatus;
+int gNCmdShow;
+int32 gMemoryInUseBytes;
 
-extern int init_systems(HINSTANCE hInstance, int nShowCmd);
-extern void do_window_paint(HWND hWnd);
+LRESULT CALLBACK game_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+bool game_create_window(HINSTANCE hInstance, int nCmdShow);
 
-extern LRESULT CALLBACK game_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+bool init_systems(HINSTANCE hInstance, int nShowCmd) {
+    bool ret;
 
-#pragma ASM_FUNC init_systems hasret
+    ret = FALSE;
 
-#pragma ASM_FUNC FUN_004d45b0
+    gNCmdShow = nShowCmd;
+    gWindowStatus = 0;
+    LPCGUID_005a4f84 = &GUID_004ea6c8;
+
+    setup_virtual_memory_buffers();
+    init_timers();
+
+    if (game_create_window(hInstance, nShowCmd)) {
+        ret = TRUE;
+
+        gMemoryInUseBytes = get_memory_in_use_bytes(str_Start);
+        get_memory_in_use_bytes(str_Start);
+
+        pump_messages_and_update_input_state();
+
+        init_sound_system();
+        mouse_init();
+
+        gD3DDeviceFound = 0;
+        if (gCmdLineArgH != 0) {
+            if (FUN_00401100(gWndHandle)) {
+                gD3DDeviceFound = 1;
+            }
+        }
+    }
+
+    return ret;
+}
+
+bool FUN_004d45b0() {
+    return FUN_00401100(gWndHandle);
+}
 
 bool game_create_window(HINSTANCE hInstance, int nCmdShow) {
     WNDCLASSA wndClass;
@@ -141,7 +166,7 @@ LRESULT CALLBACK game_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
                 gKeyDownHistory[gKeyDownHistoryIdx] = wParam;
 
                 gKeyDownHistoryIdx += 1;
-                if (gKeyDownHistoryIdx >= 32) {
+                if (gKeyDownHistoryIdx >= MAX_KEYDOWN_HISTORY) {
                     gKeyDownHistoryIdx = 0;
                 }
             }
@@ -207,7 +232,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, 
     }
 
     strtok(gCmdLineString, str_space_tab);
-    for (gCmdLineArgCount = 1; gCmdLineArgCount < 20; gCmdLineArgCount++) {
+    for (gCmdLineArgCount = 1; gCmdLineArgCount < MAX_CMD_LINE_ARGS; gCmdLineArgCount++) {
         gCmdLineToken = strtok(NULL, str_space_tab);
         if (gCmdLineToken == NULL) {
             break;
@@ -275,24 +300,159 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, 
     load_game_dirs_from_registry();
     ShowCursor(FALSE);
     cd_check();
+
     game_main();
-    return game_exit();
+    game_exit();
 }
 
-#pragma ASM_FUNC display_message_and_exit
+void display_messagebox_and_exit(const char *message) {
+    display_messagebox(message);
+    game_exit();
+}
 
-#pragma ASM_FUNC game_exit hasret
+void game_exit() {
+    MSG msg;
 
-#pragma ASM_FUNC display_message
+    while (get_key_state(VK_F4) & 0x8000) {
+        while (PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+            GetMessageA(&msg, NULL, 0, 0);
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+    }
 
-#pragma ASM_FUNC FUN_004d4e70
+    FUN_004a5c30();
+    FUN_0047a020();
+    FUN_004c8ab0();
+    deinit_sound_system();
+    FUN_00401b40();
 
-#pragma ASM_FUNC FUN_004d4eb0
+    gDontReleaseDirectDraw = 0;
+    free_graphics_stuff();
 
-#pragma ASM_FUNC FUN_004d4ef0
+    _fcloseall();
+    free_all_virtual_memory_buffers();
 
-#pragma ASM_FUNC FUN_004d4f00
+    exit(1);
+}
 
-#pragma ASM_FUNC FUN_004d4fa0
+void display_messagebox(const char *format, ...) {
+    char buffer[300];
+    va_list args;
 
+    va_start(args, format);
+    vsprintf(buffer, format, args);
+    va_end(args);
+
+    if (gDDFrontBuffer != NULL) {
+        IDirectDraw4_FlipToGDISurface(gDirectDraw4);
+    }
+
+    MessageBoxA(gWndHandle, buffer, str_Message_dotdotdot, MB_OK);
+}
+
+bool display_yesno_messagebox(const char *message) {
+    if (gDDFrontBuffer != NULL) {
+        IDirectDraw4_FlipToGDISurface(gDirectDraw4);
+    }
+
+    return MessageBoxA(gWndHandle, message, str_Message_dotdotdot, MB_YESNO | MB_DEFBUTTON2) == IDYES;
+}
+
+int32 get_next_buffered_key() {
+    int32 bufferedKey; 
+
+    if (gKeyDownBufferIdx == gKeyDownHistoryIdx) {
+        return 0;
+    }
+
+    bufferedKey = gKeyDownHistory[gKeyDownBufferIdx];
+    gKeyDownHistory[gKeyDownBufferIdx] = 0;
+
+    gKeyDownBufferIdx += 1;
+    if (gKeyDownBufferIdx >= MAX_KEYDOWN_HISTORY) {
+        gKeyDownBufferIdx = 0;
+    }
+
+    return bufferedKey;
+}
+
+void reset_keydown_buffer() {
+    gKeyDownBufferIdx = gKeyDownHistoryIdx;
+}
+
+void pump_messages_and_update_input_state() {
+    MSG msg;
+
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+        GetMessageA(&msg, NULL, 0, 0);
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+
+    update_mouse_state();
+
+    if (handle_window_focus_change()) {
+        set_cursor_pos(gCursorUnbufferedX, gCursorUnbufferedY);
+    }
+
+    update_keys_pressed();
+
+    if (gWindowStatus != 0) {
+        game_exit();
+    }
+}
+
+void pump_messages() {
+    MSG msg;
+
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+        GetMessageA(&msg, NULL, 0, 0);
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+
+    if (handle_window_focus_change()) {
+        set_cursor_pos(gCursorUnbufferedX, gCursorUnbufferedY);
+    }
+
+    if (gWindowStatus != 0) {
+        game_exit();
+    }
+}
+
+#ifdef NON_MATCHING
+bool handle_window_focus_change() {
+    HWND focus;
+
+    gActiveWindow = GetActiveWindow();
+    focus = GetFocus();
+
+    if (focus != gWndHandle || gActiveWindow == NULL || gActiveWindow != gWndHandle) {
+        if (!gWindowFocused && !gBitmapCreated && gDirectDraw4 != NULL) {
+            IDirectDraw4_FlipToGDISurface(gDirectDraw4);
+        }
+
+        gWindowFocused = FALSE;
+        return FALSE;
+    } else {
+        if (!gWindowFocused) {
+            if (gBitmapCreated) {
+                do_window_paint(NULL);
+            } else {
+                if (gDDFrontBuffer != NULL) {
+                    IDirectDrawSurface4_Restore(gDDFrontBuffer);
+                }
+                if (gDDBackBuffer != NULL) {
+                    IDirectDrawSurface4_Restore(gDDBackBuffer);
+                }
+            }
+        }
+
+        gWindowFocused = TRUE;
+        return TRUE;
+    }
+}
+#else
 #pragma ASM_FUNC handle_window_focus_change hasret
+#endif

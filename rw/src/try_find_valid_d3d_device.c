@@ -1,9 +1,10 @@
-#include <ddraw.h>
-#include <d3d.h>
+#include <DDRAW.h>
+#include <D3D.h>
 
 #include "strings.h"
 #include "types.h"
 #include "undefined.h"
+#include "window.h"
 
 // .bss
 
@@ -26,14 +27,14 @@ bool try_find_valid_d3d_device() {
     result = DirectDrawCreate(NULL, &lpDD, NULL);
 
     if (result != S_OK) {
-        display_message(str_dd3d_obj_failed);
+        display_messagebox(str_dd3d_obj_failed);
         return FALSE;
     }
 
     result = IDirectDraw_QueryInterface(lpDD, &IID_IDirect3D, &lpD3D);
     
     if (result != S_OK) {
-        display_message(str_creation_of_id3d_failed);
+        display_messagebox(str_creation_of_id3d_failed);
         return FALSE;
     }
 
@@ -41,12 +42,12 @@ bool try_find_valid_d3d_device() {
     result = IDirect3D_EnumDevices(lpD3D, enum_devices_callback, &gSelectedD3DDevice);
 
     if (result != S_OK) {
-        display_message(str_enum_of_drivers_failed);
+        display_messagebox(str_enum_of_drivers_failed);
         return FALSE;
     }
 
     if (gD3DDeviceCounter == 0) {
-        display_message(str_couldnt_find_compatible_d3d_driver);
+        display_messagebox(str_couldnt_find_compatible_d3d_driver);
         return FALSE;
     }
 

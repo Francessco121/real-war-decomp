@@ -2,7 +2,6 @@
 #include <STDIO.H>
 #include <WINDEF.H>
 
-#include "create_window.h"
 #include "data.h"
 #include "sound.h"
 #include "strings.h"
@@ -10,6 +9,7 @@
 #include "undefined.h"
 #include "virtual_memory.h"
 #include "warnsuppress.h"
+#include "window.h"
 
 #define NUM_SOUND_BUFFERS 18
 
@@ -140,10 +140,10 @@ void init_sound_system() {
 
             gSoundSystemInitialized = TRUE;
         } else {
-            display_message(str_SoundSystemNotInitialized);
+            display_messagebox(str_SoundSystemNotInitialized);
         }
     } else {
-        display_message(str_SoundSystemNotInitialized);
+        display_messagebox(str_SoundSystemNotInitialized);
     }
 }
 
@@ -421,7 +421,7 @@ void write_adpcm_to_sound_buffers(
 }
 
 void display_message_and_exit_2(const char* message) {
-    display_message_and_exit(message);
+    display_messagebox_and_exit(message);
 }
 
 void adpcm_decompress(const int8 *input, int16 *output, int32 length) {
@@ -656,7 +656,7 @@ uint8* read_kvag_file(const char* filePath) {
 
         return kvagBuf;
     } else {
-        display_message(str_bad_or_missing_adpcm_file, filePath);
+        display_messagebox(str_bad_or_missing_adpcm_file, filePath);
         return NULL;
     }
 }
@@ -673,10 +673,10 @@ int32 sound_func_004d26c0(int32 idx, int16 *output1, int16 *output2, int32 lengt
         return 0;
     }
 
-    gADPCMIndex = gSomeAudioStructs[idx].adpcmIndex1;
-    gADPCMPredictor = gSomeAudioStructs[idx].adpcmPredictor1;
-    gADPCMIndex2 = gSomeAudioStructs[idx].adpcmIndex2;
-    gADPCMPredictor2 = gSomeAudioStructs[idx].adpcmPredictor2;
+    gADPCMIndex = (int8)gSomeAudioStructs[idx].adpcmIndex1;
+    gADPCMPredictor = (int16)gSomeAudioStructs[idx].adpcmPredictor1;
+    gADPCMIndex2 = (int8)gSomeAudioStructs[idx].adpcmIndex2;
+    gADPCMPredictor2 = (int16)gSomeAudioStructs[idx].adpcmPredictor2;
 
     if (gSomeAudioStructs[idx].isStereo) {
         length2 = length;

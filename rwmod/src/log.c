@@ -8,7 +8,7 @@
 static FILE *logTxtFile = NULL;
 static char logPrintBuffer[LOG_PRINT_BUFFER_LENGTH];
 
-extern void display_message_and_exit(char* message);
+extern void display_messagebox_and_exit(char* message);
 
 void log_printlnf(char *format, ...) {
     va_list args;
@@ -21,7 +21,7 @@ void log_printlnf(char *format, ...) {
         logTxtFile = fopen("modlog.txt", "w");
 
         if (logTxtFile == NULL) {
-            display_message_and_exit("Failed to open modlog.txt.");
+            display_messagebox_and_exit("Failed to open modlog.txt.");
         }
     }
 
@@ -33,7 +33,7 @@ void log_printlnf(char *format, ...) {
     va_end(args);
 
     if (length > LOG_PRINT_BUFFER_LENGTH) {
-        display_message_and_exit("Log print buffer overflow :(");
+        display_messagebox_and_exit("Log print buffer overflow :(");
     }
 
     fwrite(logPrintBuffer, 1, length, logTxtFile);

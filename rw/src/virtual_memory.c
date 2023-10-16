@@ -6,6 +6,7 @@
 #include "types.h"
 #include "undefined.h"
 #include "virtual_memory.h"
+#include "window.h"
 
 #define MAX_VIRTUAL_MEMORY_BUFFERS 8192
 
@@ -114,7 +115,7 @@ void* custom_alloc(size_t bytes) {
     void* allocatedPtr;
 
     if (bytes <= 0) {
-        display_message_and_exit(str_trying_to_allocate_0);
+        display_messagebox_and_exit(str_trying_to_allocate_0);
     }
 
     bufferIndex = 0;
@@ -128,7 +129,7 @@ void* custom_alloc(size_t bytes) {
         bufferIndex++;
     }
 
-    display_message_and_exit(str_no_memory_buffers_left);
+    display_messagebox_and_exit(str_no_memory_buffers_left);
     label1:
 
     if (bytes >= 0x400000) {
@@ -138,7 +139,7 @@ void* custom_alloc(size_t bytes) {
             goto label2;
         }
         
-        display_message(str_virtual_alloc_failed);
+        display_messagebox(str_virtual_alloc_failed);
     } else {
         allocatedPtr = malloc(bytes);
 
@@ -147,7 +148,7 @@ void* custom_alloc(size_t bytes) {
         }
     }
 
-    display_message_and_exit(str_no_memory_left_for_alloc);
+    display_messagebox_and_exit(str_no_memory_left_for_alloc);
     label2:
 
     gVirtualMemoryBuffers[bufferIndex] = allocatedPtr;
@@ -173,7 +174,7 @@ void custom_free(void** ptr) {
 
             if (gVirtualMemorySizes[i] >= 0x400000) {
                 if (VirtualFree(gVirtualMemoryBuffers[i], 0, 0x8000) == 0) {
-                    display_message(str_virtual_free_failed);
+                    display_messagebox(str_virtual_free_failed);
                 }
             } else {
                 free(gVirtualMemoryBuffers[i]);
@@ -200,7 +201,7 @@ void free_all_virtual_memory_buffers() {
 
     if (gTotalVirtualMemoryAllocated != 0) {
         sprintf(gTempString2, str_memory_unaccounted, gTotalVirtualMemoryAllocated);
-        display_message(gTempString2);
+        display_messagebox(gTempString2);
     }
 }
 

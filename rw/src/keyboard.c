@@ -3,9 +3,15 @@
 #include "keyboard.h"
 #include "types.h"
 #include "undefined.h"
+#include "window.h"
 
 bool8 gKeysPressed[256];
 bool8 gKeysTapped[256];
+
+int32 gKeyDownHistoryIdx;
+int32 gKeyDownHistory[MAX_KEYDOWN_HISTORY];
+bool8 gKeysDown[256];
+int32 gKeyDownBufferIdx;
 
 uint32 get_key_state(int nVirtKey) {
     if (gWindowFocused) {
