@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/coff.dart';
+import 'package:rw_decomp/basic_cmacro_parser.dart';
 
 /// cl_wrapper exists to solve the following issues:
 /// - Provide an easy way to invoke CL.EXE without the pain of batch/powershell
@@ -290,65 +291,11 @@ Future<AsmFuncInfo> _asmFuncPreprocess(
 List<AsmFuncPragma> _scanAsmFuncPragmas(List<String> lines, Set<String> defines) {
   final asmFuncs = <AsmFuncPragma>[];
 
-  List<bool> skipStack = [];
-  bool skipping = false;
-
-  bool evaluate(String expr) {
-    final number = int.tryParse(expr);
-    if (number != null) {
-      return number != 0;
-    }
-
-    return defines.contains(expr);
-  }
-
-  String arg(String line, int idx) {
-    final parts = line.split(' ');
-    if ((idx + 1) < parts.length) {
-      return parts[idx + 1];
-    } else {
-      return '';
-    }
-  }
-
-  String rest(String line) {
-    final spaceIdx = line.indexOf(' ');
-    if (spaceIdx < 0) {
-      return '';
-    } else {
-      return line.substring(spaceIdx + 1);
-    }
-  }
-
-  void push(bool skip) {
-    skipStack.add(skipping);
-    skipping = skip;
-  }
-
-  void pop() {
-    skipping = skipStack.removeLast();
-  }
-
-  for (int i = 0; i < lines.length; i++) {
-    final line = lines[i].trim();
-    if (line.startsWith('#if')) {
-      push(!evaluate(rest(line)));
-    } else if (line.startsWith('#ifdef')) {
-      push(!defines.contains(arg(line, 0)));
-    } else if (line.startsWith('#ifndef')) {
-      push(defines.contains(arg(line, 0)));
-    } else if (line.startsWith('#elif')) {
-      pop();
-      push(!evaluate(rest(line)));
-    } else if (line.startsWith('#else')) {
-      skipping = !skipping;
-    } else if (line.startsWith('#endif')) {
-      pop();
-    } else {
-      final asmFunc = _pragmaAsmFuncRegex.firstMatch(line);
-      if (asmFunc != null && asmFunc.group(1) != null) {
-        asmFuncs.add(AsmFuncPragma(i, asmFunc.group(1)!, asmFunc.group(2) == 'hasret', skipping));
-      }
+  for (final (int i, String line, bool skipping) in 
+      iterateLinesWithCIfMacroContext(lines, defines)) {
+    final asmFunc = _pragmaAsmFuncRegex.firstMatch(line);
+    if (asmFunc != null && asmFunc.group(1) != null) {
+      asmFuncs.add(AsmFuncPragma(i, asmFunc.group(1)!, asmFunc.group(2) == 'hasret', skipping));
     }
   }
 

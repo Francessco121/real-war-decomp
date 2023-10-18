@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/coff.dart';
+import 'package:rw_decomp/basic_cmacro_parser.dart';
 import 'package:rw_decomp/rw_yaml.dart';
 import 'package:rw_decomp/symbol_utils.dart';
 
@@ -49,6 +50,8 @@ Future<void> main(List<String> args) async {
       .fold(0, (sum, addr) => (addr >= _textStart && addr < _textEnd) ? (sum + 1) : sum);
   int textMatchingBytes = 0;
   int matchingFunctions = 0;
+  int textMatchingBytesWithNonMatching = 0;
+  int matchingFunctionsWithNonMatching = 0;
   
   for (final (i, segment) in rw.segments.indexed) {
     if (segment.address < _textStart || segment.address >= _textEnd) {
@@ -57,13 +60,15 @@ Future<void> main(List<String> args) async {
 
     if (segment.type == 'c') {
       final cFile = File(p.join(srcDir, '${segment.name}.c'));
-      final asmFuncs = _getAsmFuncs(cFile);
+      final (asmFuncsWithNonMatching, asmFuncsWithoutNonMatching) = _getAsmFuncs(cFile);
 
       final obj = objCache.get(p.join(buildDir, 'obj', '${segment.name}.obj'));
-      final objProgress = _getObjTextProgress(obj, asmFuncs);
+      final objProgress = _getObjTextProgress(obj, asmFuncsWithNonMatching, asmFuncsWithoutNonMatching);
 
       textMatchingBytes += objProgress.matchingBytes;
       matchingFunctions += objProgress.matchingFunctions;
+      textMatchingBytesWithNonMatching += objProgress.matchingBytesWithNonMatching;
+      matchingFunctionsWithNonMatching += objProgress.matchingFunctionsWithNonMatching;
     } else if (segment.type == 'thunks') {
       final nextSegment = rw.segments[i + 1];
       final segmentSize = nextSegment.address - segment.address;
@@ -110,22 +115,29 @@ Future<void> main(List<String> args) async {
   // Display
   final totalBytes = textTotalBytes + rdataTotalBytes + dataTotalBytes;
   final totalMatchingBytes = textMatchingBytes + rdataMatchingBytes + dataMatchingBytes;
+  final totalMatchingBytesWithNonMatching = textMatchingBytesWithNonMatching + rdataMatchingBytes + dataMatchingBytes;
 
   final funcPercentage = ((matchingFunctions / totalFunctions) * 100.0).toStringAsFixed(2);
   final textBytePercentage = ((textMatchingBytes / textTotalBytes) * 100.0).toStringAsFixed(2);
+  final funcPercentageWithNonMatching = ((matchingFunctionsWithNonMatching / totalFunctions) * 100.0).toStringAsFixed(2);
+  final textBytePercentageWithNonMatching = ((textMatchingBytesWithNonMatching / textTotalBytes) * 100.0).toStringAsFixed(2);
   final rdataBytePercentage = ((rdataMatchingBytes / rdataTotalBytes) * 100.0).toStringAsFixed(2);
   final dataBytePercentage = ((dataMatchingBytes / dataTotalBytes) * 100.0).toStringAsFixed(2);
   final totalBytePercentage = ((totalMatchingBytes / totalBytes) * 100.0).toStringAsFixed(2);
+  final totalBytePercentageWithNonMatching = ((totalMatchingBytesWithNonMatching / totalBytes) * 100.0).toStringAsFixed(2);
 
   print('total:');
-  print('    bytes: ${'$totalMatchingBytes/$totalBytes'.padLeft(14)} ($totalBytePercentage%)');
+  print('    bytes:      ${'$totalMatchingBytes/$totalBytes'.padLeft(14)} ($totalBytePercentage%)');
+  print('    bytes (NM): ${'$totalMatchingBytesWithNonMatching/$totalBytes'.padLeft(14)} ($totalBytePercentageWithNonMatching%)');
   print('.text:');
-  print('    funcs: ${'$matchingFunctions/$totalFunctions'.padLeft(14)} ($funcPercentage%)');
-  print('    bytes: ${'$textMatchingBytes/$textTotalBytes'.padLeft(14)} ($textBytePercentage%)');
+  print('    funcs:      ${'$matchingFunctions/$totalFunctions'.padLeft(14)} ($funcPercentage%)');
+  print('    funcs (NM): ${'$matchingFunctionsWithNonMatching/$totalFunctions'.padLeft(14)} ($funcPercentageWithNonMatching%)');
+  print('    bytes:      ${'$textMatchingBytes/$textTotalBytes'.padLeft(14)} ($textBytePercentage%)');
+  print('    bytes (NM): ${'$textMatchingBytesWithNonMatching/$textTotalBytes'.padLeft(14)} ($textBytePercentageWithNonMatching%)');
   print('.rdata:');
-  print('    bytes: ${'$rdataMatchingBytes/$rdataTotalBytes'.padLeft(14)} ($rdataBytePercentage%)');
+  print('    bytes:      ${'$rdataMatchingBytes/$rdataTotalBytes'.padLeft(14)} ($rdataBytePercentage%)');
   print('.data:');
-  print('    bytes: ${'$dataMatchingBytes/$dataTotalBytes'.padLeft(14)} ($dataBytePercentage%)');
+  print('    bytes:      ${'$dataMatchingBytes/$dataTotalBytes'.padLeft(14)} ($dataBytePercentage%)');
 
   // Generate shields
   if (genShields) {
@@ -137,8 +149,8 @@ Future<void> main(List<String> args) async {
       shieldFile.writeAsStringSync(shieldSvg);
     }
 
-    await makeShield('total.svg', 'Total', '$totalBytePercentage%');
-    await makeShield('funcs.svg', 'Functions', '$funcPercentage%');
+    await makeShield('total.svg', 'Total', '$totalBytePercentageWithNonMatching%');
+    await makeShield('funcs.svg', 'Functions', '$funcPercentageWithNonMatching%');
 
     print('');
     print('Wrote new shields to $shieldsDir');
@@ -159,13 +171,22 @@ class ObjCache {
 class ObjTextProgress {
   final int matchingBytes;
   final int matchingFunctions;
+  final int matchingBytesWithNonMatching;
+  final int matchingFunctionsWithNonMatching;
 
-  ObjTextProgress(this.matchingBytes, this.matchingFunctions);
+  ObjTextProgress(
+      this.matchingBytes, 
+      this.matchingFunctions,
+      this.matchingBytesWithNonMatching, 
+      this.matchingFunctionsWithNonMatching);
 }
 
-ObjTextProgress _getObjTextProgress(CoffFile obj, Set<String> asmFuncs) {
+ObjTextProgress _getObjTextProgress(CoffFile obj, 
+    Set<String> asmFuncsWithNonMatching, Set<String> asmFuncsWithoutNonMatching) {
   int matchingBytes = 0;
   int matchingFunctions = 0;
+  int matchingBytesWithNonMatching = 0;
+  int matchingFunctionsWithNonMatching = 0;
 
   // Assume the obj was compiled with COMDAT functions
   for (final (i, section) in obj.sections.indexed) {
@@ -179,14 +200,20 @@ ObjTextProgress _getObjTextProgress(CoffFile obj, Set<String> asmFuncs) {
         .firstWhere((s) => s.type == 0x20 && s.value == 0 && s.sectionNumber == (i + 1));
     final funcName = funcSymbol.name.shortName 
       ?? obj.stringTable!.strings[funcSymbol.name.offset!]!;
+    final unmangledFuncName = unmangle(funcName);
 
-    if (!asmFuncs.contains(unmangle(funcName))) {
+    if (!asmFuncsWithNonMatching.contains(unmangledFuncName)) {
       matchingFunctions++;
       matchingBytes += (section.header.sizeOfRawData / 8).ceil() * 8;
     }
+
+    if (!asmFuncsWithoutNonMatching.contains(unmangledFuncName)) {
+      matchingFunctionsWithNonMatching++;
+      matchingBytesWithNonMatching += (section.header.sizeOfRawData / 8).ceil() * 8;
+    }
   }
 
-  return ObjTextProgress(matchingBytes, matchingFunctions);
+  return ObjTextProgress(matchingBytes, matchingFunctions, matchingBytesWithNonMatching, matchingFunctionsWithNonMatching);
 }
 
 int _getObjRdataProgress(CoffFile obj) {
@@ -219,17 +246,34 @@ int _getObjDataProgress(CoffFile obj) {
 
 final _pragmaAsmFuncRegex = RegExp(r'^#pragma(?:\s+)ASM_FUNC(?:\s+)(\S+)');
 
-Set<String> _getAsmFuncs(File file) {
-  final asmFuncs = <String>{};
+(Set<String> includingNonMatching, Set<String> excludingNonMatching) _getAsmFuncs(File file) {
+  final includingNonMatching = <String>{};
+  final excludingNonMatching = <String>{};
+  final asmFuncMap = <int, String>{};
 
-  for (final line in file.readAsLinesSync()) {
+  final lines = file.readAsLinesSync();
+
+  for (final (int i, String line) in lines.indexed) {
     final asmFunc = _pragmaAsmFuncRegex.firstMatch(line)?.group(1);
     if (asmFunc != null) {
-      asmFuncs.add(asmFunc);
+      includingNonMatching.add(asmFunc);
+      asmFuncMap[i] = asmFunc;
     }
   }
 
-  return asmFuncs;
+  if (includingNonMatching.isNotEmpty) {
+    for (final (int i, _, bool skipping) in
+        iterateLinesWithCIfMacroContext(lines, const {'NON_MATCHING'})) {
+      if (!skipping) {
+        final asmFunc = asmFuncMap[i];
+        if (asmFunc != null) {
+          excludingNonMatching.add(asmFunc);
+        }
+      }
+    }
+  }
+
+  return (includingNonMatching, excludingNonMatching);
 }
 
 Future<String> _getNewShield(String label, String text) async {
