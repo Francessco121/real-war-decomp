@@ -22,13 +22,11 @@ extern float32 DAT_01b18068;
 
 extern int32 gDontReleaseDirectDraw;
 
-extern LPDIRECTDRAWSURFACE gDDFrontBuffer;
-extern LPDIRECTDRAWSURFACE gDDBackBuffer;
+extern LPDIRECTDRAWSURFACE4 gDDFrontBuffer;
+extern LPDIRECTDRAWSURFACE4 gDDBackBuffer;
 extern LPDIRECTDRAW4 gDirectDraw4;
 
 extern int32 gD3DDeviceFound;
-
-extern bool gBitmapCreated;
 
 extern int gLaunchWindowed;
 extern char gCmdLineArgN[];
@@ -46,14 +44,21 @@ extern int32 gCmdLineArgH;
 extern const GUID *LPCGUID_005a4f84;
 extern GUID GUID_004ea6c8;
 
+extern int32 DAT_00fe04d0;
+extern int32 DAT_0051b7f4;
+
+extern int32 DAT_00567aa0;
+extern int32 DAT_0051add4;
+extern bool gDontInitD3D;
+extern int32 DAT_0051b8e0;
+
 extern bool FUN_00401100(HWND hWnd);
 
 extern void FUN_004d8010(int32);
 extern void load_cursor_textures();
+extern void free_all_cursor_textures();
 
 extern int check_window_focus_change(int32);
-
-extern int set_cursor_pos(int32 x, int32 y);
 
 extern void game_main();
 
@@ -62,7 +67,27 @@ extern void FUN_0047a020();
 extern void FUN_004c8ab0();
 extern void FUN_00401b40();
 
-extern void free_graphics_stuff();
-extern void do_window_paint(HWND hWnd);
-
 extern int32 get_memory_in_use_bytes(char *str);
+
+extern void FUN_00406e60();
+extern int32 get_available_vid_memory();
+extern bool init_d3d(HWND);
+extern int32 FUN_004013f0(HWND);
+extern void FUN_00406ed0();
+extern void FUN_0041a8e0();
+extern void FUN_00401870(HWND);
+
+extern void memcpy_dword(uint32 *dst, uint32 *src, size_t length);
+extern void memset_dword(uint32 *dst, uint32 value, size_t length);
+extern void memset_word(uint16 *dst, uint16 value, size_t length);
+
+extern void FUN_004d7bc0();
+extern void FUN_0041a830();
+extern void FUN_004d7d60();
+extern void FUN_00406fc0();
+extern void FUN_00401b90(int32);
+extern void FUN_00406f30();
+
+extern void FUN_004c3b60(int32*, int32*, int32*, int32*, int32*);
+extern void FUN_004c3ac0(int32, int32, int32, int32);
+extern void FUN_004c39f0(const char *str, int32 x, int32 y);

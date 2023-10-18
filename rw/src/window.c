@@ -13,6 +13,7 @@
 #include "undefined.h"
 #include "virtual_memory.h"
 #include "window.h"
+#include "window_graphics.h"
 
 // Not sure why these aren't defined...
 #define WM_MOUSEWHEEL 0x20a

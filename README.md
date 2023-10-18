@@ -12,7 +12,8 @@ A work in progress decompilation of the PC game [Real War (2001) by Rival Intera
         - `C:\Program Files (x86)\Microsoft Visual Studio\VC98`
         - `C:\Program Files (x86)\Microsoft Visual Studio\Common\MSDev98`
     - This can also be installed via Visual Studio 6.0 Enterprise (6.00.8168).
-- DirectX 5,6,7,8 SDK (still figuring out exactly which one to use)
+- DirectX 7 SDK
+    - The game's readme claims that it needs DX8, however the game code does not use the DX8 style of programming and instead appears to be based on DX6 with some usage of DX7 APIs. More research is needed here.
 - [Dart](https://dart.dev/) >=3.1.0
 - [Ninja](https://ninja-build.org/)
 - [Just](https://just.systems/)

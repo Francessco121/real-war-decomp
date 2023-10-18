@@ -47,7 +47,7 @@ segments:
   - [0x4c4a20, bin, null]
   - [0x4d1c90, c, sound]
   - [0x4d4510, c, window]
-  - [0x4d50f0, bin, null]
+  - [0x4d50f0, c, window_graphics]
   - [0x4d5e60, c, virtual_memory]
   - [0x4d6350, c, mouse]
   - [0x4d6860, c, data]
@@ -77,11 +77,11 @@ symbols:
   #region Functions, Thunks
   ._text: 0x401000
   FUN_00401000: 0x401000
-  FUN_00401080: 0x401080
+  get_available_vid_memory: 0x401080
   FUN_00401100: 0x401100
   try_find_valid_d3d_device: 0x401150
   enum_devices_callback: 0x401210
-  FUN_004013b0: 0x4013b0
+  init_d3d: 0x4013b0
   FUN_004013f0: 0x4013f0
   FUN_00401870: 0x401870
   FUN_004019b0: 0x4019b0
@@ -1182,20 +1182,20 @@ symbols:
   pump_messages_and_update_input_state: 0x4d4f00
   pump_messages: 0x4d4fa0
   handle_window_focus_change: 0x4d5040
-  FUN_004d50f0: 0x4d50f0
+  get_last_graphics_error_reason: 0x4d50f0
   set_cursor_pos: 0x4d5100
-  FUN_004d5120: 0x4d5120
+  some_graphics_init: 0x4d5120
   do_window_paint: 0x4d5190
-  FUN_004d5290: 0x4d5290
-  FUN_004d52b0: 0x4d52b0
-  FUN_004d53c0: 0x4d53c0
-  FUN_004d57d0: 0x4d57d0
+  delete_bitmap: 0x4d5290
+  create_some_bitmap: 0x4d52b0
+  init_directx: 0x4d53c0
+  determine_backbuffer_pixel_format: 0x4d57d0
   free_graphics_stuff: 0x4d58a0
-  FUN_004d5990: 0x4d5990
-  FUN_004d59d0: 0x4d59d0
-  FUN_004d59f0: 0x4d59f0
+  clear_surface: 0x4d5990
+  clear_in_memory_graphics_surface: 0x4d59d0
+  get_in_memory_graphics_surface: 0x4d59f0
   draw_frame: 0x4d5a20
-  FUN_004d5ce0: 0x4d5ce0
+  draw_timers: 0x4d5ce0
   setup_virtual_memory_buffers: 0x4d5e60
   skip_virtual_memory_rwmap_record: 0x4d5e90
   start_rwmap: 0x4d5ea0
@@ -1236,9 +1236,9 @@ symbols:
   FUN_004d7050: 0x4d7050
   FUN_004d7150: 0x4d7150
   FUN_004d7250: 0x4d7250
-  FUN_004d7270: 0x4d7270
-  FUN_004d7290: 0x4d7290
-  FUN_004d72b0: 0x4d72b0
+  memcpy_dword: 0x4d7270
+  memset_dword: 0x4d7290
+  memset_word: 0x4d72b0
   FUN_004d72d0: 0x4d72d0
   FUN_004d7450: 0x4d7450
   FUN_004d7460: 0x4d7460
@@ -1253,7 +1253,7 @@ symbols:
   FUN_004d7f60: 0x4d7f60
   FUN_004d8010: 0x4d8010
   load_cursor_textures: 0x4d8020
-  FUN_004d8060: 0x4d8060
+  free_all_cursor_textures: 0x4d8060
   check_window_focus_change: 0x4d8090
   get_key_state: 0x4d8140
   update_keys_pressed: 0x4d8160
@@ -1492,6 +1492,13 @@ symbols:
   RegCloseKey: 0x4e9008
   RegQueryValueExA: 0x4e900c
   GetStockObject: 0x4e9024
+  GetObjectA: 0x4e9028
+  CreateCompatibleDC: 0x4e902c
+  BitBlt: 0x4e9030
+  DeleteDC: 0x4e9034
+  CreateDIBSection: 0x4e9038
+  SelectObject: 0x4e903c
+  DeleteObject: 0x4e9040
   VirtualFree: 0x4e904c
   VirtualAlloc: 0x4e9050
   GetCommandLineA: 0x4e9054
@@ -1499,6 +1506,7 @@ symbols:
   GetSystemMetrics: 0x4e910c
   SetFocus: 0x4e9110
   ShowCursor: 0x4e9118
+  SetCursorPos: 0x4e911c
   UpdateWindow: 0x4e9120
   ShowWindow: 0x4e9124
   CreateWindowExA: 0x4e9128
@@ -1511,24 +1519,34 @@ symbols:
   GetMessageA: 0x4e9144
   DispatchMessageA: 0x4e9148
   TranslateMessage: 0x4e914c
+  EndPaint: 0x4e9150
   GetKeyState: 0x4e9154
+  BeginPaint: 0x4e9158
   GetActiveWindow: 0x4e915c
+  GetDC: 0x4e9160
+  ReleaseDC: 0x4e9164
   MessageBoxA: 0x4e9168
+  CoInitialize: 0x4e9180
+  CoUninitialize: 0x4e9184
+  IID_IDirectDraw4: 0x4e9a08
   IID_IDirect3D: 0x4e9e98
   GUID_004ea6c8: 0x4ea6c8
   #endregion
   
   #region Initialized Data
   ._data: 0x4ec000
+  gDontInitD3D: 0x4ec034
   gVidTree: 0x50a410
   gDataTree: 0x50a510
   gCDDataDir: 0x50a610
   gRegKeyValueDataSize: 0x50a740
   sTimerStrings: 0x5144e8
+  gBitmapInfo: 0x517028
   gADPCMIndexTable: 0x51702c
   gADPCMStepsizeTable: 0x51706c
   gWindowFocused: 0x5171d0
   lpD3D__try_find_valid_d3d_device: 0x51adb8
+  DAT_0051add4: 0x51add4
   gCmdLineArgB: 0x51ae34
   gDirTree: 0x51affc
   #endregion
@@ -1540,7 +1558,12 @@ symbols:
   gCmdLineArgL: 0x51b1f0
   gCmdLineArgF: 0x51b20c
   DAT_0051b418: 0x51b418
+  DAT_0051b7f4: 0x51b7f4
+  gBitmap: 0x51b8d0
+  gBitmapData: 0x51b8d4
   gEnableRwMap: 0x51b8d8
+  gBlitsPerMs: 0x51b8dc
+  DAT_0051b8e0: 0x51b8e0
   gCmdLineArgH: 0x51b8e4
   gBitmapCreated: 0x51b8e8
   sBigFileEntryCount: 0x51b8ec
@@ -1553,16 +1576,28 @@ symbols:
   gKeyDownHistoryIdx: 0x51b904
   gVirtualMemoryBufferNumber: 0x51b908
   gDontReleaseDirectDraw: 0x51b910
+  gCoInitialized: 0x51b914
   gLaunchWindowed: 0x51b918
   gWindowStatus: 0x51b928
   gTotalVirtualMemoryAllocated: 0x51b92c
   gMemoryInUseBytes: 0x51b930
   gD3DDeviceFound: 0x51b938
+  gDirectDraw: 0x51b93c
   gDirectDraw4: 0x51b940
   gDDFrontBuffer: 0x51b944
   gDDBackBuffer: 0x51b948
+  gInMemoryGraphicsSurface: 0x51b94c
+  gDisplayWidth: 0x51b950
+  gDisplayHeight: 0x51b954
+  gDisplayBPP: 0x51b958
+  gPrimarySurfaceBufferByteSize: 0x51b95c
+  DAT_0051b960: 0x51b960
+  DAT_0051b964: 0x51b964
+  DAT_0051b968: 0x51b968
   gMouseHistoryIdx: 0x51b96c
   gMouseBufferIdx: 0x51b970
+  DAT_0051b978: 0x51b978
+  gBlitsPerS: 0x51b980
   DAT_0051b988: 0x51b988
   sLoadedBigFileHeader: 0x51b98c
   gMouseButtonsHeldUnbuffered: 0x51e0e4
@@ -1595,6 +1630,7 @@ symbols:
   sRwMapTxtFile: 0x567790
   sBigFileEntryPointers: 0x5677a0
   gTempString2: 0x5679a0
+  DAT_00567aa0: 0x567aa0
   gCursorTextures: 0x567ac0
   DAT_0057137c: 0x57137c
   gMouseXHistory: 0x5713a0
@@ -1611,6 +1647,7 @@ symbols:
   gSoundBuffers2: 0x574ca0
   gCmdLineString: 0x574d00
   gCmdLineToken: 0x574f00
+  g16BitColorPallete: 0x574f40
   sSoundBuffer1: 0x594f40
   gActiveWindow: 0x594f48
   gVirtualMemoryBuffers: 0x594f60
@@ -1618,6 +1655,7 @@ symbols:
   gCursorUnbufferedY: 0x59cf64
   sSoundBuffer2: 0x59cf68
   gVirtualMemorySizes: 0x59cf80 
+  DAT_005a4f80: 0x5a4f80
   LPCGUID_005a4f84: 0x5a4f84
   DAT_005a4f88: 0x5a4f88
   gSoundBuffers1: 0x5a4fa0
@@ -1640,6 +1678,7 @@ symbols:
   gTempString: 0xef6fc0
   DAT_00f0c770: 0xf0c770
   gCmdLineArgS: 0xfe00e0
+  DAT_00fe04d0: 0xfe04d0
   DAT_01359b80: 0x1359b80
   gRealWarRegKey: 0x1a94964
   gVidPaths: 0x1a94980
@@ -1699,6 +1738,16 @@ strings:
   str_dirtree_3: 0x517348
   str_space_tab: 0x517354
   str_Message_dotdotdot: 0x517358
+  str_Failed_Creating_D3D_Devices: 0x517364
+  str_Failed_on_Back_Buffer: 0x517384
+  str_Failed_on_Front_Buffer: 0x51739c
+  str_Failed_Set_Display: 0x5173b4
+  str_Failed_Create_D3D_render: 0x5173c8
+  str_Failed_Set_Coop: 0x5173e4
+  str_Failed_On_D_Draw_Create_Query: 0x5173f8
+  str_Failed_on_D_Draw_Create_Primary: 0x517418
+  str_Windows_Blit: 0x51743c
+  str_Blit_Tick_Counts_eq_Blits_Per_S: 0x51744c
   str_memory_map_file: 0x517474
   str_rwmap_txt: 0x51748c
   str_pct_newline_newline: 0x517498

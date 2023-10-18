@@ -6,6 +6,7 @@
 
 #define TIMER_CLOCKERS 33
 #define TIMER_RESOLUTION_PER_FRAME 32
+#define TIMER_WINDOWS_BLIT 31
 
 extern void init_timers();
 extern void set_timer_label(int32 timer, const char *label);

@@ -5,6 +5,7 @@
 #include "undefined.h"
 #include "warnsuppress.h"
 #include "window.h"
+#include "window_graphics.h"
 
 #define MOUSE_HISTORY_LEN 5
 
