@@ -3,9 +3,9 @@ description: Native Dart parser for Windows Portable Executable (PE) and Common 
 version: 0.1.0
 
 environment:
-  sdk: '>=2.19.0 <3.0.0'
+  sdk: '>=3.2.0 <4.0.0'
 
 dev_dependencies:
-  file: ^6.1.4 # for mocking file IO
-  lints: ^2.0.0
-  test: ^1.24.1
+  file: ^7.0.0 # for mocking file IO
+  lints: ^3.0.0
+  test: ^1.25.1

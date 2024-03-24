@@ -2,14 +2,15 @@ name: rw_diff
 publish_to: none
 
 environment:
-  sdk: '>=3.1.0 <4.0.0'
+  sdk: '>=3.3.0 <4.0.0'
 
 dependencies: 
   ansicolor: ^2.0.1
   args: ^2.4.0
   async: ^2.11.0
   collection: ^1.17.1
-  dart_console: ^1.1.2
+  # TODO: dart_console is discontinued
+  dart_console: ^1.2.0
   ffi: ^2.0.1
   path: ^1.8.2
   pe_coff:
@@ -22,4 +23,4 @@ dependencies:
     path: ../lib/x86_analyzer
   
 dev_dependencies:
-  lints: ^2.0.0
+  lints: ^3.0.0

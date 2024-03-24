@@ -2,14 +2,14 @@ name: rw_decomp
 publish_to: none
 
 environment:
-  sdk: '>=3.1.0 <4.0.0'
+  sdk: '>=3.3.0 <4.0.0'
 
 dependencies: 
   args: ^2.4.0
   collection: ^1.18.0
   crypto: ^3.0.2
   ffi: ^2.0.1
-  path: ^1.8.2
+  path: ^1.9.0
   pe_coff:
     path: ../lib/pe_coff
   ninja_syntax:
@@ -19,5 +19,5 @@ dependencies:
   yaml: ^3.1.1
   
 dev_dependencies:
-  lints: ^2.0.0
-  test: ^1.24.1
+  lints: ^3.0.0
+  test: ^1.25.1

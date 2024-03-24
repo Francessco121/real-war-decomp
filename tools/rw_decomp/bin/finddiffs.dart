@@ -46,7 +46,12 @@ void main(List<String> args) {
   // We can't do a meaningful diff for stuff that got shifted
   final segmentIdxsByName = {for (final (i, s) in rw.segments.indexed) '${s.name}_${s.type}': i};
   final firstBigSegment = mappingEntries.firstWhereOrNull((e) {
-    final segIdx = segmentIdxsByName['${e.segmentName}_${e.segmentType}']!;
+    final segName = '${e.segmentName}_${e.segmentType}';
+    final segIdx = segmentIdxsByName[segName];
+    if (segIdx == null) {
+      print('ERR: Failed to find segment $segName in rw.yaml');
+      exit(-1);
+    }
     
     if (segIdx >= rw.segments.length - 1) {
       return false;
