@@ -22,7 +22,6 @@ uint16 g16BitColorPallete[65536];
 
 int32 DAT_005a4f80;
 
-int32 DAT_0051b960;
 int32 DAT_0051b964;
 int32 DAT_0051b968;
 

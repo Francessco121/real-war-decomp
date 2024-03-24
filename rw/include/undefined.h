@@ -52,6 +52,9 @@ extern int32 DAT_0051add4;
 extern bool gDontInitD3D;
 extern int32 DAT_0051b8e0;
 
+extern int32 DAT_0051b960;
+extern int32 DAT_0051b90c;
+
 extern bool FUN_00401100(HWND hWnd);
 
 extern void FUN_004d8010(int32);
@@ -77,9 +80,9 @@ extern void FUN_00406ed0();
 extern void FUN_0041a8e0();
 extern void FUN_00401870(HWND);
 
-extern void memcpy_dword(uint32 *dst, uint32 *src, size_t length);
-extern void memset_dword(uint32 *dst, uint32 value, size_t length);
-extern void memset_word(uint16 *dst, uint16 value, size_t length);
+extern void memcpy_dword(uint32 *dst, uint32 *src, size_t count);
+extern void memset_dword(uint32 *dst, uint32 value, size_t count);
+extern void memset_word(uint16 *dst, uint16 value, size_t count);
 
 extern void FUN_004d7bc0();
 extern void FUN_0041a830();

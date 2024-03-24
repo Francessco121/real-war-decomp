@@ -52,6 +52,8 @@ segments:
   - [0x4d6350, c, mouse]
   - [0x4d6860, c, data]
   - [0x4d7050, bin, null]
+  - [0x4d7270, c, graphics_mem]
+  - [0x4d7450, bin, null]
   - [0x4d8140, c, keyboard]
   - [0x4d81b0, thunks, null]
   - [0x4d81c0, bin, null]
@@ -1239,7 +1241,7 @@ symbols:
   memcpy_dword: 0x4d7270
   memset_dword: 0x4d7290
   memset_word: 0x4d72b0
-  FUN_004d72d0: 0x4d72d0
+  copy_frontbuffer: 0x4d72d0
   FUN_004d7450: 0x4d7450
   FUN_004d7460: 0x4d7460
   FUN_004d7470: 0x4d7470
@@ -1575,6 +1577,7 @@ symbols:
   gKeyDownBufferIdx: 0x51b900
   gKeyDownHistoryIdx: 0x51b904
   gVirtualMemoryBufferNumber: 0x51b908
+  DAT_0051b90c: 0x51b90c
   gDontReleaseDirectDraw: 0x51b910
   gCoInitialized: 0x51b914
   gLaunchWindowed: 0x51b918
