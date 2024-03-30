@@ -1,5 +1,2 @@
 # CL.EXE build artifacts
 obj/
-
-# Dart local files
-.dart_tool/

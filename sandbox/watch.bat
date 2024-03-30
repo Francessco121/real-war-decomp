@@ -1,3 +1,3 @@
 @echo off
 cd "%~dp0"
-dart run watcher/bin/watcher.dart
+dart run ../tools/rw_sandbox_watcher/bin/watcher.dart

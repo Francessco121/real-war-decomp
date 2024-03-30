@@ -25,7 +25,7 @@ Future<void> main(List<String> args) async {
       ..addOption('asmfuncdir', help: 'Directory containing raw function assembly for ASM_FUNC.')
       ..addMultiOption('include', abbr: 'I', help: 'Include paths for application.', defaultsTo: const [])
       ..addMultiOption('includelib', abbr: 'L', help: 'Include paths for libraries.', defaultsTo: const [])
-      ..addOption('deps', abbr: 'd', help: 'Output header dependencies file.')
+      ..addFlag('emit-deps', abbr: 'd', help: 'Whther to output a header dependencies file.', defaultsTo: false)
       ..addMultiOption('flag', abbr: 'f', help: 'Compiler flags.')
       ..addFlag('library-warnings', help: 'Whether warnings from library includes should be shown.', defaultsTo: true);
   
@@ -43,13 +43,14 @@ Future<void> main(List<String> args) async {
   final String output = argResults['output'];
   final List<String> srcIncludes = argResults['include'];
   final List<String> libIncludes = argResults['includelib'];
+  final bool emitDeps = argResults['emit-deps'];
   final List<String> flags = argResults['flag'];
   final bool libraryWarnings = argResults['library-warnings'];
 
   // Analyze input C file (find header dependencies and ASM_FUNC pragmas)
   final inputLines = File(input).readAsLinesSync();
 
-  final deps = _scanIncludes(input, inputLines, srcIncludes);
+  final deps = emitDeps ? _scanIncludes(input, inputLines, srcIncludes) : null;
   
   final AsmFuncInfo? asmFuncInfo;
   if (asmfuncdir != null) {
@@ -148,7 +149,9 @@ Future<void> main(List<String> args) async {
   }
 
   // Write deps (.d) file
-  _writeDepsFile(output, deps);
+  if (deps != null) {
+    _writeDepsFile(output, deps);
+  }
 
   // Stitch in actual function assembly for ASM_FUNCs
   if (asmFuncInfo != null && asmFuncInfo.asmFuncs.isNotEmpty && asmFuncInfo.asmFuncs.any((f) => !f.skipped)) {

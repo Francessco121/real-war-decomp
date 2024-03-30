@@ -1,0 +1,18 @@
+name: rw_sandbox_watcher
+publish_to: none
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies: 
+  path: ^1.9.0
+  pe_coff:
+    path: ../lib/pe_coff
+  rw_decomp:
+    path: ../rw_decomp
+  watcher: ^1.1.0
+  x86_analyzer:
+    path: ../lib/x86_analyzer
+
+dev_dependencies:
+  lints: ^3.0.0
