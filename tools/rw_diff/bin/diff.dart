@@ -69,7 +69,6 @@ Future<void> main(List<String> args) async {
   final String srcDirPath = p.join(projectDir, rw.config.srcDir);
   final String incDirPath = p.join(projectDir, rw.config.includeDir);
 
-
   // Compute physical (file) address of the symbol in the base exe
   final int physicalAddress =
       virtualAddress - (rw.exe.imageBase + rw.exe.textVirtualAddress);
@@ -77,6 +76,9 @@ Future<void> main(List<String> args) async {
   // Init capstone
   final capstoneDll = ffi.DynamicLibrary.open(p.join(projectDir, 'tools', 'capstone.dll'));
   final disassembler = FunctionDisassembler.init(capstoneDll);
+
+  // Create equality func for diffing instructions
+  final diffEquality = InstructionDiffEquality(imageBase: rw.exe.imageBase);
 
   print('Loading...');
 
@@ -153,7 +155,7 @@ Future<void> main(List<String> args) async {
               virtualAddress, rw, segment.address);
 
           // Diff
-          lines = _diff(exeFunc.instructions, objFunc!.instructions);
+          lines = _diff(exeFunc.instructions, objFunc!.instructions, diffEquality);
 
           // Refresh
           refresh();
@@ -402,6 +404,8 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     final AnsiPen? srcOpColor;
     final AnsiPen? srcSymbolColor;
 
+    bool operandDifferences = false;
+
     if (line.diffType == DiffEditType.equal) {
       targ = line.target!;
       src = line.source!;
@@ -436,19 +440,31 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
         srcMnemonicColor = null;
         srcOpColor = opDiffPen;
         srcSymbolColor = opDiffPen;
+        operandDifferences = true;
       }
     } else if (line.diffType == DiffEditType.substitute) {
       targ = line.target!;
       src = line.source!;
-
-      targAddressColor = mnemonicDiffPen;
-      targMnemonicColor = mnemonicDiffPen;
-      targOpColor = mnemonicDiffPen;
-      srcSymbol = '|';
-      srcAddressColor = mnemonicDiffPen;
-      srcMnemonicColor = mnemonicDiffPen;
-      srcOpColor = mnemonicDiffPen;
-      srcSymbolColor = mnemonicDiffPen;
+      if (targ.mnemonic == src.mnemonic) {
+        targAddressColor = opDiffPen;
+        targMnemonicColor = null;
+        targOpColor = opDiffPen;
+        srcSymbol = 'o';
+        srcAddressColor = opDiffPen;
+        srcMnemonicColor = null;
+        srcOpColor = opDiffPen;
+        srcSymbolColor = opDiffPen;
+        operandDifferences = true;
+      } else {
+        targAddressColor = mnemonicDiffPen;
+        targMnemonicColor = mnemonicDiffPen;
+        targOpColor = mnemonicDiffPen;
+        srcSymbol = '|';
+        srcAddressColor = mnemonicDiffPen;
+        srcMnemonicColor = mnemonicDiffPen;
+        srcOpColor = mnemonicDiffPen;
+        srcSymbolColor = mnemonicDiffPen;
+      }
     } else if (line.diffType == DiffEditType.insert) {
       targ = null;
       src = line.source!;
@@ -477,17 +493,50 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
       throw UnimplementedError();
     }
 
+    // Replace addresses with symbol names where possible
+    var targOp = targ == null ? null : _replaceAddressesWithSymbols(targ.opStr, rw);
+    var srcOp = src == null ? null : _replaceAddressesWithSymbols(src.opStr, rw);
+
+    // Only color differing operands when that's the main difference
+    List<OperandDiff>? targOpColors;
+    List<OperandDiff>? srcOpColors;
+    if (targ != null && src != null && operandDifferences) {
+      final targOps = targOp!.split(',');
+      final srcOps = srcOp!.split(',');
+
+      targOpColors = [];
+      srcOpColors = [];
+
+      for (int i = 0; i < targOps.length; i++) {
+        final t = targOps[i];
+        final s = srcOps[i];
+        final equal = t == s;
+
+        targOpColors.add(OperandDiff(t, equal));
+        srcOpColors.add(OperandDiff(s, equal));
+      }
+    }
+
     final targBuffer = StringBuffer();
     if (targ != null) {
       final addr = '${targ.address.toRadixString(16).padLeft(2)}: ';
       final mnemonic = targ.mnemonic.padRight(10);
-      final op = _replaceAddressesWithSymbols(targ.opStr, rw);
       targBuffer.write(targAddressColor == null ? addr : targAddressColor(addr));
       targBuffer.write(targInBranch);
       targBuffer.write(' ');
       targBuffer.write(targMnemonicColor == null ? mnemonic : targMnemonicColor(mnemonic));
       targBuffer.write(' ');
-      targBuffer.write(targOpColor == null ? op : targOpColor(op));
+      if (targOpColors == null || targOpColor == null) {
+        targBuffer.write(targOpColor == null ? targOp! : targOpColor(targOp!));
+      } else {
+        for (int i = 0; i < targOpColors.length; i++) {
+          final opColor = targOpColors[i];
+          if (i > 0) {
+            targBuffer.write(',');
+          }
+          targBuffer.write(opColor.equal ? opColor.operand : targOpColor(opColor.operand));
+        }
+      }
       targBuffer.write(targOutBranch);
     }
 
@@ -495,7 +544,6 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     if (src != null) {
       final addr = '${src.address.toRadixString(16).padLeft(2)}: ';
       final mnemonic = src.mnemonic.padRight(10);
-      final op = _replaceAddressesWithSymbols(src.opStr, rw);
       srcBuffer.write(srcSymbolColor == null ? srcSymbol : srcSymbolColor(srcSymbol));
       srcBuffer.write(' ');
       srcBuffer.write(srcAddressColor == null ? addr : srcAddressColor(addr));
@@ -503,7 +551,17 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
       srcBuffer.write(' ');
       srcBuffer.write(srcMnemonicColor == null ? mnemonic : srcMnemonicColor(mnemonic));
       srcBuffer.write(' ');
-      srcBuffer.write(srcOpColor == null ? op : srcOpColor(op));
+      if (srcOpColors == null || srcOpColor == null) {
+        srcBuffer.write(srcOpColor == null ? srcOp! : srcOpColor(srcOp!));
+      } else {
+        for (int i = 0; i < srcOpColors.length; i++) {
+          final opColor = srcOpColors[i];
+          if (i > 0) {
+            srcBuffer.write(',');
+          }
+          srcBuffer.write(opColor.equal ? opColor.operand : srcOpColor(opColor.operand));
+        }
+      }
       srcBuffer.write(srcOutBranch);
     } else {
       srcBuffer.write(srcSymbolColor == null ? srcSymbol : srcSymbolColor(srcSymbol));
@@ -556,6 +614,13 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   console.write(bottomBarPen(symbolName));
   console.write(bottomBarPen(''.padRight(console.windowWidth - nameEndIndex - diffTextLen)));
   console.write(diffText);
+}
+
+class OperandDiff {
+  final String operand;
+  final bool equal;
+
+  OperandDiff(this.operand, this.equal);
 }
 
 final _ansiSequenceRegex = RegExp(r'\x1B\[[0-9;]+m');
@@ -619,15 +684,70 @@ class DiffLine {
   DiffLine(this.diffType, this.target, this.source);
 }
 
-List<DiffLine> _diff(List<Instruction> target, List<Instruction> source) {
-  // Diff mnemonics only, we'll diff operands on a same-line basis
-  final diffTarget = target.map((i) => i.mnemonic).toList();
-  final diffSource = source.map((i) => i.mnemonic).toList();
+class InstructionDiffEquality implements Equality<Instruction> {
+  final int _imageBase;
 
+  InstructionDiffEquality({required int imageBase}) : _imageBase = imageBase;
+
+  @override
+  bool equals(Instruction a, Instruction b) {
+    // Consider two instructions to be the same (as far as the diffing algorithm goes) if:
+    // - The mnemonics are the same
+    // - They have the same number of operands and each is the same op type in the same order
+    // - Memory operands have the same displacement or neither displacement is an absolute
+    //   memory address (i.e. something in .text, .data, .rdata, .bss)
+    //
+    // Otherwise, assume the two instructions are unrelated.
+    // Instructions that have equality via this function may still have differences. Those
+    // differences will be highlighted after the diffing algorithm is ran. Allowing instructions
+    // to appear equal to the diffing algorithm even if they differ in some ways can clean up
+    // the final diff in some cases, such as preventing register allocation differences from
+    // placing two instructions that match in everything but registers on different diff lines.
+    if (a.mnemonic != b.mnemonic) {
+      return false;
+    }
+
+    if (a.operands.length != b.operands.length) {
+      return false;
+    }
+
+    for (int i = 0; i < a.operands.length; i++) {
+      final ao = a.operands[i];
+      final bo = b.operands[i];
+
+      if (ao.type != bo.type) {
+        return false;
+      }
+
+      if (ao.type == x86_op_type.X86_OP_MEM) {
+        final am = ao.mem!;
+        final bm = bo.mem!;
+
+        // Consider instructions related if the displacements are different but neither is an
+        // absolute memory address. In these cases it may be referencing a stack variable,
+        // which is likely to be related but with different stack variable allocations.
+        if (am.disp != bm.disp && (am.disp >= _imageBase || bm.disp >= _imageBase)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+  
+  @override
+  int hash(Instruction e) => e.hashCode;
+  
+  @override
+  bool isValidKey(Object? o) => o is Instruction;
+}
+
+List<DiffLine> _diff(List<Instruction> target, List<Instruction> source, 
+    InstructionDiffEquality diffEquality) {
   // Run diff
   // Note: run diff backwards, we want changes from source (the obj file) to target (the exe file)
   // i swear it's not confusing...
-  final result = levenshtein(diffTarget, diffSource);
+  final result = levenshtein<Instruction>(target, source, diffEquality);
   final edits = generateLevenshteinEdits(result.item2);
 
   // Note: target/source in the diff lines represent our original definition of target/source,

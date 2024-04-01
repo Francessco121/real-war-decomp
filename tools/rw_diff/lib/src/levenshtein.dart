@@ -2,6 +2,7 @@
 
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:tuple/tuple.dart';
 
 const _int64Max = 9223372036854775807;
@@ -36,7 +37,8 @@ class DiffEdit {
 }
 
 /// Returns the Levenshtein distance and distance matrix between [source] and [target].
-Tuple2<int, List<List<int>>> levenshtein<T>(List<T> source, List<T> target) {
+Tuple2<int, List<List<int>>> levenshtein<T>(List<T> source, List<T> target, 
+    [Equality<T> equality = const DefaultEquality()]) {
   int m = source.length;
   int n = target.length;
 
@@ -44,7 +46,7 @@ Tuple2<int, List<List<int>>> levenshtein<T>(List<T> source, List<T> target) {
 
   for (int i = 1; i < distances.length; i++) {
     for (int j = 1; j < distances[0].length; j++) {
-      if (source[i - 1] == target[j - 1]) {
+      if (equality.equals(source[i - 1], target[j - 1])) {
         distances[i][j] = distances[i - 1][j - 1];
         continue;
       }
