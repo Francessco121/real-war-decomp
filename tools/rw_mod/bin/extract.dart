@@ -45,7 +45,7 @@ void main(List<String> args) {
 
   // Setup
   final String binDirPath = nonMatching ? p.join(modDir, 'bin', 'nonmatching') : p.join(modDir, 'bin');
-  Directory(binDirPath).createSync();
+  Directory(binDirPath).createSync(recursive: true);
 
   // Extract
   final imageBase = exe.optionalHeader!.windows!.imageBase;

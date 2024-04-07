@@ -106,8 +106,11 @@ void main(List<String> args) {
       : null;
 
   // Load previous run if available
+  //
+  // Note: Don't use the previous run if we're updating the baseline. We want to be 100%
+  // sure the baseline is truly accurate and doesn't have incorrect data due to caching bugs
   final lastRunFile = File(p.join(buildDirPath, 'verification.json'));
-  final lastRun = lastRunFile.existsSync()
+  final lastRun = lastRunFile.existsSync() && !updateBaseline
       ? VerificationResult.fromJson(json.decode(lastRunFile.readAsStringSync()))
       : null;
 
@@ -172,6 +175,7 @@ void main(List<String> args) {
   final rdataResults = <int, SymbolVerificationResult>{};
   final dataResults = <int, SymbolVerificationResult>{};
 
+  // TODO: this doesn't account for symbols that were removed since the last run
   if (lastRun != null) {
     objTimestamps.addAll(lastRun.objs);
 
@@ -777,32 +781,36 @@ SymbolVerificationResult? _verifyFunction(VerifyContext ctx, CoffFile obj, Uint8
       InstructionDiffEquality(imageBase: ctx.rw.exe.imageBase));
 
   for (final line in instructionDiff) {
+    final a = line.target;
+    final b = line.source;
+
+    bool considerMatching = false;
+
     switch (line.diffType) {
       case DiffEditType.insert:
       case DiffEditType.delete:
-        nonMatchScore++;
+        break;
       case DiffEditType.equal:
+        // Diff may be equal but bytes may differ, double check
+        //
+        // Additionally, if the instructions aren't binary equal but the only difference is
+        // a reference to a literal symbol and the literals have the same value, then consider
+        // the two instructions matching anyway
+        if (a == b || doInstructionsMatchViaLiteralSymbol(ctx.rw, a!, b!)) {
+          considerMatching = true;
+        }
       case DiffEditType.substitute:
-        final a = line.target!;
-        final b = line.source!;
-
-        bool considerMatching = false;
-
-        if (line.diffType == DiffEditType.equal) {
-          if (a == b) {
-            considerMatching = true;
-          } else if (doInstructionsMatchViaLiteralSymbol(ctx.rw, a, b)) {
-            // Instructions aren't the same but we want to consider them equal if the only
-            // difference is a reference to a literal symbol and they reference the same literal value
-            considerMatching = true;
-          }
+        // Like above, if the only difference is a reference to a literal symbol and it's the
+        // same literal value, consider the instructions matching
+        if (a!.mnemonic == b!.mnemonic && doInstructionsMatchViaLiteralSymbol(ctx.rw, a, b)) {
+          considerMatching = true;
         }
-        
-        if (!considerMatching) {
-          nonMatchScore++;
-        } else {
-          matchingBytes += a.bytes.length;
-        }
+    }
+
+    if (!considerMatching) {
+      nonMatchScore++;
+    } else {
+      matchingBytes += a!.bytes.length;
     }
   }
 
@@ -830,21 +838,22 @@ SymbolVerificationResult? _verifyFunction(VerifyContext ctx, CoffFile obj, Uint8
     }
   }
 
-  // Compare leftover bytes
-  if (baseFuncBytes.length > baseFunc.size && newFuncBytes.length <= newFunc.size) {
-    nonMatchScore += baseFuncBytes.length - baseFunc.size;
-  } else if (baseFuncBytes.length <= baseFunc.size && newFuncBytes.length > newFunc.size) {
-    nonMatchScore += newFuncBytes.length - newFunc.size;
-  } else if (baseFuncBytes.length > baseFunc.size && newFuncBytes.length > newFunc.size) {
-    for (int i = baseFunc.size, j = newFunc.size; i < baseFuncBytes.length && j < newFuncBytes.length; i++, j++) {
-      if (baseFuncBytes[i] != newFuncBytes[j]) {
-        nonMatchScore++;
-      } else {
-        matchingBytes++;
-      }
+  // Compare leftover bytes (ignore NOPs when blindly counting)
+  for (int i = baseFunc.size, j = newFunc.size; i < baseFuncBytes.length && j < newFuncBytes.length; i++, j++) {
+    if (baseFuncBytes[i] != newFuncBytes[j]) {
+      nonMatchScore++;
+    } else {
+      matchingBytes++;
     }
+  }
 
-    nonMatchScore += ((newFuncBytes.length - newFunc.size) - (baseFuncBytes.length - baseFunc.size)).abs();
+  final baseFuncLeftovers = baseFuncBytes.length - baseFunc.size;
+  final newFuncLeftovers = newFuncBytes.length - newFunc.size;
+
+  if (newFuncLeftovers > baseFuncLeftovers) {
+    nonMatchScore += _numNonNopBytes(Uint8List.sublistView(newFuncBytes, newFunc.size + baseFuncLeftovers));
+  } else if (newFuncLeftovers < baseFuncLeftovers) {
+    nonMatchScore += _numNonNopBytes(Uint8List.sublistView(baseFuncBytes, baseFunc.size + newFuncLeftovers));
   }
 
   if (nonMatchScore == 0 && matchingBytes < baseFunc.size) {
@@ -859,6 +868,10 @@ SymbolVerificationResult? _verifyFunction(VerifyContext ctx, CoffFile obj, Uint8
     matchingBytes: matchingBytes,
     totalBaseBytes: baseFuncBytes.length,
   );
+}
+
+int _numNonNopBytes(Uint8List bytes) {
+  return bytes.fold(0, (sum, b) => b != 0x90 ? (sum + 1) : sum);
 }
 
 (DisassembledFunction, Uint8List) _disassembleExeFunction(VerifyContext ctx, int physicalAddress, 

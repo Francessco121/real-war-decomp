@@ -13,7 +13,7 @@ void main(List<String> args) {
   final obj = CoffFile.fromList(file.readAsBytesSync());
 
   for (final (sectionI, section) in obj.sections.indexed) {
-    if (!const ['.data', '.rdata'].contains(section.header.name)) {
+    if (!const ['.data', '.rdata', '.bss'].contains(section.header.name)) {
       continue;
     }
     
