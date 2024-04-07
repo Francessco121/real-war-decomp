@@ -6,7 +6,7 @@ import 'package:ninja_syntax/ninja_syntax.dart' as ninja;
 import 'package:rw_mod/rwmod_yaml.dart';
 
 const _vsDir = 'C:\\Program Files (x86)\\Microsoft Visual Studio';
-const _dxDir = 'C:\\dx7sdk';
+const _dxDir = 'C:\\dx8sdk';
 
 /// Generates build.ninja for the mod project.
 Future<void> main(List<String> args) async {
@@ -59,7 +59,7 @@ Future<void> main(List<String> args) async {
   writer.variable('SRC_DIR', 'src');
   writer.variable('BUILD_DIR', 'build');
   writer.variable('BASE_EXE', nonMatching
-      ? p.normalize(p.join(decompDir, 'build', 'RealWarNonMatching.exe'))
+      ? p.normalize(p.join(decompDir, 'build', 'RealWar.exe'))
       : p.normalize(p.join(decompDir, 'game', 'RealWar.exe')));
   writer.variable('OUT_GAME_DIR', 'game');
   writer.variable('OPT_FLAGS', [
@@ -96,7 +96,7 @@ Future<void> main(List<String> args) async {
       description: r'Compiling $in...');
   writer.rule('rwpatch', r'$RWPATCH -o $out $in',
       description: nonMatching 
-        ? r'Patching new executable from non-matching...' 
+        ? r'Patching new executable from build...' 
         : r'Patching new executable from base game...');
     
   writer.newline();

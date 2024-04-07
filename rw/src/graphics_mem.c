@@ -102,6 +102,4 @@ void copy_frontbuffer(uint16 *out) {
 
     DAT_0051b90c = prevValue;
 }
-#else
-#pragma ASM_FUNC copy_frontbuffer
 #endif

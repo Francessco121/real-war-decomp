@@ -4,7 +4,6 @@
 
 #include "data.h"
 #include "sound.h"
-#include "strings.h"
 #include "types.h"
 #include "undefined.h"
 #include "virtual_memory.h"
@@ -140,10 +139,10 @@ void init_sound_system() {
 
             gSoundSystemInitialized = TRUE;
         } else {
-            display_messagebox(str_SoundSystemNotInitialized);
+            display_messagebox("Sound System Not Initialized");
         }
     } else {
-        display_messagebox(str_SoundSystemNotInitialized);
+        display_messagebox("Sound System Not Initialized");
     }
 }
 
@@ -620,7 +619,7 @@ uint8* read_kvag_file(const char* filePath) {
         // Allocate space for the file + KVAG header (in case we need to add our own header)
         kvagBuf = (uint8*)custom_alloc(fileLength + 16);
         if (kvagBuf == NULL) {
-            display_message_and_exit_2(str_couldnt_malloc_adpcm_buf);
+            display_message_and_exit_2("Could not Malloc Adpcm Sound Buffer.");
         }
 
         // Read KVAG header
@@ -656,12 +655,11 @@ uint8* read_kvag_file(const char* filePath) {
 
         return kvagBuf;
     } else {
-        display_messagebox(str_bad_or_missing_adpcm_file, filePath);
+        display_messagebox("Bad or Missing Adpcm file.\n%s", filePath);
         return NULL;
     }
 }
 
-#ifdef NON_MATCHING
 int32 sound_func_004d26c0(int32 idx, int16 *output1, int16 *output2, int32 length) {
     int i;
     int32 length2;
@@ -760,10 +758,6 @@ int32 sound_func_004d26c0(int32 idx, int16 *output1, int16 *output2, int32 lengt
 
     return ret;
 }
-#else
-int sound_func_004d26c0(int32 idx, int16 *output1, int16 *output2, int32 length);
-#pragma ASM_FUNC sound_func_004d26c0 hasret
-#endif
 
 void sound_func_004d2a10(int32 idx, uint32 sampleRate, int32 param3) {
     DSBUFFERDESC bufferDesc = {0};
@@ -901,7 +895,7 @@ void sound_func_004d2ca0(const char *path, bool dontStream, int32 idx) {
         gSomeAudioStructs[idx].field0x14 = 65536;
 
         if (!dontStream) {
-            gSomeAudioStructs[idx].file = open_data_file_relative(path, str_rb);
+            gSomeAudioStructs[idx].file = open_data_file_relative(path, "rb");
             fread(temp, 4, 1, gSomeAudioStructs[idx].file);
 
             if (temp[0] == 'K' && temp[1] == 'V' && temp[2] == 'A' && temp[3] == 'G') {
@@ -982,7 +976,7 @@ void sound_func_004d30e0(const char *path, bool dontStream, int32 idx) {
     }
 
     if (path != NULL) {
-        sprintf(gSomeAudioStructs[idx].filePath, str_pct_s, path);
+        sprintf(gSomeAudioStructs[idx].filePath, "%s", path);
     }
 
     gSomeAudioStructs[idx].field0x0 = 0;
@@ -1029,7 +1023,7 @@ void sound_func_004d30e0(const char *path, bool dontStream, int32 idx) {
         gSomeAudioStructs[idx].field0x14 = 65536;
         
         if (!dontStream) {
-            gSomeAudioStructs[idx].file = open_data_file_relative(path, str_rb);
+            gSomeAudioStructs[idx].file = open_data_file_relative(path, "rb");
             fread(temp, 4, 1, gSomeAudioStructs[idx].file);
 
             if (temp[0] == 'K' && temp[1] == 'V' && temp[2] == 'A' && temp[3] == 'G') {
@@ -1711,10 +1705,6 @@ void sound_set_volume_2(int32 param1, int32 param2, int32 idx) {
     }
 }
 
-// NOTE: This actually matches! However, the double literal gets compiled into
-// the .rdata section and referencing that address via an extern generates different
-// code... We don't have a way to deal with this at the moment. :(
-#ifdef NON_EQUIVALENT
 void sound_set_pitch(int32 pitch, int32 idx) {
     uint32 frequency;
     
@@ -1734,6 +1724,3 @@ void sound_set_pitch(int32 pitch, int32 idx) {
         }
     }
 }
-#else
-#pragma ASM_FUNC sound_set_pitch
-#endif

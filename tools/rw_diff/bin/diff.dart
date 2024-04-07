@@ -12,9 +12,12 @@ import 'package:collection/collection.dart';
 import 'package:dart_console/dart_console.dart';
 import 'package:path/path.dart' as p;
 import 'package:pe_coff/pe_coff.dart';
+import 'package:rw_decomp/diff.dart';
+import 'package:rw_decomp/levenshtein.dart';
 import 'package:rw_decomp/relocate.dart';
 import 'package:rw_decomp/rw_yaml.dart';
 import 'package:rw_decomp/symbol_utils.dart';
+import 'package:rw_decomp/verify.dart';
 import 'package:rw_diff/rw_diff.dart';
 import 'package:watcher/watcher.dart';
 import 'package:x86_analyzer/functions.dart';
@@ -50,7 +53,7 @@ Future<void> main(List<String> args) async {
 
   // Figure out symbol address and related obj path
   final String symbolName = argResult.rest[0];
-  final int? virtualAddress = rw.symbols[symbolName];
+  final int? virtualAddress = rw.symbols[symbolName]?.address;
   if (virtualAddress == null) {
     print('Cannot locate symbol address: $symbolName');
     return;
@@ -98,7 +101,7 @@ Future<void> main(List<String> args) async {
     int lastWindowHeight = console.windowHeight;
 
     DisassembledFunction? objFunc;
-    List<DiffLine> lines = [];
+    List<DiffLine<Instruction>> lines = [];
     int scrollPosition = 0;
 
     bool refreshing = false;
@@ -155,7 +158,7 @@ Future<void> main(List<String> args) async {
               virtualAddress, rw, segment.address);
 
           // Diff
-          lines = _diff(exeFunc.instructions, objFunc!.instructions, diffEquality);
+          lines = runDiff(exeFunc.instructions, objFunc!.instructions, diffEquality);
 
           // Refresh
           refresh();
@@ -313,11 +316,21 @@ String _replaceAddressesWithSymbols(String str, RealWarYaml rw) {
     final raw = match.group(1)!;
     final address = int.parse(raw);
 
-    return rw.addressesToSymbols[address] ?? rw.addressesToStrings[address] ?? raw;
+    final sym = rw.symbolsByAddress[address];
+    if (sym != null) {
+      return sym.name;
+    }
+
+    final literalSym = rw.literalSymbolsByAddress[address];
+    if (literalSym != null) {
+      return literalSym.displayName;
+    }
+
+    return raw;
   });
 }
 
-void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
+void _displayDiff(Console console, List<DiffLine<Instruction>> lines, int scrollPosition,
     DisassembledFunction targetFunc, DisassembledFunction srcFunc,
     String symbolName, RealWarYaml rw) {
   final bottomBarPen = AnsiPen()..white()..gray(level: 0.1, bg: true);
@@ -342,23 +355,28 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   final targColumnWidth = (console.windowWidth ~/ 2) - 1;
   final srcColumnWidth = (console.windowWidth - targColumnWidth) - 1;
 
-  final differenceCount = lines.fold(0, (sum, l) {
-    if (l.diffType != DiffEditType.equal) {
-      return sum + 1;
-    } else {
-      return l.source == l.target ? sum : (sum + 1);
-    }
-  });
-
   // Assign color to each unique branch
   final targetBranchColors = <int, AnsiPen>{};
   final sourceBranchColors = <int, AnsiPen>{};
-  targetFunc.branchTargets.forEachIndexed((i, addr) {
+  (targetFunc.branchTargets.toList()..sort()).forEachIndexed((i, addr) {
     targetBranchColors[addr] = branchPens[i % branchPens.length];
   });
-  srcFunc.branchTargets.forEachIndexed((i, addr) {
+  (srcFunc.branchTargets.toList()..sort()).forEachIndexed((i, addr) {
     sourceBranchColors[addr] = branchPens[i % branchPens.length];
   });
+
+  // Determine exact differences
+  int differenceCount = 0;
+  final linesWithDifferences = lines
+      .map((l) {
+        final diffType = _determineDifference(l, rw);
+        if (diffType != DifferenceType.none) {
+          differenceCount++;
+        }
+
+        return (l, diffType);
+      })
+      .toList();
 
   console.resetCursorPosition();
 
@@ -367,9 +385,9 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
 
   int spaceLeft = console.windowHeight - 2;
   final visibleLines =
-      lines.skip(scrollPosition).take(console.windowHeight - 2);
+      linesWithDifferences.skip(scrollPosition).take(console.windowHeight - 2);
 
-  for (final line in visibleLines) {
+  for (final (line, diffType) in visibleLines) {
     spaceLeft--;
 
     // this is an abomination
@@ -381,10 +399,10 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     final targInBranch = targInBranchPen != null ? targInBranchPen('~>') : '  ';
     final srcInBranch = srcInBranchPen != null ? srcInBranchPen('~>') : '  ';
 
-    final targOutBranchPen = (line.target != null && line.target!.isLocalBranch)
+    final targOutBranchPen = (line.target != null && line.target!.isRelativeJump)
         ? targetBranchColors[line.target!.operands[0].imm!]
         : null;
-    final srcOutBranchPen = (line.source != null && line.source!.isLocalBranch)
+    final srcOutBranchPen = (line.source != null && line.source!.isRelativeJump)
         ? sourceBranchColors[line.source!.operands[0].imm!]
         : null;
 
@@ -392,70 +410,38 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
         targOutBranchPen != null ? targOutBranchPen(' ~>') : '';
     final srcOutBranch = srcOutBranchPen != null ? srcOutBranchPen(' ~>') : '';
 
-    final Instruction? targ;
+    final Instruction? targ = line.target;
     final AnsiPen? targAddressColor;
     final AnsiPen? targMnemonicColor;
     final AnsiPen? targOpColor;
 
-    final Instruction? src;
+    final Instruction? src = line.source;
     final String srcSymbol;
     final AnsiPen? srcAddressColor;
     final AnsiPen? srcMnemonicColor;
     final AnsiPen? srcOpColor;
     final AnsiPen? srcSymbolColor;
 
-    bool operandDifferences = false;
-
-    if (line.diffType == DiffEditType.equal) {
-      targ = line.target!;
-      src = line.source!;
-      if (targ.opStr == src.opStr) {
-        // compare exact bytes to be sure
-        if (targ == src) {
-          targAddressColor = null;
-          targMnemonicColor = null;
-          targOpColor = null;
-          srcSymbol = ' ';
-          srcAddressColor = null;
-          srcMnemonicColor = null;
-          srcOpColor = null;
-          srcSymbolColor = null;
-        } else {
-          // Shouldn't happen, but if it does it needs to be obvious
-          targAddressColor = byteDiffPen;
-          targMnemonicColor = byteDiffPen;
-          targOpColor = byteDiffPen;
-          srcSymbol = 'b';
-          srcAddressColor = byteDiffPen;
-          srcMnemonicColor = byteDiffPen;
-          srcOpColor = byteDiffPen;
-          srcSymbolColor = byteDiffPen;
-        }
-      } else {
-        targAddressColor = opDiffPen;
+    switch (diffType) {
+      case DifferenceType.none:
+        targAddressColor = null;
         targMnemonicColor = null;
-        targOpColor = opDiffPen;
-        srcSymbol = 'o';
-        srcAddressColor = opDiffPen;
+        targOpColor = null;
+        srcSymbol = ' ';
+        srcAddressColor = null;
         srcMnemonicColor = null;
-        srcOpColor = opDiffPen;
-        srcSymbolColor = opDiffPen;
-        operandDifferences = true;
-      }
-    } else if (line.diffType == DiffEditType.substitute) {
-      targ = line.target!;
-      src = line.source!;
-      if (targ.mnemonic == src.mnemonic) {
-        targAddressColor = opDiffPen;
-        targMnemonicColor = null;
-        targOpColor = opDiffPen;
-        srcSymbol = 'o';
-        srcAddressColor = opDiffPen;
-        srcMnemonicColor = null;
-        srcOpColor = opDiffPen;
-        srcSymbolColor = opDiffPen;
-        operandDifferences = true;
-      } else {
+        srcOpColor = null;
+        srcSymbolColor = null;
+      case DifferenceType.bytes:
+        targAddressColor = byteDiffPen;
+        targMnemonicColor = byteDiffPen;
+        targOpColor = byteDiffPen;
+        srcSymbol = 'b';
+        srcAddressColor = byteDiffPen;
+        srcMnemonicColor = byteDiffPen;
+        srcOpColor = byteDiffPen;
+        srcSymbolColor = byteDiffPen;
+      case DifferenceType.mnemonic:
         targAddressColor = mnemonicDiffPen;
         targMnemonicColor = mnemonicDiffPen;
         targOpColor = mnemonicDiffPen;
@@ -464,33 +450,33 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
         srcMnemonicColor = mnemonicDiffPen;
         srcOpColor = mnemonicDiffPen;
         srcSymbolColor = mnemonicDiffPen;
-      }
-    } else if (line.diffType == DiffEditType.insert) {
-      targ = null;
-      src = line.source!;
-
-      targAddressColor = null;
-      targMnemonicColor = null;
-      targOpColor = null;
-      srcSymbol = '>';
-      srcAddressColor = addPen;
-      srcMnemonicColor = addPen;
-      srcOpColor = addPen;
-      srcSymbolColor = addPen;
-    } else if (line.diffType == DiffEditType.delete) {
-      targ = line.target!;
-      src = null;
-
-      targAddressColor = delPen;
-      targMnemonicColor = delPen;
-      targOpColor = delPen;
-      srcSymbol = '<';
-      srcAddressColor = null;
-      srcMnemonicColor = null;
-      srcOpColor = null;
-      srcSymbolColor = delPen;
-    } else {
-      throw UnimplementedError();
+      case DifferenceType.operands:
+        targAddressColor = opDiffPen;
+        targMnemonicColor = null;
+        targOpColor = opDiffPen;
+        srcSymbol = 'o';
+        srcAddressColor = opDiffPen;
+        srcMnemonicColor = null;
+        srcOpColor = opDiffPen;
+        srcSymbolColor = opDiffPen;
+      case DifferenceType.insertion:
+        targAddressColor = null;
+        targMnemonicColor = null;
+        targOpColor = null;
+        srcSymbol = '>';
+        srcAddressColor = addPen;
+        srcMnemonicColor = addPen;
+        srcOpColor = addPen;
+        srcSymbolColor = addPen;
+      case DifferenceType.deletion:
+        targAddressColor = delPen;
+        targMnemonicColor = delPen;
+        targOpColor = delPen;
+        srcSymbol = '<';
+        srcAddressColor = null;
+        srcMnemonicColor = null;
+        srcOpColor = null;
+        srcSymbolColor = delPen;
     }
 
     // Replace addresses with symbol names where possible
@@ -500,7 +486,7 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
     // Only color differing operands when that's the main difference
     List<OperandDiff>? targOpColors;
     List<OperandDiff>? srcOpColors;
-    if (targ != null && src != null && operandDifferences) {
+    if (targ != null && src != null && diffType == DifferenceType.operands) {
       final targOps = targOp!.split(',');
       final srcOps = srcOp!.split(',');
 
@@ -616,6 +602,47 @@ void _displayDiff(Console console, List<DiffLine> lines, int scrollPosition,
   console.write(diffText);
 }
 
+DifferenceType _determineDifference(DiffLine<Instruction> line, RealWarYaml rw) {
+  final targ = line.target;
+  final src = line.source;
+  
+  switch (line.diffType) {
+    case DiffEditType.equal:
+      // Compare exact bytes with the exception of literal references
+      if (targ == src || doInstructionsMatchViaLiteralSymbol(rw, targ!, src!)) {
+        return DifferenceType.none;
+      } else if (targ.opStr != src.opStr) {
+        // Diff considered lines equal but the operands are not exactly equal
+        return DifferenceType.operands;
+      } else {
+        // Shouldn't happen, but if it does it needs to be obvious
+        return DifferenceType.bytes;
+      }
+    case DiffEditType.substitute:
+      if (targ!.mnemonic != src!.mnemonic) {
+        return DifferenceType.mnemonic;
+      } else if (doInstructionsMatchViaLiteralSymbol(rw, targ, src)) {
+        // Instructions only differ by a literal reference for the same literal value
+        return DifferenceType.none;
+      } else {
+        return DifferenceType.operands;
+      }
+    case DiffEditType.insert:
+      return DifferenceType.insertion;
+    case DiffEditType.delete:
+      return DifferenceType.deletion;
+  }
+}
+
+enum DifferenceType {
+  none,
+  bytes,
+  operands,
+  mnemonic,
+  insertion,
+  deletion
+}
+
 class OperandDiff {
   final String operand;
   final bool equal;
@@ -670,108 +697,6 @@ String _ansiAwareCropRight(String str, int width) {
   buffer.write('█');
 
   return buffer.toString();
-}
-
-class DiffLine {
-  final DiffEditType diffType;
-
-  /// Target (base exe)
-  final Instruction? target;
-
-  /// Source (obj)
-  final Instruction? source;
-
-  DiffLine(this.diffType, this.target, this.source);
-}
-
-class InstructionDiffEquality implements Equality<Instruction> {
-  final int _imageBase;
-
-  InstructionDiffEquality({required int imageBase}) : _imageBase = imageBase;
-
-  @override
-  bool equals(Instruction a, Instruction b) {
-    // Consider two instructions to be the same (as far as the diffing algorithm goes) if:
-    // - The mnemonics are the same
-    // - They have the same number of operands and each is the same op type in the same order
-    // - Memory operands have the same displacement or neither displacement is an absolute
-    //   memory address (i.e. something in .text, .data, .rdata, .bss)
-    //
-    // Otherwise, assume the two instructions are unrelated.
-    // Instructions that have equality via this function may still have differences. Those
-    // differences will be highlighted after the diffing algorithm is ran. Allowing instructions
-    // to appear equal to the diffing algorithm even if they differ in some ways can clean up
-    // the final diff in some cases, such as preventing register allocation differences from
-    // placing two instructions that match in everything but registers on different diff lines.
-    if (a.mnemonic != b.mnemonic) {
-      return false;
-    }
-
-    if (a.operands.length != b.operands.length) {
-      return false;
-    }
-
-    for (int i = 0; i < a.operands.length; i++) {
-      final ao = a.operands[i];
-      final bo = b.operands[i];
-
-      if (ao.type != bo.type) {
-        return false;
-      }
-
-      if (ao.type == x86_op_type.X86_OP_MEM) {
-        final am = ao.mem!;
-        final bm = bo.mem!;
-
-        // Consider instructions related if the displacements are different but neither is an
-        // absolute memory address. In these cases it may be referencing a stack variable,
-        // which is likely to be related but with different stack variable allocations.
-        if (am.disp != bm.disp && (am.disp >= _imageBase || bm.disp >= _imageBase)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-  
-  @override
-  int hash(Instruction e) => e.hashCode;
-  
-  @override
-  bool isValidKey(Object? o) => o is Instruction;
-}
-
-List<DiffLine> _diff(List<Instruction> target, List<Instruction> source, 
-    InstructionDiffEquality diffEquality) {
-  // Run diff
-  // Note: run diff backwards, we want changes from source (the obj file) to target (the exe file)
-  // i swear it's not confusing...
-  final result = levenshtein<Instruction>(target, source, diffEquality);
-  final edits = generateLevenshteinEdits(result.item2);
-
-  // Note: target/source in the diff lines represent our original definition of target/source,
-  // where target = exe, source = obj. This is backwards from the diff's definition since we're
-  // trying to generate a list of changes to go from the base exe to the obj file.
-  final lines = <DiffLine>[];
-
-  for (int i = edits.length - 1; i >= 0; i--) {
-    final edit = edits[i];
-
-    if (edit.type == DiffEditType.equal ||
-        edit.type == DiffEditType.substitute) {
-      lines.add(DiffLine(edit.type, target[edit.sourceIndex - 1],
-          source[edit.targetIndex! - 1]));
-    } else if (edit.type == DiffEditType.insert) {
-      lines.add(DiffLine(edit.type, null, source[edit.targetIndex! - 1]));
-    } else if (edit.type == DiffEditType.delete) {
-      lines.add(DiffLine(edit.type, target[edit.sourceIndex - 1], null));
-    } else {
-      throw UnimplementedError();
-    }
-  }
-
-  return lines;
 }
 
 DisassembledFunction _loadExeFunction(String filePath, String symbolName, int physicalAddress, 
@@ -834,7 +759,7 @@ DisassembledFunction _loadObjFunction(
     relocateSection(obj, section, 
         sectionBytes, 
         targetVirtualAddress: sectionVirtualAddress, 
-        symbolLookup: (sym) => rw.lookupSymbolOrString(unmangle(sym)),
+        symbolLookup: (sym) => rw.lookupSymbol(unmangle(sym)),
         allowUnknownSymbols: true);
 
     sectionVirtualAddress += section.header.sizeOfRawData;

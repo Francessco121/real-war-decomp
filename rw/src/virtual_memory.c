@@ -2,7 +2,6 @@
 #include <STDIO.H>
 #include <WINDOWS.H>
 
-#include "strings.h"
 #include "types.h"
 #include "undefined.h"
 #include "virtual_memory.h"
@@ -38,8 +37,8 @@ void start_rwmap() {
     if (gEnableRwMap) {
         DAT_0051b988 = gTotalVirtualMemoryAllocated;
         DAT_00567788 = gTotalVirtualMemoryAllocated;
-        sRwMapTxtFile = fopen(str_rwmap_txt, str_wb);
-        fprintf(sRwMapTxtFile, str_memory_map_file);
+        sRwMapTxtFile = fopen("rwmap.txt", "wb");
+        fprintf(sRwMapTxtFile, "Memory map file.\r\n\r\n");
     }
 }
 
@@ -59,14 +58,14 @@ void end_rwmap() {
     hundreds = bytesUsed % 1000;
 
     if (millions != 0) {
-        sprintf(gTempString, str_total_used3, millions, thousands, hundreds);
+        sprintf(gTempString, "Total Used = %d,%03d,%03d", millions, thousands, hundreds);
     } else if (thousands != 0) {
-        sprintf(gTempString, str_total_used2, thousands, hundreds);
+        sprintf(gTempString, "Total Used = %d,%03d", thousands, hundreds);
     } else {
-        sprintf(gTempString, str_total_used, hundreds);
+        sprintf(gTempString, "Total Used = %d", hundreds);
     }
 
-    fprintf(sRwMapTxtFile, str_pct_newline_newline, gTempString);
+    fprintf(sRwMapTxtFile, "%s\r\n\r\n", gTempString);
     fclose(sRwMapTxtFile);
 }
 
@@ -86,11 +85,11 @@ void record_virtual_memory_to_rwmap(const char *str) {
     hundreds = bytesUsed % 1000;
 
     if (millions != 0) {
-        sprintf(gTempString, str_used_eq_ddd, millions, thousands, hundreds, str);
+        sprintf(gTempString, "Used = %3d,%03d,%03d at %18s", millions, thousands, hundreds, str);
     } else if (thousands != 0) {
-        sprintf(gTempString, str_used_eq_dd, thousands, hundreds, str);
+        sprintf(gTempString, "Used =     %3d,%03d at %18s", thousands, hundreds, str);
     } else {
-        sprintf(gTempString, str_used_eq_d, hundreds, str);
+        sprintf(gTempString, "Used =         %3d at %18s", hundreds, str);
     }
 
     bytesUsed = gTotalVirtualMemoryAllocated - DAT_0051b988;
@@ -99,11 +98,11 @@ void record_virtual_memory_to_rwmap(const char *str) {
     hundreds = bytesUsed % 1000;
 
     if (millions != 0) {
-        fprintf(sRwMapTxtFile, str_pct_ddd, gTempString, millions, thousands, hundreds);
+        fprintf(sRwMapTxtFile, "%s %3d,%03d,%03d\r\n\r\n", gTempString, millions, thousands, hundreds);
     } else if (thousands != 0) {
-        fprintf(sRwMapTxtFile, str_pct_tab_dd, gTempString, thousands, hundreds);
+        fprintf(sRwMapTxtFile, "%s     %3d,%03d\r\n\r\n", gTempString, thousands, hundreds);
     } else {
-        fprintf(sRwMapTxtFile, str_pct_tab_d, gTempString, hundreds);
+        fprintf(sRwMapTxtFile, "%s         %3d\r\n\r\n", gTempString, hundreds);
     }
 
     DAT_00567788 = gTotalVirtualMemoryAllocated;
@@ -115,7 +114,7 @@ void* custom_alloc(size_t bytes) {
     void* allocatedPtr;
 
     if (bytes <= 0) {
-        display_messagebox_and_exit(str_trying_to_allocate_0);
+        display_messagebox_and_exit("Trying to Allocate 0 Bytes.");
     }
 
     bufferIndex = 0;
@@ -129,7 +128,7 @@ void* custom_alloc(size_t bytes) {
         bufferIndex++;
     }
 
-    display_messagebox_and_exit(str_no_memory_buffers_left);
+    display_messagebox_and_exit("No Memory Buffers Left For Allocation.");
     label1:
 
     if (bytes >= 0x400000) {
@@ -139,7 +138,7 @@ void* custom_alloc(size_t bytes) {
             goto label2;
         }
         
-        display_messagebox(str_virtual_alloc_failed);
+        display_messagebox("Virtual Alloc Failed..");
     } else {
         allocatedPtr = malloc(bytes);
 
@@ -148,7 +147,7 @@ void* custom_alloc(size_t bytes) {
         }
     }
 
-    display_messagebox_and_exit(str_no_memory_left_for_alloc);
+    display_messagebox_and_exit("No Memory left For Allocation.");
     label2:
 
     gVirtualMemoryBuffers[bufferIndex] = allocatedPtr;
@@ -174,7 +173,7 @@ void custom_free(void** ptr) {
 
             if (gVirtualMemorySizes[i] >= 0x400000) {
                 if (VirtualFree(gVirtualMemoryBuffers[i], 0, 0x8000) == 0) {
-                    display_messagebox(str_virtual_free_failed);
+                    display_messagebox("Virtual Free Failed");
                 }
             } else {
                 free(gVirtualMemoryBuffers[i]);
@@ -200,7 +199,7 @@ void free_all_virtual_memory_buffers() {
     }
 
     if (gTotalVirtualMemoryAllocated != 0) {
-        sprintf(gTempString2, str_memory_unaccounted, gTotalVirtualMemoryAllocated);
+        sprintf(gTempString2, "Memory unaccounted %d", gTotalVirtualMemoryAllocated);
         display_messagebox(gTempString2);
     }
 }

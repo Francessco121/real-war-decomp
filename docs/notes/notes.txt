@@ -18,3 +18,7 @@
     - LIBC: __cdecl
     - Win32 APIs: __stdcall
     - RealWar: mainly __cdecl and __stdcall for callbacks given to Win32 APIs
+- alignment
+    - .text: 16 bytes
+    - .data: 4 bytes
+    - there may be exceptions but this covers just about everything

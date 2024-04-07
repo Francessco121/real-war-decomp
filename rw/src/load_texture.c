@@ -16,5 +16,3 @@ void bmp_pallete_rgb888_to_rgb1555(uint8 *pallete) {
         pallete += 2;
     }
 }
-
-#pragma ASM_FUNC load_texture

@@ -191,7 +191,7 @@ Future<void> main(List<String> args) async {
     final baseFuncName = hook.key;
     final hookFuncName = hook.value;
 
-    final funcVA = rw.symbols[baseFuncName];
+    final funcVA = rw.symbols[baseFuncName]?.address;
     if (funcVA == null) {
       throw Exception('Cannot create hook from non-existent function: $baseFuncName');
     }
@@ -307,7 +307,7 @@ void _relocateSection(
       final symbolName = symbol.name.shortName ??
           coff.stringTable!.strings[symbol.name.offset!]!;
       
-      symbolAddress = newSymbols[symbolName] ?? rw.symbols[unmangle(symbolName)];
+      symbolAddress = newSymbols[symbolName] ?? rw.symbols[unmangle(symbolName)]?.address;
 
       if (symbolAddress == null) {
         final virtualAddress = sectionVirtualAddress + reloc.virtualAddress;

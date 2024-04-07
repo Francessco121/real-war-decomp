@@ -10,10 +10,6 @@ import 'package:rw_decomp/relocate.dart';
 import 'package:rw_decomp/rw_yaml.dart';
 import 'package:rw_decomp/symbol_utils.dart';
 
-/*
-- using rw.yaml segment mapping and files in bin/ and build/obj/, link an actual exe
-*/
-
 class LinkException implements Exception {
   final String message;
 
@@ -23,13 +19,11 @@ class LinkException implements Exception {
 void main(List<String> args) {
   final argParser = ArgParser()
       ..addOption('root')
-      ..addFlag('no-success-message', defaultsTo: false, 
-          help: 'Don\'t write to stdout on success.')
-      ..addFlag('non-matching', defaultsTo: false);
+      ..addFlag('no-success-message', defaultsTo: false, negatable: false,
+          help: 'Don\'t write to stdout on success.');
 
   final argResult = argParser.parse(args);
   final bool noSuccessMessage = argResult['no-success-message'];
-  final bool nonMatching = argResult['non-matching'];
   final String projectDir = p.absolute(argResult['root'] ?? p.current);
 
   // Load project config
@@ -43,252 +37,123 @@ void main(List<String> args) {
   final baseExe = PeFile.fromList(baseExeBytes);
   
   // Setup
-  final String binDirPath = p.join(projectDir, rw.config.binDir);
+  final String srcDirPath = p.join(projectDir, rw.config.srcDir);
   final String buildDirPath = p.join(projectDir, rw.config.buildDir);
+  final String buildObjDirPath = p.join(projectDir, rw.config.buildDir, 'obj');
 
   Directory(buildDirPath).createSync();
 
-  // Link
   try {
-    final segmentMapping = <MappingEntry>[];
-    final objCache = ObjectFileCache();
+    // Collect functions to patch in from built object files
+    final List<ObjFunction> objFunctions = _loadObjs(rw, 
+        srcDirPath: srcDirPath, 
+        buildObjDirPath: buildObjDirPath);
+    
+    // Link
+    final funcMapping = <MappingEntry>[];
 
-    final builder = BytesBuilder(copy: false);
     final imageBase = rw.exe.imageBase;
 
-    final nonMatchingTextBuilder = BytesBuilder(copy: false);
-    final nonMatchingBaseVA = _sectionAlign(_getLastSectionEndVA(baseExe), baseExe);
+    final baseTextStartVA = imageBase + rw.exe.textVirtualAddress;
+    final baseTextEndVA = imageBase + rw.exe.rdataVirtualAddress;
+    final baseTextStartPA = rw.exe.textFileOffset;
 
-    Section? section; // start in header
-    int nextSectionIndex = 0; 
-    Section? nextSection = baseExe.sections[nextSectionIndex];
-    for (int segIdx = 0; segIdx < rw.segments.length; segIdx++) {
-      final segment = rw.segments[segIdx];
+    final hoistedTextBuilder = BytesBuilder(copy: false);
+    final hoistedBaseVA = _sectionAlign(_getLastSectionEndVA(baseExe), baseExe);
 
-      if (segment.type == 'bss') {
-        // uninitialized data doesn't have a physical form
-        continue;
+    for (final func in objFunctions) {
+      // Double check that this symbol is even within .text
+      if (func.symbolAddress < baseTextStartVA || func.symbolAddress >= baseTextEndVA) {
+        throw LinkException('Function symbol ${func.symbolName} is not within the .text section. '
+            'Address: 0x${func.symbolAddress.toRadixString(16)}');
       }
 
-      // Have we entered a new section?
-      while (nextSection != null && segment.address >= (nextSection.header.virtualAddress + imageBase)) {
-        section = nextSection;
-        nextSectionIndex++;
-        nextSection = (nextSectionIndex) == baseExe.sections.length ? null : baseExe.sections[nextSectionIndex];
-      }
+      try {
+        final funcPA = (func.symbolAddress - baseTextStartVA) + baseTextStartPA;
 
-      final currentFilePointer = builder.length;
+        if (func.objSectionBytes.lengthInBytes <= func.expectedSize) {
+          // Recompiled function fits within its base exe location, patch it in
+          relocateSection(func.obj, func.objSection, func.objSectionBytes, 
+              targetVirtualAddress: func.symbolAddress, 
+              symbolLookup: (sym) => rw.lookupSymbol(unmangle(sym)));
 
-      // Determine where we *want* to put this segment, where it actually goes might differ
-      // due to size differences from previous segments
-      //
-      // If the expected file position is behind where we are, then do nothing. The executable
-      // was shifted up from a larger previous segment and was already warned.
-      final expectedSegmentFilePointer = section == null
-          ? segment.address - imageBase
-          : (segment.address - imageBase - section.header.virtualAddress) + section.header.pointerToRawData;
-      final expectedSegmentByteSize = segIdx < (rw.segments.length - 1)
-          ? rw.segments[segIdx + 1].address - segment.address
-          : null;
+          baseExeBytes.setRange(funcPA, funcPA + func.objSectionBytes.lengthInBytes, func.objSectionBytes);
 
-      if (currentFilePointer < expectedSegmentFilePointer) {
-        // There's a gap between the last segment and where this segment should go,
-        // pad with NOPs...
-        final padding = expectedSegmentFilePointer - currentFilePointer;
-        if (segIdx > 0) {
-          print('WARN: $padding byte gap between "${rw.segments[segIdx - 1].name}" and "${segment.name}".');
+          if (func.objSectionBytes.lengthInBytes < func.expectedSize) {
+            // Function is too small, pad with nops
+            for (int i = func.objSectionBytes.lengthInBytes; i < func.expectedSize; i++) {
+              baseExeBytes[funcPA + i] = 0x90; // 0x90 = x86 1-byte NOP
+            }
+          }
+
+          funcMapping.add(MappingEntry(
+            physicalAddress: funcPA,
+            size: func.expectedSize,
+            symbolName: func.symbolName,
+            srcName: func.objName,
+            hoistedPhysicalAddress: null
+          ));
         } else {
-          print('WARN: $padding byte gap between start of image and "${segment.name}".');
+          // Function is too big, move it into the hoisted .text section
+          final hoistedVA = hoistedBaseVA + imageBase + hoistedTextBuilder.length;
+          final hoistedPA = baseExeBytes.length + hoistedTextBuilder.length;
+          relocateSection(func.obj, func.objSection, func.objSectionBytes, 
+              targetVirtualAddress: hoistedVA, 
+              symbolLookup: (sym) => rw.lookupSymbol(unmangle(sym)));
+          
+          hoistedTextBuilder.add(func.objSectionBytes);
+
+          // Patch in relative jump to the moved function + nop padding in its place
+          final jumpInst = ByteData(5);
+          final operand = hoistedVA - func.symbolAddress - 5;
+          jumpInst.setUint8(0, 0xE9);
+          jumpInst.setUint32(1, operand, Endian.little);
+
+          baseExeBytes.setRange(funcPA, funcPA + 5, jumpInst.buffer.asUint8List());
+          baseExeBytes[funcPA + 5] = 0xC3; // unreachable RET to help disassemblers detect the function end
+          for (int i = 6; i < func.expectedSize; i++) {
+            baseExeBytes[funcPA + i] = 0x90; // 0x90 = x86 1-byte NOP
+          }
+
+          funcMapping.add(MappingEntry(
+            physicalAddress: funcPA,
+            size: func.expectedSize,
+            symbolName: func.symbolName,
+            srcName: func.objName,
+            hoistedPhysicalAddress: hoistedPA
+          ));
         }
-        for (int i = 0; i < padding; i++) {
-          builder.addByte(0x90); // 0x90 = x86 1-byte NOP
-        }
+      } on RelocationException catch (ex) {
+        throw LinkException('${func.objName}: ${ex.message}');
       }
-
-      // Handle segment
-      final String segmentFilePath;
-
-      switch (segment.type) {
-        case 'bin':
-        case 'thunks':
-        case 'extfuncs':
-          // .bin
-          segmentFilePath = p.join(binDirPath, '${segment.name}.bin');
-
-          // Link bin files as is
-          final binFile = File(segmentFilePath);
-          if (!binFile.existsSync()) {
-            throw LinkException('File doesn\'t exist: ${binFile.path}');
-          }
-
-          builder.add(binFile.readAsBytesSync());
-        case 'c':
-        case 'data':
-        case 'rdata':
-          // .obj (.text, .data, .rdata)
-          // Load object file
-          final objFilePath = p.join(buildDirPath, 'obj', '${segment.name}.obj');
-          final (coff, objBytes) = objCache.get(objFilePath);
-
-          final sectionName = switch (segment.type) {
-            'c' => '.text',
-            'data' => '.data',
-            'rdata' => '.rdata',
-            _ => throw UnimplementedError()
-          };
-
-          // If we're linking non-matching COMDATs, then calculate the expected size of each function first
-          //
-          // Any functions that are too big will be moved into the non-matching .text section
-          final functionVAs = <int>[];
-          final functionSizes = <int>[];
-          final functionNames = <String>[];
-          if (nonMatching && sectionName == '.text') {
-            for (final (i, coffSection) in coff.sections.indexed) {
-              if (coffSection.header.name != '.text') {
-                continue;
-              }
-
-              if (!coffSection.header.flags.lnkComdat) {
-                throw LinkException(
-                    'All .text sections must be COMDATs to link a non-matching executable. '
-                    'Section number ${i + 1} in $objFilePath is not a .text COMDAT.');
-              }
-
-              final funcName = _findFunctionComDatSymbolName(coff, i + 1);
-              if (funcName == null) {
-                throw LinkException(
-                    'Could not find function name for .text COMDAT (section number ${i + 1}) in $objFilePath.');
-              }
-
-              functionNames.add(funcName);
-
-              final funcVA = rw.symbols[unmangle(funcName)];
-              if (funcVA == null) {
-                throw LinkException(
-                    'Could not find function address for .text COMDAT (section number ${i + 1}) in $objFilePath.');
-              }
-
-              functionVAs.add(funcVA);
-            }
-
-            for (int i = 0; i < functionVAs.length; i++) {
-              final funcEnd = i < (functionVAs.length - 1)
-                  ? functionVAs[i + 1]
-                  : segment.address + expectedSegmentByteSize!;
-              
-              functionSizes.add(funcEnd - functionVAs[i]);
-            }
-          }
-
-          // Relocate sections and concatenate bytes (link each section in order as they appear)
-          try {
-            int sectionVirtualAddress = segment.address;
-            for (final (funcIdx, (coffSection, secBytes)) in _iterateSections(coff, objBytes, sectionName).indexed) {
-              if (nonMatching && coffSection.header.name == '.text') {
-                // Non-matching build for .text segment
-                final expectedFuncVA = functionVAs[funcIdx];
-                final expectedFuncSize = functionSizes[funcIdx];
-
-                if (sectionVirtualAddress != expectedFuncVA) {
-                  throw LinkException(
-                      'Couldn\'t link function ${functionNames[funcIdx]} at expected address 0x${expectedFuncVA.toRadixString(16)}. '
-                      'Functions in the segment $objFilePath may be out of order. Non-matching builds require functions to be '
-                      'in the same order as they appear in the base executable.');
-                }
-
-                if (secBytes.lengthInBytes > expectedFuncSize) {
-                  // Function is too big, move it into the non-matching .text section
-                  final movedVA = nonMatchingBaseVA + imageBase + nonMatchingTextBuilder.length;
-                  relocateSection(coff, coffSection, secBytes, 
-                      targetVirtualAddress: movedVA, 
-                      symbolLookup: (sym) => rw.lookupSymbolOrString(unmangle(sym)));
-                  
-                  nonMatchingTextBuilder.add(secBytes);
-
-                  // Patch in jump to the moved function + nop padding in its place
-                  final jumpInst = ByteData(5);
-                  final operand = movedVA - sectionVirtualAddress - 5;
-                  jumpInst.setUint8(0, 0xE9);
-                  jumpInst.setUint32(1, operand, Endian.little);
-
-                  builder.add(jumpInst.buffer.asUint8List());
-                  builder.addByte(0xC3); // unreachable RET to help disassemblers detect the function end
-                  for (int i = 0; i < (expectedFuncSize - 6); i++) {
-                    builder.addByte(0x90); // 0x90 = x86 1-byte NOP
-                  }
-                } else {
-                  relocateSection(coff, coffSection, secBytes, 
-                      targetVirtualAddress: sectionVirtualAddress, 
-                      symbolLookup: (sym) => rw.lookupSymbolOrString(unmangle(sym)));
-                  
-                  builder.add(secBytes);
-
-                  if (secBytes.lengthInBytes < expectedFuncSize) {
-                    // Function is too small, pad with nops
-                    for (int i = 0; i < (expectedFuncSize - secBytes.lengthInBytes); i++) {
-                      builder.addByte(0x90); // 0x90 = x86 1-byte NOP
-                    }
-                  }
-                }
-
-                sectionVirtualAddress += expectedFuncSize;
-              } else {
-                // Normal build or not a .text segment
-                relocateSection(coff, coffSection, secBytes, 
-                    targetVirtualAddress: sectionVirtualAddress, 
-                    symbolLookup: (sym) => rw.lookupSymbolOrString(unmangle(sym)));
-
-                builder.add(secBytes);
-                
-                sectionVirtualAddress += coffSection.header.sizeOfRawData;
-              }
-            }
-          } on RelocationException catch (ex) {
-            throw LinkException('${p.relative(objFilePath, from: projectDir)}: ${ex.message}');
-          }
-
-          segmentFilePath = objFilePath;
-        default:
-          throw UnimplementedError('Unknown segment type: ${segment.type}');
-      }
-
-      // Verify segment size was as expected
-      final bytesWritten = builder.length - currentFilePointer;
-
-      if (expectedSegmentByteSize != null && bytesWritten != expectedSegmentByteSize) {
-        print('WARN: Segment "${segment.name}" byte size ($bytesWritten) doesn\'t match expected size ($expectedSegmentByteSize).');
-      }
-
-      // Add mapping entry
-      segmentMapping.add(MappingEntry(
-          currentFilePointer, 
-          bytesWritten,
-          segment.name,
-          segment.type,
-          p.relative(p.normalize(segmentFilePath), from: projectDir)));
     }
 
-    // Build exe bytes
-    final nonMatchingTextSize = nonMatchingTextBuilder.length;
-    if (nonMatching) {
-      builder.add(nonMatchingTextBuilder.takeBytes());
+    // Build new exe bytes
+    final hoistedTextSize = hoistedTextBuilder.length;
+    final Uint8List exeBytes;
 
+    if (hoistedTextBuilder.isEmpty) {
+      exeBytes = baseExeBytes;
+    } else {
+      final builder = BytesBuilder(copy: false)
+          ..add(baseExeBytes)
+          ..add(hoistedTextBuilder.takeBytes());
+      
       final expectedTextEnd = _fileAlign(builder.length, baseExe);
       final padding = expectedTextEnd - builder.length;
       builder.add(Uint8List(padding));
+
+      exeBytes = builder.takeBytes();
     }
 
-    final exeBytes = builder.takeBytes();
-
-    if (nonMatching && nonMatchingTextSize > 0) {
-      // If we have a non-matching .text section, add the section header and patch the
-      // section count and image size
+    // If we have a hoisted .text section, add the section header and patch the
+    // section count and image size
+    if (hoistedTextSize > 0) {
       final textHeader = SectionHeader(
         name: '.text',
-        virtualSize: nonMatchingTextSize,
-        virtualAddress: nonMatchingBaseVA,
-        sizeOfRawData: nonMatchingTextSize,
+        virtualSize: hoistedTextSize,
+        virtualAddress: hoistedBaseVA,
+        sizeOfRawData: hoistedTextSize,
         pointerToRawData: baseExeBytes.lengthInBytes,
         pointerToRelocations: 0,
         pointerToLineNumbers: 0,
@@ -305,7 +170,7 @@ void main(List<String> args) {
           0x00000278 + SectionHeader.byteSize, 
           textHeader.toBytes());
       
-      final newDataLength = nonMatchingTextSize;
+      final newDataLength = hoistedTextSize;
       final exeData = ByteData.sublistView(exeBytes);
       exeData
         ..setUint16(0x000000E6, baseExe.coffHeader.numberOfSections + 1, Endian.little)
@@ -315,15 +180,13 @@ void main(List<String> args) {
     }
 
     // Write exe file
-    final String outExeFilePath = p.join(projectDir, rw.config.buildDir, 
-        nonMatching ? 'RealWarNonMatching.exe' : 'RealWar.exe');
+    final String outExeFilePath = p.join(projectDir, rw.config.buildDir, 'RealWar.exe');
     File(outExeFilePath).writeAsBytesSync(exeBytes);
 
     // Write mapping file
     _writeMappingFile(
-        File(p.join(projectDir, rw.config.buildDir, 
-          nonMatching ? 'RealWarNonMatching.map' : 'RealWar.map')),
-        segmentMapping);
+        File(p.join(projectDir, rw.config.buildDir, 'RealWar.funcmap')),
+        funcMapping);
 
     if (!noSuccessMessage) {
       print('Linked: ${p.relative(outExeFilePath, from: projectDir)}.');
@@ -334,32 +197,128 @@ void main(List<String> args) {
   }
 }
 
+class ObjFunction {
+  final CoffFile obj;
+  final String objName;
+  final Section objSection;
+  final Uint8List objSectionBytes;
+  final String symbolName;
+  final int symbolAddress;
+  final int expectedSize;
+
+  ObjFunction({
+    required this.obj, 
+    required this.objName, 
+    required this.objSection,
+    required this.objSectionBytes,
+    required this.symbolName, 
+    required this.symbolAddress, 
+    required this.expectedSize,
+  });
+}
+
+List<ObjFunction> _loadObjs(RealWarYaml rw, 
+    {required String srcDirPath, required String buildObjDirPath}) {
+  final objFunctions = <ObjFunction>[];
+
+  final srcDir = Directory(srcDirPath);
+  for (final file in srcDir.listSync(recursive: true)) {
+    if (file is! File || p.extension(file.path) != '.c') {
+      continue;
+    }
+
+    final objRelativePath = p.relative(p.setExtension(file.absolute.path, '.obj'), from: srcDir.absolute.path);
+    final objFile = File(p.join(buildObjDirPath, objRelativePath));
+    if (!objFile.existsSync()) {
+      stderr.writeln('Could not find ${p.relative(objFile.path, from: rw.dir)}. Have you ran the build?');
+      exit(-1);
+    }
+
+    final objBytes = objFile.readAsBytesSync();
+    final obj = CoffFile.fromList(objBytes);
+
+    objFunctions.addAll(_loadObjFunctions(obj, objBytes, objRelativePath, rw));
+  }
+
+  objFunctions.sort((a, b) => a.symbolAddress.compareTo(b.symbolAddress));
+
+  return objFunctions;
+}
+
+Iterable<ObjFunction> _loadObjFunctions(CoffFile obj, Uint8List objBytes, String objName, RealWarYaml rw) sync* {
+  if (obj.symbolTable == null) {
+    return;
+  }
+
+  for (final symbol in obj.symbolTable!.values) {
+    // Symbol is a function defined in this object file if it has a section number and MSB == 2
+    if (symbol.sectionNumber > 0 && (symbol.type >> 4) == 2) {
+      final name = symbol.name.shortName ??
+          obj.stringTable!.strings[symbol.name.offset]!;
+      final unmangledName = unmangle(name);
+      
+      final Section section = obj.sections[symbol.sectionNumber - 1];
+
+      // Assume COMDAT
+      assert(section.header.flags.lnkComdat);
+
+      // Look up symbol in rw.yaml
+      final rwSymbol = rw.symbols[unmangledName];
+      if (rwSymbol == null) {
+        throw LinkException('Unknown function symbol: $unmangledName @ '
+            '$objName/0x${section.header.pointerToRawData.toRadixString(16)}');
+      }
+      if (rwSymbol.size == null) {
+        throw LinkException('Function symbol $unmangledName must have a defined size in rw.yaml!');
+      }
+      
+      yield ObjFunction(
+        obj: obj,
+        objName: objName,
+        objSection: section,
+        objSectionBytes: Uint8List.sublistView(objBytes, 
+            section.header.pointerToRawData, 
+            section.header.pointerToRawData + section.header.sizeOfRawData),
+        symbolName: unmangledName, 
+        symbolAddress: rwSymbol.address,
+        expectedSize: rwSymbol.size!
+      );
+    }
+  }
+}
+
 const _asciiSpace = 32;
 
 class MappingEntry {
   final int physicalAddress;
   final int size;
-  final String segmentName;
-  final String segmentType;
+  final String symbolName;
   final String srcName;
+  final int? hoistedPhysicalAddress;
 
-  MappingEntry(this.physicalAddress, this.size, this.segmentName, this.segmentType, this.srcName);
+  MappingEntry({
+    required this.physicalAddress, 
+    required this.size, 
+    required this.symbolName, 
+    required this.srcName, 
+    required this.hoistedPhysicalAddress,
+  });
 }
 
 void _writeMappingFile(File mapFile, List<MappingEntry> segmentMapping) {
   segmentMapping.sort((a, b) => a.physicalAddress.compareTo(b.physicalAddress));
 
-  final int longestSegmentName = segmentMapping
-      .fold(0, (longest, e) => max(e.segmentName.length, longest));
+  final int longestSymbolName = segmentMapping
+      .fold(0, (longest, e) => max(e.symbolName.length, longest));
   
   final strBuffer = StringBuffer();
   strBuffer.write('Offset'.padRight(10));
   strBuffer.writeCharCode(_asciiSpace);
   strBuffer.write('Size'.padRight(10));
   strBuffer.writeCharCode(_asciiSpace);
-  strBuffer.write('Type'.padRight(8));
+  strBuffer.write('Hoist'.padRight(10));
   strBuffer.writeCharCode(_asciiSpace);
-  strBuffer.write('Name'.padRight(longestSegmentName));
+  strBuffer.write('Func'.padRight(longestSymbolName));
   strBuffer.writeCharCode(_asciiSpace);
   strBuffer.writeln('Source File');
 
@@ -368,62 +327,18 @@ void _writeMappingFile(File mapFile, List<MappingEntry> segmentMapping) {
     strBuffer.writeCharCode(_asciiSpace);
     strBuffer.write('0x${entry.size.toRadixString(16)}'.padLeft(10));
     strBuffer.writeCharCode(_asciiSpace);
-    strBuffer.write(entry.segmentType.padRight(8));
+    if (entry.hoistedPhysicalAddress != null) {
+      strBuffer.write('0x${entry.hoistedPhysicalAddress!.toRadixString(16)}'.padLeft(10));
+    } else {
+      strBuffer.write(''.padLeft(10));
+    }
     strBuffer.writeCharCode(_asciiSpace);
-    strBuffer.write(entry.segmentName.padRight(longestSegmentName));
+    strBuffer.write(entry.symbolName.padRight(longestSymbolName));
     strBuffer.writeCharCode(_asciiSpace);
     strBuffer.writeln(entry.srcName);
   }
 
   mapFile.writeAsStringSync(strBuffer.toString());
-}
-
-class ObjectFileCache {
-  final Map<String, (CoffFile, Uint8List)> _cache = {};
-
-  /// Gets or loads and caches the object file at the given [path].
-  /// 
-  /// Returns the COFF descriptor and raw file bytes.
-  (CoffFile, Uint8List) get(String path) {
-    final cached = _cache[path];
-    if (cached != null) {
-      return cached;
-    }
-
-    final objFile = File(path);
-    if (!objFile.existsSync()) {
-      throw LinkException('File doesn\'t exist: ${objFile.path}');
-    }
-
-    final objBytes = objFile.readAsBytesSync();
-    final coff = CoffFile.fromList(objBytes);
-
-    _cache[path] = (coff, objBytes);
-    
-    return (coff, objBytes);
-  }
-}
-
-Iterable<(Section section, Uint8List)> _iterateSections(CoffFile coff, Uint8List objBytes, String sectionName) sync* {
-  for (final section in coff.sections) {
-    if (section.header.name == sectionName) {
-      final filePtr = section.header.pointerToRawData;
-      final bytes = Uint8List.sublistView(objBytes, filePtr, filePtr + section.header.sizeOfRawData);
-
-      yield (section, bytes);
-    }
-  }
-}
-
-String? _findFunctionComDatSymbolName(CoffFile coff, int sectionNumber) {
-  for (final symbol in coff.symbolTable!.values) {
-    // Type 0x20 == function
-    if (symbol.sectionNumber == sectionNumber && symbol.type == 0x20 && symbol.value == 0) {
-      return symbol.name.shortName ?? coff.stringTable!.strings[symbol.name.offset!];
-    }
-  }
-
-  return null;
 }
 
 int _getLastSectionEndVA(PeFile exe) {

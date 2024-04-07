@@ -3,7 +3,6 @@
 #include <WINDOWS.H>
 
 #include "types.h"
-#include "strings.h"
 #include "timers.h"
 #include "undefined.h"
 #include "virtual_memory.h"
@@ -217,20 +216,20 @@ bool init_directx(int32 displayWidth, int32 displayHeight, int32 displayBpp) {
         if (gDirectDraw4 == NULL) {
             hresult = DirectDrawCreate(NULL, &gDirectDraw, NULL);
             if (hresult != DD_OK) {
-                sprintf(gTempString2, str_Failed_on_D_Draw_Create_Primary);
+                sprintf(gTempString2, "Failed on D Draw Create Primary\n");
                 return FALSE;
             }
 
             hresult = IDirectDraw_QueryInterface(gDirectDraw, &IID_IDirectDraw4, &gDirectDraw4);
             if (hresult != S_OK) {
-                sprintf(gTempString2, str_Failed_On_D_Draw_Create_Query);
+                sprintf(gTempString2, "Failed on D Draw Create Query\n");
                 return FALSE;
             }
 
             hresult = IDirectDraw4_SetCooperativeLevel(gDirectDraw4, gWndHandle, 
                 DDSCL_FULLSCREEN | DDSCL_ALLOWREBOOT | DDSCL_EXCLUSIVE | DDSCL_ALLOWMODEX);
             if (hresult != DD_OK) {
-                sprintf(gTempString2, str_Failed_Set_Coop);
+                sprintf(gTempString2, "Failed Set Coop\n");
                 return FALSE;
             }
         }
@@ -238,14 +237,14 @@ bool init_directx(int32 displayWidth, int32 displayHeight, int32 displayBpp) {
         get_available_vid_memory();
         if (gD3DDeviceFound && !gDontInitD3D) {
             if (!init_d3d(gWndHandle)) {
-                sprintf(gTempString2, str_Failed_Create_D3D_render);
+                sprintf(gTempString2, "Failed Create D3D render.\n");
                 return FALSE;
             }
         }
 
         hresult = IDirectDraw4_SetDisplayMode(gDirectDraw4, gDisplayWidth, gDisplayHeight, gDisplayBPP, 0, 0);
         if (hresult != DD_OK) {
-            sprintf(gTempString2, str_Failed_Set_Display);
+            sprintf(gTempString2, "Failed Set Display\n");
             return FALSE;
         }
 
@@ -261,7 +260,7 @@ bool init_directx(int32 displayWidth, int32 displayHeight, int32 displayBpp) {
 
         hresult = IDirectDraw4_CreateSurface(gDirectDraw4, &surfaceDesc, &gDDFrontBuffer, NULL);
         if (hresult != DD_OK) {
-            sprintf(gTempString2, str_Failed_on_Front_Buffer);
+            sprintf(gTempString2, "Failed on Front Buffer\n");
             return FALSE;
         }
 
@@ -271,13 +270,13 @@ bool init_directx(int32 displayWidth, int32 displayHeight, int32 displayBpp) {
             // BUG: This function is given a DDSCAPS struct (not DDSCAPS2) which has less fields than the function expects
             hresult = IDirectDrawSurface4_GetAttachedSurface(gDDFrontBuffer, (DDSCAPS2*)&backbufferCaps, &gDDBackBuffer);
             if (hresult != DD_OK) {
-                sprintf(gTempString2, str_Failed_on_Back_Buffer);
+                sprintf(gTempString2, "Failed on Back Buffer\n");
                 return FALSE;
             }
 
             if (gD3DDeviceFound) {
                 if (FUN_004013f0(gWndHandle) == 0) {
-                    sprintf(gTempString2, str_Failed_Creating_D3D_Devices);
+                    sprintf(gTempString2, "Failed Creating D3D Devices..\n");
                     return FALSE;
                 }
             }
@@ -318,7 +317,7 @@ bool init_directx(int32 displayWidth, int32 displayHeight, int32 displayBpp) {
 
         DAT_01b18068 = 0.95f;
         DAT_005a4f80 = 0;
-        DAT_0051add4 = 0;
+        gVertexCount = 0;
     }
 
     gVirtualMemoryBufferNumber = prevVirtualMemoryBufferNumber;
@@ -443,7 +442,6 @@ void *get_in_memory_graphics_surface(int32 *width, int32 *height) {
     return gInMemoryGraphicsSurface;
 }
 
-#ifdef NON_MATCHING
 void draw_frame() {
     DDSURFACEDESC2 surfaceDesc;
     int32 widthBytes;
@@ -454,8 +452,8 @@ void draw_frame() {
 
     DAT_01b18068 = 1e-05f;
     FUN_004d7bc0();
-    DAT_005a4f80 = DAT_0051add4;
-    DAT_0051add4 = 0;
+    DAT_005a4f80 = gVertexCount;
+    gVertexCount = 0;
 
     if (!handle_window_focus_change() && !gBitmapCreated) {
         return;
@@ -468,7 +466,7 @@ void draw_frame() {
         draw_timers();
     }
 
-    set_timer_label_and_update_cycle_counter(TIMER_WINDOWS_BLIT, str_Windows_Blit);
+    set_timer_label_and_update_cycle_counter(TIMER_WINDOWS_BLIT, "Windows Blit");
 
     if (gBitmapCreated) {
         // Runs in windowed mode
@@ -537,6 +535,7 @@ void draw_frame() {
         }
 
         if (gD3DDeviceFound && DAT_005a4f80 > 0) {
+            // 3D acceleration enabled
             FUN_00406fc0();
             FUN_00401b90(DAT_005a4f80);
             FUN_00406f30();
@@ -544,6 +543,7 @@ void draw_frame() {
             // BUG: wtf??? why does this use the backbuffer vtable but pass frontbuffer as this?
             while ((gDDBackBuffer)->lpVtbl->GetBltStatus(gDDFrontBuffer, DDGBS_ISBLTDONE) != DD_OK) { }
         } else {
+            // 3D acceleration disabled
             DAT_005a4f80 = 0;
         }
 
@@ -558,9 +558,6 @@ void draw_frame() {
 
     update_timer_cycle_delta(TIMER_WINDOWS_BLIT);
 }
-#else
-#pragma ASM_FUNC draw_frame
-#endif
 
 void draw_timers() {
     int32 local1;
@@ -609,7 +606,7 @@ void draw_timers() {
         gBlitsPerS = 1000;
     }
 
-    sprintf(gTempString2, str_Blit_Tick_Counts_eq_Blits_Per_S, gBlitsPerS);
+    sprintf(gTempString2, "Blit Tick Counts = %d Blits Per Second", gBlitsPerS);
     FUN_004c39f0(gTempString2, 0, lines * 8);
     FUN_004c3ac0(local1, local2, local3, local4);
 

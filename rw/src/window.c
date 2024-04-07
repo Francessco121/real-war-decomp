@@ -7,7 +7,6 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "sound.h"
-#include "strings.h"
 #include "timers.h"
 #include "types.h"
 #include "undefined.h"
@@ -54,8 +53,8 @@ bool init_systems(HINSTANCE hInstance, int nShowCmd) {
     if (game_create_window(hInstance, nShowCmd)) {
         ret = TRUE;
 
-        gMemoryInUseBytes = get_memory_in_use_bytes(str_Start);
-        get_memory_in_use_bytes(str_Start);
+        gMemoryInUseBytes = get_memory_in_use_bytes("Start");
+        get_memory_in_use_bytes("Start");
 
         pump_messages_and_update_input_state();
 
@@ -88,15 +87,15 @@ bool game_create_window(HINSTANCE hInstance, int nCmdShow) {
     wndClass.hIcon = LoadIconA(NULL, IDI_APPLICATION);
     wndClass.hCursor = LoadCursorA(NULL, IDI_APPLICATION);
     wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-    wndClass.lpszMenuName = str_real_war_v9_dot_25;
-    wndClass.lpszClassName = str_real_war_v9_dot_25;
+    wndClass.lpszMenuName = "Real War: V9.25";
+    wndClass.lpszClassName = "Real War: V9.25";
     RegisterClassA(&wndClass);
 
     if (gLaunchWindowed) {
         gWndHandle = CreateWindowExA(
             0,
-            str_real_war_v9_dot_25,
-            str_real_war_v9_dot_25,
+            "Real War: V9.25",
+            "Real War: V9.25",
             WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX,
             GetSystemMetrics(SM_CXSCREEN) / 2 + -400,
             GetSystemMetrics(SM_CYSCREEN) / 2 + -300,
@@ -112,8 +111,8 @@ bool game_create_window(HINSTANCE hInstance, int nCmdShow) {
     } else {
         gWndHandle = CreateWindowExA(
             0,
-            str_real_war_v9_dot_25,
-            str_real_war_v9_dot_25,
+            "Real War: V9.25",
+            "Real War: V9.25",
             WS_POPUP,
             GetSystemMetrics(SM_CXSCREEN) / 2 + -400,
             GetSystemMetrics(SM_CYSCREEN) / 2 + -300,
@@ -232,9 +231,9 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, 
         }
     }
 
-    strtok(gCmdLineString, str_space_tab);
+    strtok(gCmdLineString, " \t");
     for (gCmdLineArgCount = 1; gCmdLineArgCount < MAX_CMD_LINE_ARGS; gCmdLineArgCount++) {
-        gCmdLineToken = strtok(NULL, str_space_tab);
+        gCmdLineToken = strtok(NULL, " \t");
         if (gCmdLineToken == NULL) {
             break;
         }
@@ -248,49 +247,49 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, 
         }
 
         if (gCmdLineArgs[i][1] == 'M') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgM);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgM);
         } else if (gCmdLineArgs[i][1] == 'C') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgC);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgC);
         } else if (gCmdLineArgs[i][1] == 'L') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgL);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgL);
         } else if (gCmdLineArgs[i][1] == 'T') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgT);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgT);
         } else if (gCmdLineArgs[i][1] == 'F') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgF);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgF);
         } else if (gCmdLineArgs[i][1] == 'L') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgL);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgL);
         } else if (gCmdLineArgs[i][1] == 'G') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gLaunchWindowed);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gLaunchWindowed);
         } else if (gCmdLineArgs[i][1] == 'E') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgE);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgE);
         } else if (gCmdLineArgs[i][1] == 'H') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgH);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgH);
         } else if (gCmdLineArgs[i][1] == 'B') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgB);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgB);
         } else if (gCmdLineArgs[i][1] == 'N') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_s, &gCmdLineArgN);
+            sscanf(&gCmdLineArgs[i][2], "%s", &gCmdLineArgN);
             j = 0;
             while ((gCmdLineArgN[j] >= '0' && gCmdLineArgN[j] <= '9') || gCmdLineArgN[j] == '.') {
                 j += 1;
             }
             gCmdLineArgN[j] = '\0';
         } else if (gCmdLineArgs[i][1] == 'P') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_s, &gCmdLineArgP);
+            sscanf(&gCmdLineArgs[i][2], "%s", &gCmdLineArgP);
             for (j = 0; j < strlen(gCmdLineArgP); j++) {
                 if (gCmdLineArgP[j] == '+') {
                     gCmdLineArgP[j] = ' ';
                 }
             }
         } else if (gCmdLineArgs[i][1] == 'S') {
-            sscanf(&gCmdLineArgs[i][2], str_pct_d, &gCmdLineArgS);
+            sscanf(&gCmdLineArgs[i][2], "%d", &gCmdLineArgS);
             gCmdLineArgS += 1;
             DAT_0051b418 = ((gCmdLineArgS - 1) == 0) - 2;
         } else if (gCmdLineArgs[i][1] == 'R') {
-            set_game_registry_value(str_dirtree_3, &gCmdLineArgs[i][2]);
-            sprintf(gRegValueTemp, str_pct_s_data_slash, &gCmdLineArgs[i][2]);
-            set_game_registry_value(str_datatree_2, gRegValueTemp);
-            sprintf(gRegValueTemp, str_pct_s_vids_slash, &gCmdLineArgs[i][2]);
-            set_game_registry_value(str_vidtree_2, gRegValueTemp);
+            set_game_registry_value("DirTree", &gCmdLineArgs[i][2]);
+            sprintf(gRegValueTemp, "%sdata\\", &gCmdLineArgs[i][2]);
+            set_game_registry_value("DataTree", gRegValueTemp);
+            sprintf(gRegValueTemp, "%svids\\", &gCmdLineArgs[i][2]);
+            set_game_registry_value("VidTree", gRegValueTemp);
         }
     }
 
@@ -349,7 +348,7 @@ void display_messagebox(const char *format, ...) {
         IDirectDraw4_FlipToGDISurface(gDirectDraw4);
     }
 
-    MessageBoxA(gWndHandle, buffer, str_Message_dotdotdot, MB_OK);
+    MessageBoxA(gWndHandle, buffer, "Message...", MB_OK);
 }
 
 bool display_yesno_messagebox(const char *message) {
@@ -357,7 +356,7 @@ bool display_yesno_messagebox(const char *message) {
         IDirectDraw4_FlipToGDISurface(gDirectDraw4);
     }
 
-    return MessageBoxA(gWndHandle, message, str_Message_dotdotdot, MB_YESNO | MB_DEFBUTTON2) == IDYES;
+    return MessageBoxA(gWndHandle, message, "Message...", MB_YESNO | MB_DEFBUTTON2) == IDYES;
 }
 
 int32 get_next_buffered_key() {
@@ -422,7 +421,6 @@ void pump_messages() {
     }
 }
 
-#ifdef NON_MATCHING
 bool handle_window_focus_change() {
     HWND focus;
 
@@ -454,6 +452,3 @@ bool handle_window_focus_change() {
         return TRUE;
     }
 }
-#else
-#pragma ASM_FUNC handle_window_focus_change hasret
-#endif

@@ -1,4 +1,6 @@
+import 'dart:collection';
 import 'dart:ffi';
+import 'dart:typed_data';
 
 import 'package:capstone/capstone.dart';
 import 'package:ffi/ffi.dart';
@@ -8,19 +10,34 @@ import 'instruction.dart';
 
 class DisassembledFunction {
   final String name;
-  /// Size in bytes.
+  /// Size in bytes, including any jump tables.
   final int size;
   final List<Instruction> instructions;
-  final Set<int> branchTargetSet;
-  /// In order of discovery.
-  final List<int> branchTargets;
+  /// Target addresses of local branches.
+  final Set<int> branchTargets;
+  /// Target addresses of jump table cases, if a jump table exists.
+  final Set<int>? caseTargets;
+  final LinkedHashMap<int, DisassembledJumpTable>? jumpTables;
 
   DisassembledFunction({
     required this.name,
     required this.size,
     required this.instructions,
-    required this.branchTargetSet,
     required this.branchTargets,
+    required this.caseTargets,
+    required this.jumpTables,
+  });
+}
+
+class DisassembledJumpTable {
+  final int address;
+  final int size;
+  final List<int> cases;
+
+  DisassembledJumpTable({
+    required this.address,
+    required this.size,
+    required this.cases,
   });
 }
 
@@ -65,20 +82,25 @@ class FunctionDisassembler {
     }
   }
 
+  /// [endAddressHint] - Hint for the likely end address of the function including any jump tables.
+  /// The size of the diasassembled function is not guaranteed to be within this address but it will
+  /// be used to avoid bailing out early on RET instructions.
   DisassembledFunction disassembleFunction(FileData data, int offset,
-      {required int address, required String name, int? endAddress}) {
-    _codePtr.value = Pointer<Uint8>.fromAddress(data.data.address + offset);
+      {required int address, required String name, int? endAddressHint}) {
+    _codePtr.value = Pointer<Uint8>.fromAddress(data.dataPtr.address + offset);
     _sizePtr.value = data.size - offset;
     _addressPtr.value = address;
 
     final insts = <Instruction>[];
     final branchTargetSet = <int>{};
     final branchTargets = <int>[];
+    final possibleJumpTables = <int>{};
     int? furthestBranchEnd;
     int? furthestJumpTableAddress;
     int size = 0;
 
     while (true) {
+      // Next instruction
       if (!_cs.disasm_iter(
           _handle.value, _codePtr, _sizePtr, _addressPtr, _instPtr)) {
         int err = _cs.errno(_handle.value);
@@ -95,10 +117,10 @@ class FunctionDisassembler {
 
       size += inst.bytes.lengthInBytes;
 
-      if (inst.isLocalBranch) {
+      if (inst.isRelativeJump) {
         // Possibly local branch, check if the target address is in bounds (if available)
         final target = inst.operands[0].imm!;
-        if (endAddress == null || target < endAddress) {
+        if (endAddressHint == null || target < endAddressHint) {
           // Local branch
           if (branchTargetSet.add(target)) {
             branchTargets.add(target);
@@ -113,11 +135,11 @@ class FunctionDisassembler {
           inst.operands[0].type == x86_op_type.X86_OP_MEM) {
         // Possibly a jump into a switch jump table
         final targetDisp = inst.operands[0].mem!.disp;
-        if (endAddress == null || targetDisp < endAddress) {
-          if (furthestJumpTableAddress == null ||
-              targetDisp > furthestJumpTableAddress) {
+        if (endAddressHint == null || targetDisp < endAddressHint) {
+          if (furthestJumpTableAddress == null || targetDisp > furthestJumpTableAddress) {
             furthestJumpTableAddress = targetDisp;
           }
+          possibleJumpTables.add(targetDisp);
         }
       }
 
@@ -127,7 +149,7 @@ class FunctionDisassembler {
       }
 
       if (furthestBranchEnd != null && inst.address >= furthestBranchEnd) {
-        // Reached end of a branch
+        // Reached end of an outer branch
         furthestBranchEnd = null;
       }
 
@@ -147,12 +169,72 @@ class FunctionDisassembler {
       }
     }
 
+    // Read jump table(s)
+    //
+    // Jump tables should always start right after the end of the function and will be made
+    // up of 4-byte addresses that point somewhere in the function
+    final funcEndAddress = address + size;
+    LinkedHashMap<int, DisassembledJumpTable>? jumpTables;
+    Set<int>? caseTargetSet;
+
+    if (possibleJumpTables.any((a) => a >= funcEndAddress)) {
+      final byteData = ByteData.sublistView(data.data);
+      final jumpTablesData = <int>[];
+
+      caseTargetSet = {};
+
+      // Read all bytes that make up jump tables
+      final jumpTablesStart = address + size;
+      int jumpTablesEnd = address + size;
+      for (int i = jumpTablesStart; (((i + 4) - address) + offset) <= data.size; i += 4) {
+        final addr = byteData.getUint32((i - address) + offset, Endian.little);
+        if (addr < address || addr >= funcEndAddress) {
+          break;
+        }
+
+        jumpTablesData.add(addr);
+        jumpTablesEnd += 4;
+
+        caseTargetSet.add(addr);
+      }
+
+      // Split read data into each individual jump table
+      if (jumpTablesEnd - jumpTablesStart > 0) {
+        jumpTables = LinkedHashMap<int, DisassembledJumpTable>();
+
+        final validJumpTableAddresses = possibleJumpTables
+          .where((a) => a >= funcEndAddress && a < jumpTablesEnd)
+          .toList();
+
+        for (int i = 0; i < validJumpTableAddresses.length; i++) {
+          final jumpTableStart = validJumpTableAddresses[i];
+          final jumpTableEnd = i < (validJumpTableAddresses.length - 1)
+              ? validJumpTableAddresses[i + 1]
+              : jumpTablesEnd;
+          final jumpTableSize = jumpTableEnd - jumpTableStart;
+
+          jumpTables[jumpTableStart] = DisassembledJumpTable(
+            address: jumpTableStart, 
+            size: jumpTableSize, 
+            cases: jumpTablesData.sublist(
+                (jumpTableStart - jumpTablesStart) ~/ 4,
+                (jumpTableEnd - jumpTablesStart) ~/ 4),
+          );
+        }
+
+        size += jumpTablesData.length * 4;
+      } else {
+        caseTargetSet = null;
+      }
+    }
+
     return DisassembledFunction(
       name: name,
       size: size,
       instructions: insts,
-      branchTargetSet: branchTargetSet,
-      branchTargets: branchTargets,
+      branchTargets: branchTargetSet,
+      caseTargets: caseTargetSet,
+      jumpTables: jumpTables,
     );
   }
 

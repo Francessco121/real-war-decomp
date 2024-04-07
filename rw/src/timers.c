@@ -2,7 +2,6 @@
 #include <WINDOWS.H>
 
 #include "rdtsc.h"
-#include "strings.h"
 #include "timers.h"
 
 // .data
@@ -45,11 +44,11 @@ void init_timers() {
 }
 
 void set_timer_label(int32 timer, const char *label) {
-    sprintf(sTimerStrings[timer], str_pct_s, label);
+    sprintf(sTimerStrings[timer], "%s", label);
 }
 
 void set_timer_label_and_update_cycle_counter(int32 timer, const char *label) {
-    sprintf(sTimerStrings[timer], str_pct_s, label);
+    sprintf(sTimerStrings[timer], "%s", label);
 
     rdtsc((uint64*)&sClockCycleCounters[timer*2]);
     sClockCycleCounters[timer*2] = sClockCycleCounters[timer*2] - 100;
@@ -127,12 +126,12 @@ const char *timer_tostring(int32 timer) {
 
     if (millions == 0) {
         if (thousands == 0) {
-            sprintf(sTimerTempString, str_pct24s_d, sTimerStrings[timer], hundreds);
+            sprintf(sTimerTempString, "%24s %d", sTimerStrings[timer], hundreds);
         } else {
-            sprintf(sTimerTempString, str_pct24s_dd, sTimerStrings[timer], thousands, hundreds);
+            sprintf(sTimerTempString, "%24s %d,%03d", sTimerStrings[timer], thousands, hundreds);
         }
     } else {
-        sprintf(sTimerTempString, str_pct24s_ddd, sTimerStrings[timer], millions, thousands, hundreds);
+        sprintf(sTimerTempString, "%24s %d,%03d,%03d", sTimerStrings[timer], millions, thousands, hundreds);
     }
     
     return sTimerTempString;
@@ -146,8 +145,8 @@ void calculate_timer_resolution() {
     sUnusedTimerGlobal3 = 0;
     sUnusedTimerGlobal4 = 0;
 
-    set_timer_label(TIMER_CLOCKERS, str_clockers);
-    set_timer_label(TIMER_RESOLUTION_PER_FRAME, str_resolution_per_frame);
+    set_timer_label(TIMER_CLOCKERS, "Clockers");
+    set_timer_label(TIMER_RESOLUTION_PER_FRAME, "Resolution Per Frame");
 
     tc1 = GetTickCount();
     update_timer_cycle_counter(TIMER_RESOLUTION_PER_FRAME);

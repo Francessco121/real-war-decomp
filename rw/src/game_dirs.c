@@ -3,7 +3,6 @@
 
 #include "data.h"
 #include "game_dirs.h"
-#include "strings.h"
 #include "types.h"
 #include "undefined.h"
 #include "warnsuppress.h"
@@ -34,24 +33,23 @@ char gVidPaths[4][256];
 void load_game_dirs_from_registry() {
     char value[256];
 
-    if (get_game_registry_value(str_dirtree, value)) {
-        sprintf(gDirTree, str_pct_s, &value);
+    if (get_game_registry_value("DIRTREE", value)) {
+        sprintf(gDirTree, "%s", &value);
     }
 
-    if (get_game_registry_value(str_datatree, value)) {
-        sprintf(gDataTree, str_pct_s, &value);
+    if (get_game_registry_value("DATATREE", value)) {
+        sprintf(gDataTree, "%s", &value);
     }
 
-    if (get_game_registry_value(str_vidtree, value)) {
-        sprintf(gVidTree, str_pct_s, &value);
+    if (get_game_registry_value("VIDTREE", value)) {
+        sprintf(gVidTree, "%s", &value);
     }
 
-    if (get_game_registry_value(str_cddatadir, value)) {
-        sprintf(gCDDataDir, str_pct_s_vids_slash, &value);
+    if (get_game_registry_value("CDDATADIR", value)) {
+        sprintf(gCDDataDir, "%svids\\", &value);
     }
 }
 
-#ifdef NON_MATCHING
 void to_absolute_data_path2(char *path) {
     int pathLen;
     int i;
@@ -85,17 +83,13 @@ void to_absolute_data_path2(char *path) {
         return;
     }
 
-    if (strstr(path, str_GAMESAVE) == NULL) {
-        sprintf(temp, str_pct_s, path);
-        sprintf(&temp[dataSlashIdx - 1], str_pct_s_pct_s, gDataTree, &path[dataSlashIdx + 4]);
-        sprintf(path, str_pct_s, temp);
+    if (strstr(path, "GAMESAVE") == NULL) {
+        sprintf(temp, "%s", path);
+        sprintf(&temp[dataSlashIdx - 1], "%s%s", gDataTree, &path[dataSlashIdx + 4]);
+        sprintf(path, "%s", temp);
     }
 }
-#else
-#pragma ASM_FUNC to_absolute_data_path2
-#endif
 
-#ifdef NON_MATCHING
 void to_absolute_data_path(char *path) {
     int pathLen;
     int i;
@@ -129,13 +123,10 @@ void to_absolute_data_path(char *path) {
         return;
     }
 
-    sprintf(temp, str_pct_s, path);
-    sprintf(&temp[dataSlashIdx - 1], str_pct_s_pct_s, gDataTree, &path[dataSlashIdx + 4]);
-    sprintf(path, str_pct_s, temp);
+    sprintf(temp, "%s", path);
+    sprintf(&temp[dataSlashIdx - 1], "%s%s", gDataTree, &path[dataSlashIdx + 4]);
+    sprintf(path, "%s", temp);
 }
-#else
-#pragma ASM_FUNC to_absolute_data_path
-#endif
 
 void cd_check() {
     int retries = 0;
@@ -143,23 +134,23 @@ void cd_check() {
     FILE* file;
 
     while (TRUE) {
-        sprintf(gTempString, str_pct_intro_mpg, gCDDataDir);
+        sprintf(gTempString, "%sintro.mpg", gCDDataDir);
 
         if (get_data_file_length(gTempString)) {
             flag = TRUE;
         } else {
-            display_messagebox(str_please_insert_the_cd);
+            display_messagebox("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");
         }
 
         if (flag) {
-            sprintf(gTempString, str_pct_cdtest_txt, gCDDataDir);
+            sprintf(gTempString, "%scdtest.txt", gCDDataDir);
 
-            file = fopen(gTempString, str_wb);
+            file = fopen(gTempString, "wb");
             if (file != NULL) {
                 flag = FALSE;
                 fclose(file);
                 remove(gTempString);
-                display_messagebox(str_please_insert_the_cd);   
+                display_messagebox("Please insert the Real War CD\ninto the CD rom drive and\nselect OK to continue.");   
             } else if (flag) {
                 return;
             }
@@ -184,7 +175,7 @@ char *get_absolute_vid_path(const char *path, int32 idx) {
         filenameStart--;
     }
 
-    sprintf(gVidPaths[idx], str_pct_s_pct_s, gVidTree, &path[filenameStart + 1]);
+    sprintf(gVidPaths[idx], "%s%s", gVidTree, &path[filenameStart + 1]);
     return gVidPaths[idx];
 }
 
@@ -192,13 +183,13 @@ void set_game_registry_value(const char *name, const char *value) {
     LONG result;
 
     // Get/create key HKEY_LOCAL_MACHINE\Software
-    result = RegCreateKeyExA(HKEY_LOCAL_MACHINE, str_software,
+    result = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software",
         0, gRegKeyClass, 0, KEY_ALL_ACCESS, NULL,
         &gSoftwareRegKey, &gRegKeyDisposition);
     
     if (result == ERROR_SUCCESS) {
         // Get/create key HKEY_LOCAL_MACHINE\Software\RealWar
-        result = RegCreateKeyExA(gSoftwareRegKey, str_realwar,
+        result = RegCreateKeyExA(gSoftwareRegKey, "RealWar",
             0, gRegKeyClass, 0, KEY_ALL_ACCESS, NULL,
             &gRealWarRegKey, &gRegKeyDisposition);
         
@@ -214,15 +205,15 @@ void set_game_registry_value(const char *name, const char *value) {
                         RegCloseKey(gRealWarRegKey);
                         RegCloseKey(gSoftwareRegKey);
 
-                        if (strstr(name, str_dirtree_2)) {
-                            sprintf(gDirTreeRegValueData, str_pct_s, gRegKeyValueData);
+                        if (strstr(name, "DirTree")) {
+                            sprintf(gDirTreeRegValueData, "%s", gRegKeyValueData);
                         }
 
-                        display_messagebox(str_found_key, gRegKeyValueData);
+                        display_messagebox("Found Key %s", gRegKeyValueData);
                         return;
                     } else {
                         // Value exists but doesn't match, update it
-                        sprintf(gRegKeyValueData, str_pct_s_2, value);
+                        sprintf(gRegKeyValueData, "%s", value);
 
                         result = RegSetValueExA(gRealWarRegKey, name, 0,
                             REG_SZ, (BYTE*)gRegKeyValueData, strlen(gRegKeyValueData) + 1);
@@ -231,22 +222,22 @@ void set_game_registry_value(const char *name, const char *value) {
                             RegCloseKey(gRealWarRegKey);
                             RegCloseKey(gSoftwareRegKey);
 
-                            if (strstr(name, str_dirtree_2)) {
-                                sprintf(gDirTreeRegValueData, str_pct_s, gRegKeyValueData);
+                            if (strstr(name, "DirTree")) {
+                                sprintf(gDirTreeRegValueData, "%s", gRegKeyValueData);
                             }
 
-                            display_messagebox(str_created_key, gRegKeyValueData);
+                            display_messagebox("Created Key %s", gRegKeyValueData);
                             return;
                         }
 
                         RegCloseKey(gRealWarRegKey);
                         RegCloseKey(gSoftwareRegKey);
 
-                        display_messagebox(str_couldnt_create_key, value);
+                        display_messagebox("Couldn't Create Key %s", value);
                     }
                 } else {
                     // Value doesn't exist, create it
-                    sprintf(gRegKeyValueData, str_pct_s_2, value);
+                    sprintf(gRegKeyValueData, "%s", value);
 
                     result = RegSetValueExA(gRealWarRegKey, name, 0,
                         REG_SZ, (BYTE*)gRegKeyValueData, strlen(gRegKeyValueData) + 1);
@@ -255,19 +246,19 @@ void set_game_registry_value(const char *name, const char *value) {
                     RegCloseKey(gSoftwareRegKey);
 
                     if (result == ERROR_SUCCESS) {
-                        if (strstr(name, str_dirtree_2)) {
-                            sprintf(gDirTreeRegValueData, str_pct_s, gRegKeyValueData);
+                        if (strstr(name, "DirTree")) {
+                            sprintf(gDirTreeRegValueData, "%s", gRegKeyValueData);
                         }
 
-                        display_messagebox(str_created_key, gRegKeyValueData);
+                        display_messagebox("Created Key %s", gRegKeyValueData);
                         return;
                     }
 
-                    display_messagebox(str_couldnt_create_key, value);
+                    display_messagebox("Couldn't Create Key %s", value);
                 }
             } else {
                 // RealWar key didn't exist, so the value definitely doesn't. Create it
-                sprintf(gRegKeyValueData, str_pct_s_2, value);
+                sprintf(gRegKeyValueData, "%s", value);
 
                 result = RegSetValueExA(gRealWarRegKey, name, 0,
                     REG_SZ, (BYTE*)gRegKeyValueData, strlen(gRegKeyValueData) + 1);
@@ -276,23 +267,23 @@ void set_game_registry_value(const char *name, const char *value) {
                 RegCloseKey(gSoftwareRegKey);
 
                 if (result == ERROR_SUCCESS) {
-                    if (strstr(name, str_dirtree_2)) {
-                        sprintf(gDirTreeRegValueData, str_pct_s, gRegKeyValueData);
+                    if (strstr(name, "DirTree")) {
+                        sprintf(gDirTreeRegValueData, "%s", gRegKeyValueData);
                     }
 
-                    display_messagebox(str_created_key, gRegKeyValueData);
+                    display_messagebox("Created Key %s", gRegKeyValueData);
                     return;
                 }
 
-                display_messagebox(str_couldnt_create_key, value);
+                display_messagebox("Couldn't Create Key %s", value);
             }
         } else {
             RegCloseKey(gRealWarRegKey);
             RegCloseKey(gSoftwareRegKey);
-            display_messagebox(str_couldnt_create_key, value);
+            display_messagebox("Couldn't Create Key %s", value);
         }
     } else {
-        display_messagebox(str_couldnt_open_registry);
+        display_messagebox("Couldn't Open Registry!");
     }
 }
 
@@ -300,13 +291,13 @@ bool get_game_registry_value(const char *name, char *outValue) {
     LONG result;
 
     // Create/get key HKEY_LOCAL_MACHINE\Software
-    result = RegCreateKeyExA(HKEY_LOCAL_MACHINE, str_software,
+    result = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software",
         0, gRegKeyClass, 0, KEY_ALL_ACCESS, NULL,
         &gSoftwareRegKey, &gRegKeyDisposition);
 
     if (result == ERROR_SUCCESS) {
         // Create/get key HKEY_LOCAL_MACHINE\Software\RealWar
-        result = RegCreateKeyExA(gSoftwareRegKey, str_realwar,
+        result = RegCreateKeyExA(gSoftwareRegKey, "RealWar",
             0, gRegKeyClass, 0, KEY_ALL_ACCESS, NULL,
             &gRealWarRegKey, &gRegKeyDisposition);
         
@@ -318,7 +309,7 @@ bool get_game_registry_value(const char *name, char *outValue) {
             if (result == ERROR_SUCCESS) {
                 if (gRegKeyValueType == REG_SZ) {
                     // If the value exists and is a string, return it
-                    sprintf(outValue, str_pct_s, &gRegKeyValueData);
+                    sprintf(outValue, "%s", &gRegKeyValueData);
                     RegCloseKey(gRealWarRegKey);
                     RegCloseKey(gSoftwareRegKey);
                     return TRUE;

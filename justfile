@@ -20,21 +20,13 @@ set shell := ["powershell.exe", "-c"]
 @rwyaml *args:
     dart run tools/rw_decomp/bin/rwyaml.dart {{args}}
 
-# display differing segments between the current build and the base exe
-@finddiffs:
-    dart run tools/rw_decomp/bin/finddiffs.dart
-
 # calculate decomp progress
 @progress *args:
     dart run tools/rw_decomp/bin/progress.dart {{args}}
 
-# split base exe
-@split:
-    tools/rw_decomp/build/split.exe
-
 # recreate build.ninja
-@configure *args:
-    tools/rw_decomp/build/configure.exe {{args}}
+@configure:
+    tools/rw_decomp/build/configure.exe
 
 # compile a single source file (name should not have an extension)
 cl name:
@@ -47,20 +39,20 @@ cl name:
 
 # clean + build
 [no-exit-message]
-@rebuild *args:
+@rebuild:
     just clean
-    just configure {{args}}
+    just configure
     ninja
 
-# verify that the linked exe matches the original base exe
+# verify decomp accuracy
 [no-exit-message]
-@verify:
-    tools/rw_decomp/build/verify.exe
+@verify *args:
+    tools/rw_decomp/build/verify.exe {{args}}
 
 # verify that the base exe is valid
 [no-exit-message]
 @verifybase:
-    tools/rw_decomp/build/verify.exe base
+    dart run tools/rw_decomp/bin/md5.dart base
 
 # build + verify
 [no-exit-message]
@@ -75,12 +67,6 @@ cl name:
     if (Test-Path .ninja_log -PathType Leaf) { Remove-Item .ninja_log -Force }
     if (Test-Path .ninja_deps -PathType Leaf) { Remove-Item .ninja_deps -Force }
 
-# clean build and split artifacts (excluding tools)
-@clean-full:
-    if (Test-Path asm -PathType Container) { Remove-Item asm -Force -Recurse }
-    if (Test-Path bin -PathType Container) { Remove-Item bin -Force -Recurse }
-    just clean
-
 # start a file watcher for the sandbox
 @sandbox:
     cd sandbox; dart run ../tools/rw_sandbox_watcher/bin/watcher.dart
@@ -92,7 +78,6 @@ build-tools:
     just build-tool-configure
     just build-tool-link
     just build-tool-verify
-    just build-tool-split
     just build-tool-dump
 
 @build-tool-diff:
@@ -114,10 +99,6 @@ build-tools:
 @build-tool-verify:
     New-Item -ItemType Directory -Force -Path tools\rw_decomp\build | Out-Null
     dart compile exe -o tools/rw_decomp/build/verify.exe tools/rw_decomp/bin/verify.dart
-
-@build-tool-split:
-    New-Item -ItemType Directory -Force -Path tools\rw_decomp\build | Out-Null
-    dart compile exe -o tools/rw_decomp/build/split.exe tools/rw_decomp/bin/split.dart
 
 @build-tool-dump:
     New-Item -ItemType Directory -Force -Path tools\rw_decomp\build | Out-Null

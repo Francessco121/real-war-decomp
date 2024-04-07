@@ -22,3 +22,6 @@ build/
 build.ninja
 .ninja_log
 .ninja_deps
+
+# Verification baseline
+verification-baseline.json

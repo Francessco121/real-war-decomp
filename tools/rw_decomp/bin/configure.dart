@@ -6,40 +6,33 @@ import 'package:ninja_syntax/ninja_syntax.dart' as ninja;
 import 'package:rw_decomp/rw_yaml.dart';
 
 const _vsDir = 'C:\\Program Files (x86)\\Microsoft Visual Studio';
-const _dxDir = 'C:\\dx7sdk';
+const _dxDir = 'C:\\dx8sdk';
 
 /// Generates build.ninja for the Real War decompilation project.
 void main(List<String> args) {
   final argParser = ArgParser()
-      ..addOption('root')
-      ..addFlag('non-matching', abbr: 'n', 
-          help: 'Build a non-matching executable.', 
-          defaultsTo: false);
+      ..addOption('root');
 
   final argResult = argParser.parse(args);
   final String projectDir = p.absolute(argResult['root'] ?? p.current);
-  final bool nonMatching = argResult['non-matching'];
 
   // Load project config
   final rw = RealWarYaml.load(
       File(p.join(projectDir, 'rw.yaml')).readAsStringSync(),
       dir: projectDir);
   
-  final outputExeName = nonMatching ? 'RealWarNonMatching.exe' : 'RealWar.exe';
+  final outputExeName = 'RealWar.exe';
 
   // Collect list of files to compile
   final compilationUnits = <String>[];
-  final binarySegments = <String>[];
 
-  for (final segment in rw.segments) {
-    switch (segment.type) {
-      case 'c':
-        compilationUnits.add(segment.name);
-      case 'bin':
-      case 'thunks':
-      case 'extfuncs':
-        binarySegments.add(segment.name);
+  final srcDir = Directory(p.join(projectDir, rw.config.srcDir));
+  for (final file in srcDir.listSync(recursive: true)) {
+    if (file is! File || p.extension(file.path) != '.c') {
+      continue;
     }
+
+    compilationUnits.add(p.withoutExtension(p.relative(file.absolute.path, from: srcDir.absolute.path)));
   }
 
   // Write ninja build file  
@@ -51,7 +44,6 @@ void main(List<String> args) {
   writer.variable('DX_DIR', _dxDir);
   writer.variable('SRC_DIR', p.normalize(rw.config.srcDir));
   writer.variable('BUILD_DIR', p.normalize(rw.config.buildDir));
-  writer.variable('BIN_DIR', p.normalize(rw.config.binDir));
   writer.variable('CL_FLAGS', [
     '/W4', // warning level 4
     '/Og', // global opt
@@ -60,11 +52,8 @@ void main(List<String> args) {
     '/Oy', // frame pointer omission
     '/Ob1', // expand __inline marked functions
     '/Gs', // only insert stack probes when over 4k
-    //'/Gf', // eliminate duplicate strings (pool to writable .data) (leave off since
-    //          it makes it harder to match data sections and isn't necessary)
+    '/Gf', // eliminate duplicate strings (pool to writable .data)
     '/Gy', // function-level linking (COMDAT)
-    if (nonMatching)
-      '/DNON_MATCHING',
   ].join(','));
   writer.variable('INCLUDES', [
     '-I "${p.normalize(rw.config.includeDir)}"',
@@ -75,7 +64,7 @@ void main(List<String> args) {
   writer.newline();
   writer.comment('Tools');
   writer.variable('CL', 
-      r'tools/rw_decomp/build/cl_wrapper.exe --vsdir="$VS_DIR" --asmfuncdir="$BIN_DIR\_funcs" --no-library-warnings --emit-deps');
+      r'tools/rw_decomp/build/cl_wrapper.exe --vsdir="$VS_DIR" --no-library-warnings --emit-deps');
   writer.variable('LINK', 'tools/rw_decomp/build/link.exe');
 
   writer.newline();
@@ -83,7 +72,7 @@ void main(List<String> args) {
   writer.rule('cl', r'$CL $INCLUDES --flag="$CL_FLAGS" -o $out -i $in',
       depfile: r'$out.d', deps: 'gcc', 
       description: r'Compiling $in...');
-  writer.rule('link', '\$LINK --no-success-message${nonMatching ? ' --non-matching' : ''}', 
+  writer.rule('link', '\$LINK --no-success-message', 
       description: 'Linking \$BUILD_DIR\\$outputExeName...');
 
   writer.newline();
@@ -96,10 +85,7 @@ void main(List<String> args) {
   writer.newline();
   writer.comment('Linking');
   writer.build('\$BUILD_DIR\\$outputExeName', 'link', 
-      implicit: [
-        ...compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'),
-        ...binarySegments.map((n) => '\$BIN_DIR\\${p.normalize(n)}.bin')
-      ]);
+      implicit: compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'));
 
   // Write file
   final buildFile = File(p.join(projectDir, 'build.ninja'));

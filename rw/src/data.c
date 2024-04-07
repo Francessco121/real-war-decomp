@@ -3,7 +3,6 @@
 
 #include "data.h"
 #include "game_dirs.h"
-#include "strings.h"
 #include "undefined.h"
 #include "virtual_memory.h"
 #include "warnsuppress.h"
@@ -44,8 +43,8 @@ char sAbsolutePathTempString[256];
 
 // .text
 
-static int32 find_bigfile_entry_by_path(const char *path);
-static void read_data_file_internal(const char *path, void *out);
+/*static*/ int32 find_bigfile_entry_by_path(const char *path);
+/*static*/ void read_data_file_internal(const char *path, void *out);
 
 size_t read_data_file(const char *path, void *out) {
     int32 index;
@@ -62,11 +61,11 @@ size_t read_data_file(const char *path, void *out) {
         // Not in bigfile, read from file system
 
         // Convert path to an absolute file path
-        sprintf(absolutePath, str_pct_s, path);
+        sprintf(absolutePath, "%s", path);
         to_absolute_data_path2(absolutePath);
         
         // Read
-        file = fopen(absolutePath, str_rb);
+        file = fopen(absolutePath, "rb");
         if (file != NULL) {
             fseek(file, 0, SEEK_END);
             fileSize = ftell(file);
@@ -88,7 +87,7 @@ FILE *open_data_file_relative(const char *path, const char *mode) {
     int32 index = find_bigfile_entry_by_path(path);
     if (index < 0) {
         // Convert path to an absolute file path
-        sprintf(sAbsolutePathTempString, str_pct_s, path);
+        sprintf(sAbsolutePathTempString, "%s", path);
         to_absolute_data_path2(sAbsolutePathTempString);
 
         return fopen(sAbsolutePathTempString, mode);
@@ -116,10 +115,10 @@ size_t read_data_file_partial(const char *path, void *out, size_t length) {
     index = find_bigfile_entry_by_path(path);
     if (index < 0) {
         // Convert path to an absolute file path
-        sprintf(sAbsolutePathTempString, str_pct_s, path);
+        sprintf(sAbsolutePathTempString, "%s", path);
         to_absolute_data_path2(sAbsolutePathTempString);
 
-        file = fopen(sAbsolutePathTempString, str_rb);
+        file = fopen(sAbsolutePathTempString, "rb");
         if (file != NULL) {
             read = fread(out, length, 1, file);
             fclose(file);
@@ -128,7 +127,7 @@ size_t read_data_file_partial(const char *path, void *out, size_t length) {
         return read;
     }
 
-    file = fopen(path, str_rb);
+    file = fopen(path, "rb");
     fseek(file, sBigFileHeader[index].byteOffset, SEEK_SET);
     fread(out, length, 1, file);
     read = fclose(file); // wtf?
@@ -146,11 +145,11 @@ size_t get_data_file_length(const char *path) {
         // Not in bigfile, read from file system
 
         // Convert path to an absolute file path
-        sprintf(sAbsolutePathTempString, str_pct_s, path);
+        sprintf(sAbsolutePathTempString, "%s", path);
         to_absolute_data_path2(sAbsolutePathTempString);
 
         length = 0;
-        file = fopen(sAbsolutePathTempString, str_rb);
+        file = fopen(sAbsolutePathTempString, "rb");
         if (file != NULL) {
             fseek(file, 0, SEEK_END);
             length = ftell(file);
@@ -170,7 +169,7 @@ size_t write_bytes_to_file(const char *filename, const void *ptr, size_t length)
     size_t bytesWritten;
 
     bytesWritten = 0;
-    file = fopen(filename, str_wb);
+    file = fopen(filename, "wb");
 
     if (file != NULL) {
         if (length != 0) {
@@ -236,11 +235,11 @@ void load_bigfile_header(const char *path) {
     memset(sBigFileEntryPointers, 0xFFFFFFFF, sizeof(BigFileEntryPointer) * MAX_BIG_FILE_ENTRY_POINTERS);
 
     // Convert path to absolute
-    sprintf(absolutePath, str_pct_s, path);
+    sprintf(absolutePath, "%s", path);
     to_absolute_data_path(absolutePath);
-    sprintf(sBigFileAbsolutePath, str_pct_s, absolutePath);
+    sprintf(sBigFileAbsolutePath, "%s", absolutePath);
 
-    file = fopen(absolutePath, str_rb);
+    file = fopen(absolutePath, "rb");
     if (file != NULL) {
         // Read entry count
         fread(&sBigFileEntryCount, 4, 1, file);
@@ -276,7 +275,7 @@ void load_bigfile_header(const char *path) {
     }
 }
 
-static int32 find_bigfile_entry_by_path(const char *path) {
+/*static*/ int32 find_bigfile_entry_by_path(const char *path) {
     char pathCopy[256];
     int32 charIndex;
     int32 entryIndex;
@@ -288,7 +287,7 @@ static int32 find_bigfile_entry_by_path(const char *path) {
     }
 
     // Convert path to uppercase
-    sprintf(pathCopy, str_pct_s_2, path);
+    sprintf(pathCopy, "%s", path);
     charIndex = 0;
     while (pathCopy[charIndex] != '\0') {
         if (pathCopy[charIndex] >= 'a' && pathCopy[charIndex] <= 'z') {
@@ -327,7 +326,7 @@ static int32 find_bigfile_entry_by_path(const char *path) {
     return entryIndex;
 }
 
-static void read_data_file_internal(const char *path, void *out) {
+/*static*/ void read_data_file_internal(const char *path, void *out) {
     int32 index;
     FILE *file;
 
@@ -339,7 +338,7 @@ static void read_data_file_internal(const char *path, void *out) {
     }
 
     // Path is in bigfile, read from bigfile on disk
-    file = fopen(sBigFileAbsolutePath, str_rb);
+    file = fopen(sBigFileAbsolutePath, "rb");
     fseek(file, sBigFileHeader[index].byteOffset, SEEK_SET);
     fread(out, sBigFileHeader[index].sizeBytes, 1, file);
     fclose(file);
@@ -359,7 +358,7 @@ FILE *open_data_file(const char *path, const char *mode) {
     }
 
     // Open file in bigfile
-    file = fopen(sBigFileAbsolutePath, str_rb);
+    file = fopen(sBigFileAbsolutePath, "rb");
     fseek(file, sBigFileHeader[index].byteOffset, SEEK_SET);
 
     // Find first entry pointer element that is free
@@ -374,7 +373,7 @@ FILE *open_data_file(const char *path, const char *mode) {
 
     // If there's a free slot, store information about the file
     if (ptrIndex < MAX_BIG_FILE_ENTRY_POINTERS) {
-        sprintf(sBigFileEntryPointerPaths[ptrIndex], str_pct_s, path);
+        sprintf(sBigFileEntryPointerPaths[ptrIndex], "%s", path);
         sBigFileEntryPointers[ptrIndex].file = file;
         sBigFileEntryPointers[ptrIndex].position = 0;
         sBigFileEntryPointers[ptrIndex].sizeBytes = sBigFileHeader[index].sizeBytes;

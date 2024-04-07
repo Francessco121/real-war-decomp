@@ -12,8 +12,8 @@ A work in progress decompilation of the PC game [Real War (2001) by Rival Intera
         - `C:\Program Files (x86)\Microsoft Visual Studio\VC98`
         - `C:\Program Files (x86)\Microsoft Visual Studio\Common\MSDev98`
     - This can also be installed via Visual Studio 6.0 Enterprise (6.00.8168).
-- DirectX 7 SDK
-    - The game's readme claims that it needs DX8, however the game code does not use the DX8 style of programming and instead appears to be based on DX6 with some usage of DX7 APIs. More research is needed here.
+- DirectX 8 SDK
+    - Tooling currently assumes that this is installed at `C:\dx8sdk`
 - [Dart](https://dart.dev/) >=3.3.0
 - [Ninja](https://ninja-build.org/)
 - [Just](https://just.systems/)
@@ -29,24 +29,19 @@ A work in progress decompilation of the PC game [Real War (2001) by Rival Intera
 3. Build [Capstone](https://www.capstone-engine.org/) (v5.0) and place `capstone.dll` in `tools/`.
 4. Build tools: `just build-tools`
 5. Verify game exe: `just verifybase`
-6. Extract asm/bin: `just split`
-7. Configure build script: `just configure`
-8. Build: `just build`
-9. Verify recompiled exe: `just verify`
+6. Configure build script: `just configure`
+7. Build: `just build`
+8. Verify recompiled exe: `just verify`
 
 ### Decompiling
 A quick overview of the decompilation process:
 
 - Decompile functions and place them in `rw/src`.
 - Map files in `rw/src` and symbols to virtual exe addresses in `rw.yaml`.
-- For functions that haven't been decompiled yet but are in the middle of a source file, add a `#pragma ASM_FUNC function_name` line in its place (with `function_name` being the actual name of the function) to let the rest of the file compile correctly.
-    - If the function is not void, add `hasret` after the function name.
-- If segments in `rw.yaml` are updated or new `#pragma ASM_FUNC`s are added, re-run `just split`.
 - If source files are added/renamed/deleted, re-run `just configure`.
 - Use `just diff {function name}` for live function diffing.
-- Once the function matches: rebuild and verify (shortcut: `just check`).
-- If the function doesn't match, surround it with `#ifdef NON_MATCHING` and add back its `#pragma ASM_FUNC`
-    - If the function isn't even logically the same yet, surround it with `#ifdef NON_EQUIVALENT` instead.
+- Once the function matches or is logically equivalent: build and verify (shortcut: `just check`).
+- If the function isn't logically equivalent but worth committing, surround it with `#ifdef NON_EQUIVALENT`.
 
 ## Cool Stuff
 

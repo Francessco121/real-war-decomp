@@ -39,7 +39,7 @@ void main(List<String> args) {
   
   // Parse exe
   final String exeFilePath = p.join(decompDir, 
-      nonMatching ? p.join(rw.config.buildDir, 'RealWarNonMatching.exe') : rw.config.exePath);
+      nonMatching ? p.join(rw.config.buildDir, 'RealWar.exe') : rw.config.exePath);
   final exeBytes = File(exeFilePath).readAsBytesSync();
   final exe = PeFile.fromList(exeBytes);
 
@@ -60,7 +60,7 @@ void main(List<String> args) {
     final baseFuncName = clone.key;
     final cloneFuncName = clone.value;
 
-    final funcVA = rw.symbols[baseFuncName];
+    final funcVA = rw.symbols[baseFuncName]?.address;
     if (funcVA == null) {
       throw Exception('Cannot clone/extract non-existent function: $baseFuncName');
     }
@@ -74,7 +74,7 @@ void main(List<String> args) {
           funcRelativePA, 
           address: funcVA,
           name: baseFuncName, 
-          endAddress: imageBase + textVA + textSize);
+          endAddressHint: imageBase + textVA + textSize);
 
     // Create symbol for function
     final strings = StringTableBuilder();

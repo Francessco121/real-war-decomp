@@ -9,6 +9,14 @@ String makeBranchLabel(int address) {
   return '_L${address.toRadixString(16)}';
 }
 
+String makeSwitchLabel(int address) {
+  return '_S${address.toRadixString(16)}';
+}
+
+String makeCaseLabel(int address) {
+  return '_C${address.toRadixString(16)}';
+}
+
 class OperandMem {
   /// segment register (or X86_REG_INVALID if irrelevant)
   final int segment;
@@ -62,9 +70,9 @@ class Operand {
 }
 
 class Instruction {
-  bool get isBranch => mnemonic.startsWith('j');
-  bool get isLocalBranch =>
-      isBranch &&
+  bool get isJump => mnemonic.startsWith('j');
+  bool get isRelativeJump =>
+      isJump &&
       operands.length == 1 &&
       operands[0].type == x86_op_type.X86_OP_IMM;
 

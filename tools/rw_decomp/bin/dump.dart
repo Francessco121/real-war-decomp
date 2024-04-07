@@ -28,7 +28,7 @@ void main(List<String> args) {
 
   // Figure out symbol address
   final String symbolName = argResult.rest[0];
-  final int? virtualAddress = rw.symbols[symbolName];
+  final int? virtualAddress = rw.symbols[symbolName]?.address;
   if (virtualAddress == null) {
     print('Cannot locate symbol address: $symbolName');
     return;

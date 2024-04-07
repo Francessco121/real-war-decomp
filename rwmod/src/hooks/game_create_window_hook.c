@@ -1,7 +1,5 @@
 #include <WINDOWS.H>
 
-#include "strings.h"
-
 extern int gLaunchWindowed;
 extern HWND gWndHandle;
 extern int gCursorTextures;

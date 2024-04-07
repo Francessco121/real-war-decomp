@@ -48,7 +48,7 @@ extern int32 DAT_00fe04d0;
 extern int32 DAT_0051b7f4;
 
 extern int32 DAT_00567aa0;
-extern int32 DAT_0051add4;
+extern int32 gVertexCount;
 extern bool gDontInitD3D;
 extern int32 DAT_0051b8e0;
 
@@ -68,7 +68,7 @@ extern void game_main();
 extern void FUN_004a5c30();
 extern void FUN_0047a020();
 extern void FUN_004c8ab0();
-extern void FUN_00401b40();
+extern int32 FUN_00401b40();
 
 extern int32 get_memory_in_use_bytes(char *str);
 
@@ -78,7 +78,7 @@ extern bool init_d3d(HWND);
 extern int32 FUN_004013f0(HWND);
 extern void FUN_00406ed0();
 extern void FUN_0041a8e0();
-extern void FUN_00401870(HWND);
+extern int32 FUN_00401870(HWND);
 
 extern void memcpy_dword(uint32 *dst, uint32 *src, size_t count);
 extern void memset_dword(uint32 *dst, uint32 value, size_t count);

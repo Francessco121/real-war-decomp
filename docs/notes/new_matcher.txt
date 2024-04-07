@@ -1,0 +1,79 @@
+Problems to solve:
+    - Verifying matching data by relinking a matching exe is very difficult (nearly impossible) and not necessary
+    - Regression testing for non-matching (but equivalent) code is currently impossible
+
+Solution:
+    - Verify units of code/data individually instead of as a whole linked exe
+    - Don't try to map segments of the exe to files
+    - The order of code and data doesn't matter, just the contents
+    - Where static literal data is located and whether or not duplicates exist doesn't matter, just that the contents match
+        - i.e. static string literals, float/double literals that end up in .rdata
+
+Consequences:
+    - Verification process is much more complicated
+    - Data segment verification depends on correct variable sizes being recorded
+    - Incorrect/missing global sizes and/or missing globals may result in missed data even tho verification passes
+    + Non-matching code can now be included in every build, matching 100% is much less important
+    + Split doesn't need to be re-ran all the time
+    + Regressions can be caught
+    + ASM_FUNC is not longer necessary
+
+
+- VERIFY
+    - [X] works off of compiled object files
+    - [X] scans objs for symbols defined in said files and matches them to the base exe
+    - [X] symbols must still be mapped in rw.yaml
+    - [X] function matching is on an instruction basis (must disassemble both the base exe function and recompiled exe)
+        - literal symbols are compared by symbol name instead of address (exact address is allowed to be different)
+          (only relevant for static string literals and float/double literals)
+    - [X] object file must be relocated before matching
+    - [X] requires object files to be compiled with COMDATs (mainly for static string matching, but handy for functions)
+    - [X] data matching is on a byte basis per variable
+        - requires knowledge of the original variable size for perfect accuracy, can estimate without tho (recompiled
+          variable size can be inferred from obj file)
+    - [X] data matching should require that the data is in the correct section (i.e. .data vs .rdata)
+    - [X] should generate a report listing matching bytes per symbol
+        - requires running a real differ on functions
+    - [X] should be able to compare reports against a baseline to detect regressions/improvements
+        - allows us to keep and eye on non-matching code and make sure changes elsewhere dont
+          make that code worse 
+        - baseline report could be periodically generated manually and stored in source control
+    - [X] should only check object files that changed
+
+- LINK
+    - [X] works exactly as now but always assumes code is non-matching
+        - no longer interested in linking "matching" exes
+    - linked exe can be ran whenever to test current decompiled code
+    - non equivalent code will be wrapped in #if NON_EQUIVALENT and therefore not compiled and not linked
+    - non matching code will always be compiled and linked
+    - still ran on a full build
+    - [X] linking data segments is no longer interesting and could be skipped
+        - realistically, matching data segments will be done at the end of the decomp anyway
+
+- CL_WRAPPER
+    - no changes necessary
+    - ASM_FUNCs are no longer required but support can be kept in case its useful later, no point in ripping it out
+
+- FINDDIFFS
+    - probably not needed anymore, could be an option of the verify tool
+
+- PROGRESS
+    - should use the verification report to determine progress
+    - verify tool will already list which functions/data are defined and how close they match,
+      progress just needs to figure out the total to compare against for the whole exe
+
+- SPLIT
+    - needs to split every function
+    - mapping no longer needs specific C files
+    - split header to bin
+    - split .text (up to LIBC) to individual function bins (named by their address so we dont have to resplit)
+        - diassemble all functions
+        - option to just update diassembled function/file names
+    - split LIBC to bin file
+    - split .data, .rdata, .rsrc to bin files
+
+- RW_YAML
+    - [X] symbols should only define a name to an address and optionally a size
+    - size is necessary for accurate data matching, but we can still attempt matching without
+        - size of data from recompiled obj can be determined from symbol values (values are the offset within the section)
+    - [X] move literal symbols to separate map within the file

@@ -1,25 +1,26 @@
 import 'package:yaml/yaml.dart';
 
 class RealWarYaml {
-  Map<int, String> get addressesToSymbols {
-    _addressesToSymbols ??= symbols.map((key, value) => MapEntry(value, key));
-    return _addressesToSymbols!;
+  Map<int, RealWarYamlSymbol> get symbolsByAddress {
+    _symbolsByAddress ??= symbols.map((key, value) => MapEntry(value.address, value));
+    return _symbolsByAddress!;
   }
 
-  Map<int, String> get addressesToStrings {
-    _addressesToStrings ??= strings.map((key, value) => MapEntry(value, key));
-    return _addressesToStrings!;
+  Map<int, RealWarYamlLiteralSymbol> get literalSymbolsByAddress {
+    _literalSymbolsByAddress ??= Map.fromEntries(literalSymbols.entries.expand((e) => 
+        [for (final a in e.value.addresses) MapEntry(a, e.value)]));
+    return _literalSymbolsByAddress!;
   }
 
-  Map<int, String>? _addressesToSymbols;
-  Map<int, String>? _addressesToStrings;
+  Map<int, RealWarYamlSymbol>? _symbolsByAddress;
+  Map<int, RealWarYamlLiteralSymbol>? _literalSymbolsByAddress;
 
   final String dir;
   final RealWarYamlConfig config;
   final RealWarYamlExe exe;
   final List<RealWarYamlSegment> segments;
-  final Map<String, int> symbols;
-  final Map<String, int> strings;
+  final Map<String, RealWarYamlSymbol> symbols;
+  final Map<String, RealWarYamlLiteralSymbol> literalSymbols;
 
   RealWarYaml._({
     required this.dir,
@@ -27,7 +28,7 @@ class RealWarYaml {
     required this.exe,
     required this.segments,
     required this.symbols,
-    required this.strings,
+    required this.literalSymbols,
   });
 
   factory RealWarYaml.load(String contents, {required String dir}) {
@@ -50,14 +51,14 @@ class RealWarYaml {
       lastSegmentAddress = seg.address;
     }
 
-    final symbols = <String, int>{};
+    final symbols = <String, RealWarYamlSymbol>{};
     for (final MapEntry entry in yaml['symbols'].entries) {
-      symbols[entry.key] = entry.value;
+      symbols[entry.key] = RealWarYamlSymbol._(entry.key, entry.value);
     }
 
-    final strings = <String, int>{};
-    for (final MapEntry entry in yaml['strings'].entries) {
-      strings[entry.key] = entry.value;
+    final literalSymbols = <String, RealWarYamlLiteralSymbol>{};
+    for (final MapEntry entry in yaml['literalSymbols'].entries) {
+      literalSymbols[entry.key] = RealWarYamlLiteralSymbol._(entry.key, entry.value);
     }
 
     return RealWarYaml._(
@@ -66,12 +67,12 @@ class RealWarYaml {
       exe: exe,
       segments: segments,
       symbols: symbols,
-      strings: strings,
+      literalSymbols: literalSymbols,
     );
   }
 
-  int? lookupSymbolOrString(String name) {
-    return symbols[name] ?? strings[name];
+  int? lookupSymbol(String name) {
+    return symbols[name]?.address ?? literalSymbols[name]?.addresses.first;
   }
 
   RealWarYamlSegment? findSegmentOfAddress(int virtualAddress) {
@@ -87,6 +88,38 @@ class RealWarYaml {
 
     return lastSeg;
   }
+}
+
+class RealWarYamlSymbol {
+  final String name;
+  final int address;
+  final int? size;
+
+  RealWarYamlSymbol._value(this.name, this.address) 
+      : size = null;
+  RealWarYamlSymbol._list(this.name, YamlList list)
+      : address = list[0],
+        size = list[1];
+
+  factory RealWarYamlSymbol._(String name, dynamic yaml) {
+    if (yaml is YamlList) {
+      return RealWarYamlSymbol._list(name, yaml);
+    } else {
+      return RealWarYamlSymbol._value(name, yaml);
+    }
+  }
+}
+
+class RealWarYamlLiteralSymbol {
+  final String name;
+  final String displayName;
+  final int size;
+  final List<int> addresses;
+
+  RealWarYamlLiteralSymbol._(this.name, YamlList list)
+      : displayName = list[0],
+        size = list[1],
+        addresses = list.skip(2).cast<int>().toList();
 }
 
 class RealWarYamlConfig {
@@ -115,21 +148,41 @@ class RealWarYamlExe {
   final int textVirtualAddress;
   /// Size (in bytes) of the .text section within the exe file.
   final int textPhysicalSize;
+  /// File offset of the .rdata section data.
+  final int rdataFileOffset;
+  /// Virtual address of the .rdata section in memory relative to [imageBase].
+  final int rdataVirtualAddress;
+  /// File offset of the .data section data.
+  final int dataFileOffset;
+  /// Virtual address of the .data section in memory relative to [imageBase].
+  final int dataVirtualAddress;
+  /// Virtual address of the .data section, where uninitialized memory start, 
+  /// in memory relative to [imageBase].
+  final int bssVirtualAddress;
 
   RealWarYamlExe._(YamlMap map)
       : imageBase = map['imageBase'],
         textFileOffset = map['textFileOffset'],
         textVirtualAddress = map['textVirtualAddress'],
-        textPhysicalSize = map['textPhysicalSize'];
+        textPhysicalSize = map['textPhysicalSize'],
+        rdataFileOffset = map['rdataFileOffset'],
+        rdataVirtualAddress = map['rdataVirtualAddress'],
+        dataFileOffset = map['dataFileOffset'],
+        dataVirtualAddress = map['dataVirtualAddress'],
+        bssVirtualAddress = map['bssVirtualAddress'];
 }
 
 class RealWarYamlSegment {
   final int address;
   final String type;
-  final String name;
+  final String? name;
 
   RealWarYamlSegment._(YamlList list)
       : address = list[0],
         type = list[1],
-        name = list[2] ?? 'segment_${list[0].toRadixString(16)}';
+        name = list.length >= 3 ? list[2] : null;
+}
+
+String makeDefaultSegmentName(int address) {
+  return 'segment_${address.toRadixString(16)}'; 
 }

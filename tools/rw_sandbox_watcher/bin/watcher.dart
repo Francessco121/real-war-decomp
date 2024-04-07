@@ -12,7 +12,7 @@ import 'package:watcher/watcher.dart';
 import 'package:x86_analyzer/functions.dart';
 
 const vsPath = 'C:\\Program Files (x86)\\Microsoft Visual Studio';
-const dxPath = 'C:\\dx7sdk';
+const dxPath = 'C:\\dx8sdk';
 final workingDirectory = p.current;
 final projectDir = p.normalize(p.join(workingDirectory, '..'));
 final clWrapperExePath = p.join(projectDir, 'tools/rw_decomp/build/cl_wrapper.exe');
@@ -82,7 +82,7 @@ Future<void> compile(String cPath) async {
     '--vsdir=$vsPath',
     '--no-library-warnings',
     // Standard flags used by the decomp
-    '--flag=/W4,/Og,/Oi,/Ot,/Oy,/Ob1,/Gs,/Gy',
+    '--flag=/W4,/Og,/Oi,/Ot,/Oy,/Ob1,/Gs,/Gf,/Gy',
     // Additional debug info for sandbox
     '--flag=/Fd$pdbPath,/Zi',
     '-L', '$dxPath\\include',
@@ -211,7 +211,7 @@ Future<void> disassemble(IOSink writer, String objPath) async {
         FileData.fromList(sectionBytes), 0, 
         address: funcVA, 
         name: funcName,
-        endAddress: funcVA + sectionBytes.length);
+        endAddressHint: funcVA + sectionBytes.length);
 
     if (functions > 0) {
       writer.writeln();
@@ -221,7 +221,7 @@ Future<void> disassemble(IOSink writer, String objPath) async {
     writer.writeln('${func.name}:');
 
     for (final inst in func.instructions) {
-      if (func.branchTargetSet.contains(inst.address)) {
+      if (func.branchTargets.contains(inst.address)) {
         writer.write(makeBranchLabel(inst.address));
         writer.writeln(':');
       }
@@ -230,7 +230,7 @@ Future<void> disassemble(IOSink writer, String objPath) async {
       writer.write(inst.mnemonic.padRight(10));
       writer.write(' ');
       // Replace branch addresses with symbols where possible
-      if (inst.isLocalBranch) {
+      if (inst.isRelativeJump) {
         if (inst.operands.length == 1 && inst.operands[0].imm != null && 
             inst.operands[0].imm! < fakeTextAddressStart) {
           writer.write(makeBranchLabel(inst.operands[0].imm!));

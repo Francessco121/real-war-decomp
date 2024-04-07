@@ -6,6 +6,9 @@ class RelocationException implements Exception {
   final String message;
 
   RelocationException(this.message);
+
+  @override
+  String toString() => 'RelocationException: $message';
 }
 
 /// Applies all relocations for a single COFF section to the new [targetVirtualAddress].
