@@ -13,13 +13,17 @@ class RealWarModYaml {
     final yaml = loadYaml(contents);
 
     final hooks = <String, String>{};
-    for (final MapEntry entry in yaml['hooks'].entries) {
-      hooks[entry.key] = entry.value;
+    if (yaml['hooks'] != null) {
+      for (final MapEntry entry in yaml['hooks'].entries) {
+        hooks[entry.key] = entry.value;
+      }
     }
 
     final funcClones = <String, String>{};
-    for (final MapEntry entry in yaml['func_clones'].entries) {
-      funcClones[entry.key] = entry.value;
+    if (yaml['func_clones'] != null) {
+      for (final MapEntry entry in yaml['func_clones'].entries) {
+        funcClones[entry.key] = entry.value;
+      }
     }
 
     return RealWarModYaml._(

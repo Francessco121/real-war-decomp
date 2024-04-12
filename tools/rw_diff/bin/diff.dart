@@ -155,7 +155,7 @@ Future<void> main(List<String> args) async {
         if (!error) {
           // Disassemble
           objFunc = _loadObjFunction(objFilePath, symbolName, disassembler,
-              virtualAddress, rw, segment.address);
+              virtualAddress, rw);
 
           // Diff
           lines = runDiff(exeFunc.instructions, objFunc!.instructions, diffEquality);
@@ -721,8 +721,7 @@ DisassembledFunction _loadExeFunction(String filePath, String symbolName, int ph
 
 DisassembledFunction _loadObjFunction(
     String filePath, String symbolName, FunctionDisassembler disassembler, 
-    int virtualAddress,
-    RealWarYaml rw, int segmentVirtualAddress) {
+    int virtualAddress, RealWarYaml rw) {
   final bytes = File(filePath).readAsBytesSync();
   final obj = CoffFile.fromList(bytes);
 
@@ -736,40 +735,29 @@ DisassembledFunction _loadObjFunction(
     throw LoadException('Could not find symbol \'$symbolName\' in $filePath');
   }
 
-  // NOTE: Functions may be compiled as COMDATs, so there's possibly more than one .text section.
-  // The symbol specifies which section exactly and a relative offset within it.
-  final int textFileAddress =
-      obj.sections[symbol.sectionNumber - 1].header.pointerToRawData;
-
-  final int funcFileAddress = textFileAddress + symbol.value;
-
-  // Apply .text relocations
-  //
-  // If this was compiled with COMDATs, we could theoretically just relocate the one function, but
-  // let's not assume for simplicity.
-  int sectionVirtualAddress = segmentVirtualAddress;
-  for (final section in obj.sections) {
-    if (section.header.name != '.text') {
-      continue;
-    }
-
-    final filePtr = section.header.pointerToRawData;
-    final sectionBytes = Uint8List.sublistView(bytes, filePtr, filePtr + section.header.sizeOfRawData);
-
-    relocateSection(obj, section, 
-        sectionBytes, 
-        targetVirtualAddress: sectionVirtualAddress, 
-        symbolLookup: (sym) => rw.lookupSymbol(unmangle(sym)),
-        allowUnknownSymbols: true);
-
-    sectionVirtualAddress += section.header.sizeOfRawData;
-  }
-
-  final objData = FileData.fromList(bytes);
+  // Relocate function .text COMDAT section
+  final section = obj.sections[symbol.sectionNumber - 1];
+  final filePtr = section.header.pointerToRawData;
+  final funcSize = section.header.sizeOfRawData;
+  final sectionBytes = Uint8List.sublistView(bytes, filePtr, filePtr + funcSize);
 
   try {
-    return disassembler.disassembleFunction(objData, funcFileAddress,
-        address: virtualAddress, name: symbolName);
+    relocateSection(obj, section, 
+        sectionBytes, 
+        targetVirtualAddress: virtualAddress, 
+        symbolLookup: (sym) => rw.lookupSymbol(unmangle(sym)));
+  } on RelocationException catch (ex) {
+    throw LoadException(ex.message);
+  }
+
+  // Disassemble
+  final objData = FileData.fromList(sectionBytes);
+
+  try {
+    return disassembler.disassembleFunction(objData, 0,
+        address: virtualAddress, 
+        name: symbolName,
+        endAddressHint: virtualAddress + funcSize);
   } finally {
     objData.free();
   }

@@ -59,6 +59,12 @@ set shell := ["powershell.exe", "-c"]
     just rebuild
     just run {{args}}
 
+# build + debug
+[no-exit-message]
+@builddebug *args:
+    just build
+    just debug {{args}}
+
 # watch modlog.txt
 [no-exit-message]
 @logtail:

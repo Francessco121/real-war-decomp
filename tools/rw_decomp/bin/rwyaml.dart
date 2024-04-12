@@ -498,10 +498,10 @@ SymbolMapping _parseSymbolNameSizePair(String str) {
 
   final semicolonIdx = str.indexOf(';', colonIdx < 0 ? 0 : colonIdx);
   if (semicolonIdx >= 0) {
-    address = _parseInt(str.substring(colonIdx < 0 ? 0 : colonIdx, semicolonIdx));
+    address = _parseInt(str.substring(colonIdx < 0 ? 0 : (colonIdx + 1), semicolonIdx));
     size = _parseInt(str.substring(semicolonIdx + 1));
   } else {
-    address = _parseInt(str.substring(colonIdx < 0 ? 0 : colonIdx));
+    address = _parseInt(str.substring(colonIdx < 0 ? 0 : (colonIdx + 1)));
     size = null;
   }
 
