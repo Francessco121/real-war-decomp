@@ -131,7 +131,7 @@ void to_absolute_dirtree_path(char *path) {
 
 void cd_check() {
     int retries = 0;
-    bool flag = FALSE;
+    bool32 flag = FALSE;
     FILE* file;
 
     while (TRUE) {
@@ -288,7 +288,7 @@ void set_game_registry_value(const char *name, const char *value) {
     }
 }
 
-bool get_game_registry_value(const char *name, char *outValue) {
+bool32 get_game_registry_value(const char *name, char *outValue) {
     LONG result;
 
     // Create/get key HKEY_LOCAL_MACHINE\Software

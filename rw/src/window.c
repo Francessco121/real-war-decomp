@@ -21,7 +21,7 @@
 #define MAX_CMD_LINE_ARGS 20
 
 HWND gWndHandle;
-bool gWindowFocused;
+bool32 gWindowFocused;
 HWND gActiveWindow;
 int32 gWindowStatus;
 
@@ -36,10 +36,10 @@ int gNCmdShow;
 int32 gMemoryInUseBytes;
 
 LRESULT CALLBACK game_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-bool game_create_window(HINSTANCE hInstance, int nCmdShow);
+bool32 game_create_window(HINSTANCE hInstance, int nCmdShow);
 
-bool init_systems(HINSTANCE hInstance, int nShowCmd) {
-    bool ret;
+bool32 init_systems(HINSTANCE hInstance, int nShowCmd) {
+    bool32 ret;
 
     ret = FALSE;
 
@@ -72,11 +72,11 @@ bool init_systems(HINSTANCE hInstance, int nShowCmd) {
     return ret;
 }
 
-bool FUN_004d45b0() {
+bool32 FUN_004d45b0() {
     return FUN_00401100(gWndHandle);
 }
 
-bool game_create_window(HINSTANCE hInstance, int nCmdShow) {
+bool32 game_create_window(HINSTANCE hInstance, int nCmdShow) {
     WNDCLASSA wndClass;
 
     wndClass.style = 0;
@@ -351,7 +351,7 @@ void display_messagebox(const char *format, ...) {
     MessageBoxA(gWndHandle, buffer, "Message...", MB_OK);
 }
 
-bool display_yesno_messagebox(const char *message) {
+bool32 display_yesno_messagebox(const char *message) {
     if (gDDFrontBuffer != NULL) {
         IDirectDraw4_FlipToGDISurface(gDirectDraw4);
     }
@@ -421,7 +421,7 @@ void pump_messages() {
     }
 }
 
-bool handle_window_focus_change() {
+bool32 handle_window_focus_change() {
     HWND focus;
 
     gActiveWindow = GetActiveWindow();

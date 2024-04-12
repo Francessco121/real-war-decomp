@@ -217,8 +217,8 @@ void sound_func_004d1e60(int32 idx) {
     sound_func_004d35a0(idx);
 }
 
-bool is_sound_playing(int32 idx) {
-    bool playing;
+bool32 is_sound_playing(int32 idx) {
+    bool32 playing;
     
     if (!gSoundSystemInitialized) {
         return TRUE;
@@ -344,7 +344,7 @@ void write_adpcm_to_sound_buffers(
     IDirectSoundBuffer *soundBuffer2,
     const int8 *adpcmBytes,
     uint32 adpcmLength,
-    bool isStereo
+    bool32 isStereo
 ) {
     LPVOID audioPtr1_1;
     DWORD audioBytes1_1;
@@ -841,9 +841,9 @@ void sound_func_004d2a10(int32 idx, uint32 sampleRate, int32 param3) {
     }
 }
 
-void sound_func_004d2ca0(const char *path, bool dontStream, int32 idx) {
+void sound_func_004d2ca0(const char *path, bool32 dontStream, int32 idx) {
     uint8 *kvagBytes;
-    bool isStereo;
+    bool32 isStereo;
     uint32 sampleRate;
     int8 temp[4];
 
@@ -955,9 +955,9 @@ void sound_func_004d2ca0(const char *path, bool dontStream, int32 idx) {
     }
 }
 
-void sound_func_004d30e0(const char *path, bool dontStream, int32 idx) {
+void sound_func_004d30e0(const char *path, bool32 dontStream, int32 idx) {
     uint8 *kvagBytes;
-    bool isStereo;
+    bool32 isStereo;
     uint32 sampleRate;
     int8 temp[4];
 
@@ -1196,10 +1196,10 @@ void sound_func_004d35a0(int32 idx) {
     }
 }
 
-void sound_func_004d39a0(const uint8 *kvagBytes, int32 idx, int32 volume1, int32 volume2, int32 pitch, bool playLooping) {
+void sound_func_004d39a0(const uint8 *kvagBytes, int32 idx, int32 volume1, int32 volume2, int32 pitch, bool32 playLooping) {
     uint32 adpcmByteLength;
     uint32 sampleRate;
-    bool isStereo;
+    bool32 isStereo;
     DSBUFFERDESC bufferDesc = {0};
 
     if (!gSoundSystemInitialized) {

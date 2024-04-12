@@ -16,7 +16,7 @@ size_t gVirtualMemorySizes[MAX_VIRTUAL_MEMORY_BUFFERS];
 int32 gVirtualMemoryNumbers[MAX_VIRTUAL_MEMORY_BUFFERS];
 int32 gTotalVirtualMemoryAllocated;
 
-bool gEnableRwMap;
+bool32 gEnableRwMap;
 int32 DAT_0051b988;
 int32 DAT_00567788;
 FILE* sRwMapTxtFile;

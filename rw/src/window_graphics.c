@@ -26,14 +26,14 @@ int32 DAT_0051b968;
 
 IDirectDraw *gDirectDraw;
 
-bool gCoInitialized;
+bool32 gCoInitialized;
 
 int32 gDisplayBPP;
 int32 gPrimarySurfaceBufferByteSize;
 int32 gDisplayWidth;
 int32 gDisplayHeight;
 
-bool gBitmapCreated;
+bool32 gBitmapCreated;
 
 uint16 *gInMemoryGraphicsSurface;
 uint16 *gBitmapData;
@@ -52,7 +52,7 @@ const char *get_last_graphics_error_reason() {
     return gTempString2;
 }
 
-bool set_cursor_pos(int32 x, int32 y) {
+bool32 set_cursor_pos(int32 x, int32 y) {
     if (gBitmapCreated) {
         return FALSE;
     }
@@ -60,7 +60,7 @@ bool set_cursor_pos(int32 x, int32 y) {
     return SetCursorPos(x, y);
 }
 
-bool some_graphics_init(int32 width, int32 height, int32 bpp) {
+bool32 some_graphics_init(int32 width, int32 height, int32 bpp) {
     free_graphics_stuff();
 
     if (!gCoInitialized) {
@@ -172,7 +172,7 @@ void create_some_bitmap() {
     ReleaseDC(NULL, hdc);
 }
 
-bool init_directx(int32 displayWidth, int32 displayHeight, int32 displayBpp) {
+bool32 init_directx(int32 displayWidth, int32 displayHeight, int32 displayBpp) {
     HRESULT hresult;
     int32 prevVirtualMemoryBufferNumber;
     DDSURFACEDESC2 surfaceDesc;

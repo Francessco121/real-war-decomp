@@ -177,8 +177,8 @@ void update_mouse_state() {
     gMouseButtonsClicked = (gMouseButtonsHeld ^ prevButtonsHeld) & gMouseButtonsHeld;
 }
 
-bool mouse_btns_held_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons) {
-    bool ret;
+bool32 mouse_btns_held_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons) {
+    bool32 ret;
     
     if (!handle_window_focus_change()) {
         return FALSE;
@@ -198,8 +198,8 @@ bool mouse_btns_held_in_rect(int32 left, int32 top, int32 right, int32 bottom, u
     return ret;
 }
 
-bool mouse_btns_clicked_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons) {
-    bool ret;
+bool32 mouse_btns_clicked_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons) {
+    bool32 ret;
     
     if (!handle_window_focus_change()) {
         return FALSE;
@@ -235,8 +235,8 @@ int32 force_mouse_btns_held(uint32 buttons) {
     return 0;
 }
 
-bool is_cursor_in_rect(int32 left, int32 top, int32 right, int32 bottom) {
-    bool ret;
+bool32 is_cursor_in_rect(int32 left, int32 top, int32 right, int32 bottom) {
+    bool32 ret;
 
     ret = handle_window_focus_change();
     

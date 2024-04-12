@@ -16,4 +16,4 @@ extern int32 gKeyDownBufferIdx;
 
 extern uint32 get_key_state(int nVirtKey);
 extern void update_keys_pressed();
-extern bool was_key_tapped(int virtKeyCode);
+extern bool32 was_key_tapped(int virtKeyCode);

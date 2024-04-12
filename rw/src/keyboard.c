@@ -32,6 +32,6 @@ void update_keys_pressed() {
     }
 }
 
-bool was_key_tapped(int virtKeyCode) {
+bool32 was_key_tapped(int virtKeyCode) {
     return gKeysTapped[virtKeyCode];
 }

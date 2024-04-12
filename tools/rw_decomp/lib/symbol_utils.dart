@@ -15,7 +15,7 @@ String unmangle(String name) {
     // Other
     if (name.startsWith('__imp__')) {
       name = name.substring(7);
-    } else if (name.startsWith('_')) { // cdecl/stdcall prefix
+    } else if (name.startsWith('_') || name.startsWith('?')) { // cdecl/stdcall prefix
       name = name.substring(1);
     } else if (name.startsWith('@')) { // fastcall prefix
       name = name.substring(1);

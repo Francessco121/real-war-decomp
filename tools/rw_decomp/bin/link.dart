@@ -223,7 +223,11 @@ List<ObjFunction> _loadObjs(RealWarYaml rw,
 
   final srcDir = Directory(srcDirPath);
   for (final file in srcDir.listSync(recursive: true)) {
-    if (file is! File || p.extension(file.path) != '.c') {
+    if (file is! File) {
+      continue;
+    }
+    final ext = p.extension(file.path);
+    if (ext != '.c' && ext != '.cpp') {
       continue;
     }
 

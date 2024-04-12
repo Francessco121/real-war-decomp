@@ -16,7 +16,7 @@ typedef unsigned __int64 uint64;
 typedef float float32;
 typedef double float64;
 
-typedef int bool;
+typedef int bool32;
 typedef __int8 bool8;
 
 #ifndef FALSE

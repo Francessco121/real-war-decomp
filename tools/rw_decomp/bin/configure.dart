@@ -28,11 +28,15 @@ void main(List<String> args) {
 
   final srcDir = Directory(p.join(projectDir, rw.config.srcDir));
   for (final file in srcDir.listSync(recursive: true)) {
-    if (file is! File || p.extension(file.path) != '.c') {
+    if (file is! File) {
+      continue;
+    }
+    final ext = p.extension(file.path);
+    if (ext != '.c' && ext != '.cpp') {
       continue;
     }
 
-    compilationUnits.add(p.withoutExtension(p.relative(file.absolute.path, from: srcDir.absolute.path)));
+    compilationUnits.add(p.relative(file.absolute.path, from: srcDir.absolute.path));
   }
 
   // Write ninja build file  
@@ -79,13 +83,14 @@ void main(List<String> args) {
   writer.comment('Compilation');
   for (final name in compilationUnits) {
     final normalizedName = p.normalize(name);
-    writer.build('\$BUILD_DIR\\obj\\$normalizedName.obj', 'cl', inputs: '\$SRC_DIR\\$normalizedName.c');
+    final objName = p.setExtension(normalizedName, '.obj');
+    writer.build('\$BUILD_DIR\\obj\\$objName', 'cl', inputs: '\$SRC_DIR\\$normalizedName');
   }
 
   writer.newline();
   writer.comment('Linking');
   writer.build('\$BUILD_DIR\\$outputExeName', 'link', 
-      implicit: compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'));
+      implicit: compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.setExtension(p.normalize(n), '.obj')}'));
 
   // Write file
   final buildFile = File(p.join(projectDir, 'build.ninja'));

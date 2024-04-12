@@ -80,13 +80,13 @@ extern int32 DAT_0051b7f4;
 
 extern int32 DAT_00567aa0;
 extern int32 gVertexCount;
-extern bool gDontInitD3D;
+extern bool32 gDontInitD3D;
 extern int32 DAT_0051b8e0;
 
 extern int32 DAT_0051b960;
 extern int32 DAT_0051b90c;
 
-extern bool FUN_00401100(HWND hWnd);
+extern bool32 FUN_00401100(HWND hWnd);
 
 extern void FUN_004d8010(int32);
 extern void load_cursor_textures();
@@ -105,7 +105,7 @@ extern int32 get_memory_in_use_bytes(char *str);
 
 extern void FUN_00406e60();
 extern int32 get_available_vid_memory();
-extern bool init_d3d(HWND);
+extern bool32 init_d3d(HWND);
 extern int32 FUN_004013f0(HWND);
 extern void FUN_00406ed0();
 extern void FUN_0041a8e0();

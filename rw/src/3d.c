@@ -141,7 +141,7 @@ extern UnkD3dStruct1 DAT_01b910e0;
 extern D3DVIEWPORT2 gD3DViewport2;
 extern LPDIRECT3DVIEWPORT3 g3DViewport;
 
-extern bool gZEnable;
+extern bool32 gZEnable;
 
 extern int32 DAT_0051add8;
 extern void *DAT_0051ad80;
@@ -186,7 +186,7 @@ struct _gD3DGlobals {
 
 // .text
 
-bool try_find_valid_d3d_device(HWND hWnd);
+bool32 try_find_valid_d3d_device(HWND hWnd);
 HRESULT CALLBACK enum_devices_callback(
     LPGUID lpGUID, 
     LPSTR lpszDeviceDesc, 
@@ -251,7 +251,7 @@ int32 get_available_vid_memory() {
     return result;
 }
 
-bool FUN_00401100(HWND hWnd) {
+bool32 FUN_00401100(HWND hWnd) {
     memset(&DAT_01b2ea60, 0, 0x18800*4);
     memset(&DAT_01b2dda0, 0, 0x32b*4);
 
@@ -266,7 +266,7 @@ bool FUN_00401100(HWND hWnd) {
     }
 }
 
-bool try_find_valid_d3d_device(HWND hWnd) {
+bool32 try_find_valid_d3d_device(HWND hWnd) {
     static LPDIRECT3D sD3D = NULL;
 
     HRESULT result;
@@ -313,8 +313,8 @@ HRESULT CALLBACK enum_devices_callback(
     LPD3DDEVICEDESC lpd3dSWDeviceDesc,
     LPVOID lpUserArg) {
     
-    static bool sDevIsHardware = FALSE;
-    static bool sDevIsMonoColor = FALSE;
+    static bool32 sDevIsHardware = FALSE;
+    static bool32 sDevIsMonoColor = FALSE;
 
     LPD3DDEVICEDESC lpDeviceDesc;
     int32 *lpStartDevice;
@@ -374,7 +374,7 @@ HRESULT CALLBACK enum_devices_callback(
     return D3DENUMRET_OK;
 }
 
-bool init_d3d(HWND hWnd) {
+bool32 init_d3d(HWND hWnd) {
     get_available_vid_memory();
 
     if (gDontInitD3D) {
@@ -1602,7 +1602,7 @@ int FUN_00403720(uint16 *baseBytes, uint16 *alphaBytes, int32 width, int32 heigh
 
 void try_init_zbuffer() {
     DDSURFACEDESC2 surfaceDesc;
-    
+
     gZEnable = FALSE;
 
     IDirect3D3_EnumZBufferFormats(gDirect3D3, gD3DClassID, enum_zbuffer_formats_callback, &DAT_01b91140);

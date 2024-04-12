@@ -35,8 +35,8 @@ void handle_m2_up(HWND hWnd, int32 mouseX, int32 mouseY, uint32 modifiers);
  */
 void update_mouse_state();
 
-bool mouse_btns_held_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons);
-bool mouse_btns_clicked_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons);
+bool32 mouse_btns_held_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons);
+bool32 mouse_btns_clicked_in_rect(int32 left, int32 top, int32 right, int32 bottom, uint32 buttons);
 int32 force_mouse_btns_clicked(uint32 buttons);
 int32 force_mouse_btns_held(uint32 buttons);
-bool is_cursor_in_rect(int32 left, int32 top, int32 right, int32 bottom);
+bool32 is_cursor_in_rect(int32 left, int32 top, int32 right, int32 bottom);

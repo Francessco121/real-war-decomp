@@ -8,4 +8,4 @@ extern void to_absolute_dirtree_path(char *path);
 extern void cd_check();
 extern char *get_absolute_vid_path(const char *path, int32 idx);
 extern void set_game_registry_value(const char *name, const char *value);
-extern bool get_game_registry_value(const char *name, char *outValue);
+extern bool32 get_game_registry_value(const char *name, char *outValue);

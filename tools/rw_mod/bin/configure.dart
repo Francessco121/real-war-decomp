@@ -36,7 +36,7 @@ Future<void> main(List<String> args) async {
 
   await for (final file in Directory(modSrcDir).list(recursive: true)) {
     if (file is File) {
-      final basename = p.basenameWithoutExtension(file.path);
+      final basename = p.basename(file.path);
       final dir = p.dirname(file.path);
       final relativePath = p.join(
         p.relative(dir, from: modSrcDir),
@@ -103,7 +103,8 @@ Future<void> main(List<String> args) async {
   writer.comment('Compilation');
   for (final name in compilationUnits) {
     final normalizedName = p.normalize(name);
-    writer.build('\$BUILD_DIR\\obj\\$normalizedName.obj', 'cl', inputs: '\$SRC_DIR\\$normalizedName.c');
+    final objName = p.setExtension(normalizedName, '.obj');
+    writer.build('\$BUILD_DIR\\obj\\$objName', 'cl', inputs: '\$SRC_DIR\\$normalizedName');
   }
   
   if (cloneObjs.isNotEmpty) {
@@ -120,7 +121,7 @@ Future<void> main(List<String> args) async {
   writer.comment('Patching');
   writer.build(r'$OUT_GAME_DIR\RealWar.exe', 'rwpatch', 
       inputs: [
-        ...compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.normalize(n)}.obj'),
+        ...compilationUnits.map((n) => '\$BUILD_DIR\\obj\\${p.setExtension(p.normalize(n), '.obj')}'),
         ...cloneObjs.map((n) => nonMatching ? '\$BIN_DIR\\nonmatching\\$n.obj' : '\$BIN_DIR\\$n.obj')
       ],
       implicit: nonMatching ? r'$BASE_EXE' : null);

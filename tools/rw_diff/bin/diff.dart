@@ -178,7 +178,7 @@ Future<void> main(List<String> args) async {
         StreamGroup.merge([srcWatcher.events, incWatcher.events])
             .listen((event) {
       final ext = p.extension(event.path).toLowerCase();
-      if (ext != '.c' && ext != '.h') {
+      if (ext != '.c'&& ext != '.cpp' && ext != '.h') {
         return;
       }
 
