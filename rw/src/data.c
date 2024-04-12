@@ -62,7 +62,7 @@ size_t read_data_file(const char *path, void *out) {
 
         // Convert path to an absolute file path
         sprintf(absolutePath, "%s", path);
-        to_absolute_data_path2(absolutePath);
+        to_absolute_data_path(absolutePath);
         
         // Read
         file = fopen(absolutePath, "rb");
@@ -88,7 +88,7 @@ FILE *open_data_file_relative(const char *path, const char *mode) {
     if (index < 0) {
         // Convert path to an absolute file path
         sprintf(sAbsolutePathTempString, "%s", path);
-        to_absolute_data_path2(sAbsolutePathTempString);
+        to_absolute_data_path(sAbsolutePathTempString);
 
         return fopen(sAbsolutePathTempString, mode);
     }
@@ -116,7 +116,7 @@ size_t read_data_file_partial(const char *path, void *out, size_t length) {
     if (index < 0) {
         // Convert path to an absolute file path
         sprintf(sAbsolutePathTempString, "%s", path);
-        to_absolute_data_path2(sAbsolutePathTempString);
+        to_absolute_data_path(sAbsolutePathTempString);
 
         file = fopen(sAbsolutePathTempString, "rb");
         if (file != NULL) {
@@ -146,7 +146,7 @@ size_t get_data_file_length(const char *path) {
 
         // Convert path to an absolute file path
         sprintf(sAbsolutePathTempString, "%s", path);
-        to_absolute_data_path2(sAbsolutePathTempString);
+        to_absolute_data_path(sAbsolutePathTempString);
 
         length = 0;
         file = fopen(sAbsolutePathTempString, "rb");
@@ -236,7 +236,7 @@ void load_bigfile_header(const char *path) {
 
     // Convert path to absolute
     sprintf(absolutePath, "%s", path);
-    to_absolute_data_path(absolutePath);
+    to_absolute_dirtree_path(absolutePath);
     sprintf(sBigFileAbsolutePath, "%s", absolutePath);
 
     file = fopen(absolutePath, "rb");

@@ -24,18 +24,20 @@ typedef struct UnkD3dStruct1 {
 } UnkD3dStruct1;
 
 typedef struct UnkTexStruct1 {
-    /*0x0*/ int32 unk0x0;
-    /*0x4*/ int32 unk0x4;
-    /*0x8*/ int32 unk0x8;
-    /*0xc*/ int32 unk0xc;
-    /*0x10*/ int32 unk0x10;
-    /*0x14*/ char unk0x0_pad[24];
+    /*0x0*/ uint16 *texBytes;
+    /*0x4*/ int32 width;
+    /*0x8*/ int32 height;
+    /*0xc*/ int32 widthMultipleOfMin;
+    /*0x10*/ int32 heightMultipleOfMin;
+    /*0x14*/ char unk0x0_pad[16];
+    /*0x24*/ int32 unk0x24;
+    /*0x28*/ int32 unk0x28;
     /*0x2c*/ int32 unk0x2c;
     /*0x30*/ int32 unk0x30;
     /*0x34*/ int32 unk0x34[32]; // unsure of length
     /*0xb4*/ LPDIRECTDRAWSURFACE4 surface;
     /*0xb8*/ LPDIRECT3DTEXTURE2 texture;
-    /*0xbc*/ int32 unk0xbc;
+    /*0xbc*/ char *unk0xbc;
     /*0xc0*/ void *unk0xc0;
 } UnkTexStruct1;
 
@@ -142,24 +144,34 @@ extern LPDIRECT3DVIEWPORT3 g3DViewport;
 extern bool gZEnable;
 
 extern int32 DAT_0051add8;
-extern char *DAT_0051ad80;
+extern void *DAT_0051ad80;
 
-extern LPDIRECTDRAWSURFACE4 DAT_01b2ea4c;
+extern LPDIRECTDRAWSURFACE4 gZBufferSurface;
 extern LPUNKNOWN DAT_0051adc4;
 
 extern int32 DAT_0051ad90;
 
-extern void FUN_00403b80();
+extern DDPIXELFORMAT DAT_01b91140;
+
+extern int32 DAT_01b2dd80;
+extern int32 DAT_01b2dd84;
+extern int32 DAT_01b2dd88;
+extern int32 DAT_01b2dd8c;
+
+extern int32 DAT_0051ada8;
+
+extern void try_init_zbuffer();
 extern int32 FUN_00401af0();
 extern int32 FUN_004055c0(int32);
+extern void FUN_00409aa0(Matrix3x3 *matrix,int param_2,int index);
 
 // .data
 
-// lpD3D__try_find_valid_d3d_device
-// devIsHardware__enum_devices_callback
-// devIsMonoColor__enum_devices_callback
-
 // .bss
+
+// sD3D__try_find_valid_d3d_device
+// sDevIsHardware__enum_devices_callback
+// sDevIsMonoColor__enum_devices_callback
 
 struct _gD3DGlobals {
     GUID devGuids[MAX_ENUM_DEVICES];
@@ -175,15 +187,16 @@ struct _gD3DGlobals {
 // .text
 
 bool try_find_valid_d3d_device(HWND hWnd);
-HRESULT WINAPI enum_devices_callback(
+HRESULT CALLBACK enum_devices_callback(
     LPGUID lpGUID, 
     LPSTR lpszDeviceDesc, 
     LPSTR lpszDeviceName,
     LPD3DDEVICEDESC lpd3dHWDeviceDesc,
     LPD3DDEVICEDESC lpd3dSWDeviceDesc, 
     LPVOID lpUserArg);
+HRESULT CALLBACK enum_zbuffer_formats_callback(LPDDPIXELFORMAT lpDDPixFmt, LPVOID lpContext);
 
-HRESULT WINAPI enum_pixel_formats_callback(LPDDPIXELFORMAT lpDDPixFmt, LPVOID lpContext) {
+HRESULT CALLBACK enum_pixel_formats_callback(LPDDPIXELFORMAT lpDDPixFmt, LPVOID lpContext) {
     if ((lpDDPixFmt->dwFlags & (DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8)) == 0 && lpDDPixFmt->dwRGBBitCount == 16) {
         if (lpDDPixFmt->dwRGBAlphaBitMask == 0x8000 &&
             lpDDPixFmt->dwRBitMask == 0x7c00 &&
@@ -254,7 +267,7 @@ bool FUN_00401100(HWND hWnd) {
 }
 
 bool try_find_valid_d3d_device(HWND hWnd) {
-    static LPDIRECT3D lpD3D; // = NULL
+    static LPDIRECT3D sD3D = NULL;
 
     HRESULT result;
     LPDIRECTDRAW lpDD;
@@ -266,7 +279,7 @@ bool try_find_valid_d3d_device(HWND hWnd) {
         return FALSE;
     }
 
-    result = IDirectDraw_QueryInterface(lpDD, &IID_IDirect3D, &lpD3D);
+    result = IDirectDraw_QueryInterface(lpDD, &IID_IDirect3D, &sD3D);
     
     if (result != S_OK) {
         display_messagebox("Creation of Direct3D interface failed.");
@@ -274,7 +287,7 @@ bool try_find_valid_d3d_device(HWND hWnd) {
     }
 
     gD3DGlobals.selectedDev = -1;
-    result = IDirect3D_EnumDevices(lpD3D, enum_devices_callback, &gD3DGlobals.selectedDev);
+    result = IDirect3D_EnumDevices(sD3D, enum_devices_callback, &gD3DGlobals.selectedDev);
 
     if (result != S_OK) {
         display_messagebox("Enumeration of drivers failed.");
@@ -286,13 +299,13 @@ bool try_find_valid_d3d_device(HWND hWnd) {
         return FALSE;
     }
 
-    IDirect3D_Release(lpD3D);
-    lpD3D = NULL;
+    IDirect3D_Release(sD3D);
+    sD3D = NULL;
 
     return TRUE;
 }
 
-HRESULT WINAPI enum_devices_callback(
+HRESULT CALLBACK enum_devices_callback(
     LPGUID lpGUID, 
     LPSTR lpszDeviceDesc, 
     LPSTR lpszDeviceName,
@@ -300,8 +313,8 @@ HRESULT WINAPI enum_devices_callback(
     LPD3DDEVICEDESC lpd3dSWDeviceDesc,
     LPVOID lpUserArg) {
     
-    static bool devIsHardware; // = FALSE
-    static bool devIsMonoColor; // = FALSE
+    static bool sDevIsHardware = FALSE;
+    static bool sDevIsMonoColor = FALSE;
 
     LPD3DDEVICEDESC lpDeviceDesc;
     int32 *lpStartDevice;
@@ -328,24 +341,24 @@ HRESULT WINAPI enum_devices_callback(
         if (*lpStartDevice == -1) {
             // Select the first device we find to start
             gD3DGlobals.selectedDev = gD3DGlobals.devCounter;
-            devIsHardware = lpDeviceDesc == lpd3dHWDeviceDesc;
-            devIsMonoColor = (lpDeviceDesc->dcmColorModel & D3DCOLOR_MONO) ? TRUE : FALSE;
-        } else if (lpDeviceDesc == lpd3dHWDeviceDesc && !devIsHardware) {
+            sDevIsHardware = lpDeviceDesc == lpd3dHWDeviceDesc;
+            sDevIsMonoColor = (lpDeviceDesc->dcmColorModel & D3DCOLOR_MONO) ? TRUE : FALSE;
+        } else if (lpDeviceDesc == lpd3dHWDeviceDesc && !sDevIsHardware) {
             // Prefer hardware over software
             gD3DGlobals.selectedDev = gD3DGlobals.devCounter;
-            devIsHardware = lpDeviceDesc == lpd3dHWDeviceDesc;
-            devIsMonoColor = (lpDeviceDesc->dcmColorModel & D3DCOLOR_MONO) ? TRUE : FALSE;
-        } else if ((lpDeviceDesc == lpd3dHWDeviceDesc && devIsHardware) || (lpDeviceDesc == lpd3dSWDeviceDesc && !devIsHardware)) {
-            if (lpDeviceDesc->dcmColorModel == D3DCOLOR_RGB && devIsMonoColor) {
+            sDevIsHardware = lpDeviceDesc == lpd3dHWDeviceDesc;
+            sDevIsMonoColor = (lpDeviceDesc->dcmColorModel & D3DCOLOR_MONO) ? TRUE : FALSE;
+        } else if ((lpDeviceDesc == lpd3dHWDeviceDesc && sDevIsHardware) || (lpDeviceDesc == lpd3dSWDeviceDesc && !sDevIsHardware)) {
+            if (lpDeviceDesc->dcmColorModel == D3DCOLOR_RGB && sDevIsMonoColor) {
                 // Prefer color over mono
                 gD3DGlobals.selectedDev = gD3DGlobals.devCounter;
-                devIsHardware = lpDeviceDesc == lpd3dHWDeviceDesc;
-                devIsMonoColor = (lpDeviceDesc->dcmColorModel & D3DCOLOR_MONO) ? TRUE : FALSE;
+                sDevIsHardware = lpDeviceDesc == lpd3dHWDeviceDesc;
+                sDevIsMonoColor = (lpDeviceDesc->dcmColorModel & D3DCOLOR_MONO) ? TRUE : FALSE;
             }
         }
     
         // Only record hardware devices that can draw primitives, has blending capabilities, and has a depth buffer
-        if (devIsHardware &&
+        if (sDevIsHardware &&
             (lpd3dHWDeviceDesc->dwDevCaps & D3DDEVCAPS_DRAWPRIMTLVERTEX) != 0 &&
             (lpd3dHWDeviceDesc->dpcTriCaps.dwSrcBlendCaps) != 0 &&
             (lpd3dHWDeviceDesc->dpcTriCaps.dwDestBlendCaps) != 0 &&
@@ -385,7 +398,7 @@ int32 FUN_004013f0() {
     gViewportQueue = custom_alloc(0x40000);
 
     gD3DClassID = &gD3DGlobals.devGuids[0]; // wtf, why take the first one? this ignores the work enum_devices_callback did
-    FUN_00403b80();
+    try_init_zbuffer();
 
     if (gDDBackBuffer != NULL) {
         result = IDirect3D3_CreateDevice(gDirect3D3, gD3DClassID, gDDBackBuffer, &gDirect3DDevice3, NULL);
@@ -550,10 +563,10 @@ int32 FUN_00401870(HWND hWnd) {
     gTextureQueue = NULL;
     gViewportQueue = NULL;
 
-    if (DAT_01b2ea4c != NULL) {
-        IDirectDrawSurface4_Release(DAT_01b2ea4c);
+    if (gZBufferSurface != NULL) {
+        IDirectDrawSurface4_Release(gZBufferSurface);
     }
-    DAT_01b2ea4c = NULL;
+    gZBufferSurface = NULL;
 
     if (DAT_0051adc4 != NULL) {
         (DAT_0051adc4)->lpVtbl->Release(DAT_0051adc4);
@@ -999,8 +1012,8 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
     gRenderFlagQueue[triangleCount] = 0;
 
     if (gTextureQueue[gVertexCount / 3] >= 0) {
-        tuDivisor = DAT_01b2ea60[gTextureQueue[triangleCount] & 0xffff].unk0xc - 1.0;
-        tvDivisor = DAT_01b2ea60[gTextureQueue[triangleCount] & 0xffff].unk0x10 - 1.0;
+        tuDivisor = DAT_01b2ea60[gTextureQueue[triangleCount] & 0xffff].widthMultipleOfMin - 1.0;
+        tvDivisor = DAT_01b2ea60[gTextureQueue[triangleCount] & 0xffff].heightMultipleOfMin - 1.0;
 
         gVertexQueue[gVertexCount + 0].tu = (float32)(param1->tu1 + 0.5) / tuDivisor;
         gVertexQueue[gVertexCount + 0].tv = (float32)(param1->tv1 + 0.5) / tvDivisor;
@@ -1202,8 +1215,8 @@ void FUN_00402e30(UnkModelStruct* param1, int32 param2, UnkModelStruct2* param3)
     }
 
     if (gTextureQueue[triangleCount] >= 0) {
-        tuDivisor = DAT_01b2ea60[gTextureQueue[triangleCount]].unk0xc - 1.0;
-        tvDivisor = DAT_01b2ea60[gTextureQueue[triangleCount]].unk0x10 - 1.0;
+        tuDivisor = DAT_01b2ea60[gTextureQueue[triangleCount]].widthMultipleOfMin - 1.0;
+        tvDivisor = DAT_01b2ea60[gTextureQueue[triangleCount]].heightMultipleOfMin - 1.0;
 
         gVertexQueue[gVertexCount + 0].tu = (float32)(param1->tu1 + 0.5) / tuDivisor;
         gVertexQueue[gVertexCount + 0].tv = (float32)(param1->tv1 + 0.5) / tvDivisor;
@@ -1243,4 +1256,707 @@ void FUN_00402e30(UnkModelStruct* param1, int32 param2, UnkModelStruct2* param3)
     }
 
     gVertexCount += 3;
+}
+
+// Loads textures for 3D models
+int FUN_00403260(char *texPath, uint16 *texBytes, int32 width, int32 height, int32 textureId) {
+    int32 widthMultipleOfMin;
+    int32 heightMultipleOfMin;
+
+    int32 texturePageIdx;
+
+    DDSURFACEDESC2 surfaceDesc;
+    DDSURFACEDESC2 surfaceDesc2;
+
+    int32 width2;
+    int32 width3;
+    int32 height2;
+    int32 height3;
+
+    DDCOLORKEY colorKey;
+
+    widthMultipleOfMin = ((gMinTextureWidth - 1 + width) / gMinTextureWidth) * gMinTextureWidth;
+    heightMultipleOfMin = ((gMinTextureHeight - 1 + width) / gMinTextureHeight) * gMinTextureHeight;
+
+    if (widthMultipleOfMin > gMaxTextureWidth) {
+        widthMultipleOfMin = gMaxTextureWidth;
+    }
+
+    if (heightMultipleOfMin > gMaxTextureHeight) {
+        heightMultipleOfMin = gMaxTextureHeight;
+    }
+
+    texturePageIdx = textureId - 1;
+    if (texturePageIdx <= 0) {
+        texturePageIdx = 0;
+
+        while (texturePageIdx < 2048) {
+            if (DAT_01b2ea60[texturePageIdx].texture == NULL && DAT_01b2ea60[texturePageIdx].unk0xc0 == NULL) {
+                break;
+            }
+
+            texturePageIdx++;
+        }
+
+        if (texturePageIdx >= 2048) {
+            display_messagebox("No more Texture pages available.");
+        }
+
+        DAT_01b2ea60[texturePageIdx].width = width;
+        DAT_01b2ea60[texturePageIdx].height = height;
+        DAT_01b2ea60[texturePageIdx].widthMultipleOfMin = widthMultipleOfMin;
+        DAT_01b2ea60[texturePageIdx].heightMultipleOfMin = heightMultipleOfMin;
+        DAT_01b2ea60[texturePageIdx].texBytes = texBytes;
+        DAT_01b2ea60[texturePageIdx].unk0xbc = textureId; // TODO: this might not be right
+        DAT_01b2ea60[texturePageIdx].unk0x24 = 0;
+        DAT_01b2ea60[texturePageIdx].unk0xc0 = NULL;
+        DAT_01b2ea60[texturePageIdx].unk0x28 = 0;
+        DAT_01b2ea60[texturePageIdx].unk0x2c = 0;
+        DAT_01b2ea60[texturePageIdx].unk0x30 = 0;
+
+        memset(&surfaceDesc, 0, sizeof(DDSURFACEDESC2));
+        surfaceDesc.dwSize = sizeof(DDSURFACEDESC2);
+
+        memset(&surfaceDesc.ddpfPixelFormat, 0, sizeof(DDPIXELFORMAT));
+        surfaceDesc.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+
+        surfaceDesc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        surfaceDesc.ddpfPixelFormat.dwFourCC = 0;
+        surfaceDesc.ddpfPixelFormat.dwRGBBitCount = 16;
+        if (DAT_0051ada4 == 1) {
+            surfaceDesc.ddpfPixelFormat.dwRBitMask = 0x7c00;
+            surfaceDesc.ddpfPixelFormat.dwGBitMask = 0x03e0;
+            surfaceDesc.ddpfPixelFormat.dwBBitMask = 0x001f;
+            surfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask = 0x8000;
+        } else if (DAT_0051ada4 == 2) {
+            surfaceDesc.ddpfPixelFormat.dwRBitMask = 0xf800;
+            surfaceDesc.ddpfPixelFormat.dwGBitMask = 0x07e0;
+            surfaceDesc.ddpfPixelFormat.dwBBitMask = 0x001f;
+            surfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask = 0x0000;
+        }
+        surfaceDesc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_TEXTURESTAGE;
+        surfaceDesc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        surfaceDesc.ddsCaps.dwCaps2 = 0;
+        surfaceDesc.dwWidth = widthMultipleOfMin;
+        surfaceDesc.dwHeight = heightMultipleOfMin;
+
+        if (IDirectDraw4_CreateSurface(gDirectDraw4, &surfaceDesc, &DAT_01b2ea60[texturePageIdx].surface, NULL) != DD_OK) {
+            display_messagebox("could not create %s texture..", texPath);
+        }
+    }
+
+    memset(&surfaceDesc2, 0, sizeof(DDSURFACEDESC2));
+    surfaceDesc2.dwSize = sizeof(DDSURFACEDESC2);
+
+    while (IDirectDrawSurface4_Lock(DAT_01b2ea60[texturePageIdx].surface, NULL, &surfaceDesc2, 0, NULL) != DD_OK) { }
+
+    width2 = 256;
+    height2 = 256;
+    width3 = width;
+    height3 = height;
+
+    if (widthMultipleOfMin < width3) {
+        width2 = (width3 << 8) / widthMultipleOfMin;
+        width3 = widthMultipleOfMin;
+    }
+
+    if (heightMultipleOfMin < height3) {
+        height2 = (height3 << 8) / heightMultipleOfMin;
+        height3 = heightMultipleOfMin;
+    }
+
+    if (DAT_0051ada4 == 1) {
+        uint16 *pDst;
+        int32 y;
+
+        memset(surfaceDesc2.lpSurface, 0, 
+            heightMultipleOfMin * widthMultipleOfMin * sizeof(uint16));
+
+        pDst = (uint16*)surfaceDesc2.lpSurface;
+
+        for (y = 0; y < height3; y++) {
+            uint16 *pCurrentDstWord;
+            int32 x;
+
+            pCurrentDstWord = pDst;
+
+            for (x = 0; x < width3; x++) {
+                *pCurrentDstWord = texBytes[((x * width2) >> 8) + ((y * height2) >> 8) * width];
+
+                pCurrentDstWord++;
+            }
+
+            pDst += surfaceDesc2.lPitch / sizeof(uint16);
+        }
+    } else {
+        uint16 *pDst;
+        int32 y;
+        
+        memset(surfaceDesc2.lpSurface, 0, 
+            heightMultipleOfMin * widthMultipleOfMin * sizeof(uint16));
+
+        pDst = (uint16*)surfaceDesc2.lpSurface;
+
+        for (y = 0; y < height3; y++) {
+            uint16 *pCurrentDstWord;
+            int32 x;
+
+            pCurrentDstWord = pDst;
+
+            for (x = 0; x < width3; x++) {
+                *pCurrentDstWord = g16BitColorPallete[texBytes[((x * width2) >> 8) + ((y * height2) >> 8) * width]];
+
+                pCurrentDstWord++;
+            }
+
+            pDst += surfaceDesc2.lPitch / sizeof(uint16);
+        }
+    }
+
+    IDirectDrawSurface4_Unlock(DAT_01b2ea60[texturePageIdx].surface, NULL);
+
+    if (textureId <= 0) {
+        if (IDirectDrawSurface4_QueryInterface(DAT_01b2ea60[texturePageIdx].surface, 
+                &IID_IDirect3DTexture2, &DAT_01b2ea60[texturePageIdx].texture) != DD_OK) {
+            display_messagebox("Could not query texture surface");
+        }
+
+        colorKey.dwColorSpaceLowValue = 0;
+        colorKey.dwColorSpaceHighValue = 0;
+
+        if (IDirectDrawSurface4_SetColorKey(DAT_01b2ea60[texturePageIdx].surface, 8, &colorKey) != DD_OK) {
+            display_messagebox("Couldn't set color key on texture..");
+        }
+    }
+
+    return texturePageIdx + 1;
+}
+
+// Handles textures for cursors, fog of war edges, unit stars, and probably more
+int FUN_00403720(uint16 *baseBytes, uint16 *alphaBytes, int32 width, int32 height, int32 textureId) {
+    int32 widthMultipleOfMin;
+    int32 heightMultipleOfMin;
+
+    int32 texturePageIdx;
+
+    DDSURFACEDESC2 surfaceDesc;
+    DDSURFACEDESC2 surfaceDesc2;
+
+    int32 width2;
+    int32 width3;
+    int32 height2;
+    int32 height3;
+
+    DDCOLORKEY colorKey;
+
+    widthMultipleOfMin = ((gMinTextureWidth - 1 + width) / gMinTextureWidth) * gMinTextureWidth;
+    heightMultipleOfMin = ((gMinTextureHeight - 1 + width) / gMinTextureHeight) * gMinTextureHeight;
+
+    if (widthMultipleOfMin > gMaxTextureWidth) {
+        widthMultipleOfMin = gMaxTextureWidth;
+    }
+
+    if (heightMultipleOfMin > gMaxTextureHeight) {
+        heightMultipleOfMin = gMaxTextureHeight;
+    }
+
+    texturePageIdx = textureId - 1;
+    if (texturePageIdx <= 0) {
+        texturePageIdx = 0;
+
+        while (texturePageIdx < 2048) {
+            if (DAT_01b2ea60[texturePageIdx].texture == NULL && DAT_01b2ea60[texturePageIdx].unk0xc0 == NULL) {
+                break;
+            }
+
+            texturePageIdx++;
+        }
+
+        if (texturePageIdx >= 2048) {
+            display_messagebox("No more Texture pages available.");
+        }
+
+        DAT_01b2ea60[texturePageIdx].width = width;
+        DAT_01b2ea60[texturePageIdx].height = height;
+        DAT_01b2ea60[texturePageIdx].widthMultipleOfMin = widthMultipleOfMin;
+        DAT_01b2ea60[texturePageIdx].heightMultipleOfMin = heightMultipleOfMin;
+        DAT_01b2ea60[texturePageIdx].texBytes = alphaBytes;
+        DAT_01b2ea60[texturePageIdx].unk0xbc = -1;
+        DAT_01b2ea60[texturePageIdx].unk0xc0 = NULL;
+        DAT_01b2ea60[texturePageIdx].unk0x28 = 1;
+        DAT_01b2ea60[texturePageIdx].unk0x2c = 0;
+        DAT_01b2ea60[texturePageIdx].unk0x30 = 0;
+        DAT_01b2ea60[texturePageIdx].unk0x24 = 0;
+
+        memset(&surfaceDesc, 0, sizeof(DDSURFACEDESC2));
+        surfaceDesc.dwSize = sizeof(DDSURFACEDESC2);
+
+        surfaceDesc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+        surfaceDesc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        surfaceDesc.ddsCaps.dwCaps2 = 0;
+        surfaceDesc.dwWidth = widthMultipleOfMin;
+        surfaceDesc.dwHeight = heightMultipleOfMin;
+        surfaceDesc.dwAlphaBitDepth = 4;
+        surfaceDesc.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+        surfaceDesc.ddpfPixelFormat.dwRGBBitCount = 16;
+        surfaceDesc.ddpfPixelFormat.dwFlags = DDPF_ALPHAPIXELS | DDPF_RGB;
+        surfaceDesc.ddpfPixelFormat.dwRBitMask = 0x0f00;
+        surfaceDesc.ddpfPixelFormat.dwGBitMask = 0x00f0;
+        surfaceDesc.ddpfPixelFormat.dwBBitMask = 0x000f;
+        surfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xf000;
+        
+
+        if (IDirectDraw4_CreateSurface(gDirectDraw4, &surfaceDesc, &DAT_01b2ea60[texturePageIdx].surface, NULL) != DD_OK) {
+            display_messagebox("could not create alpha object texture..");
+        }
+    }
+
+    memset(&surfaceDesc2, 0, sizeof(DDSURFACEDESC2));
+    surfaceDesc2.dwSize = sizeof(DDSURFACEDESC2);
+
+    while (IDirectDrawSurface4_Lock(DAT_01b2ea60[texturePageIdx].surface, NULL, &surfaceDesc2, 0, NULL) != DD_OK) { }
+
+    width2 = 256;
+    height2 = 256;
+    width3 = width;
+    height3 = height;
+
+    if (widthMultipleOfMin < width3) {
+        width2 = (width3 << 8) / widthMultipleOfMin;
+        width3 = widthMultipleOfMin;
+    }
+
+    if (heightMultipleOfMin < height3) {
+        height2 = (height3 << 8) / heightMultipleOfMin;
+        height3 = heightMultipleOfMin;
+    }
+
+    {
+        uint16 *pDst;
+        int32 y;
+
+        memset(surfaceDesc2.lpSurface, 0, 
+            heightMultipleOfMin * widthMultipleOfMin * sizeof(uint16));
+
+        pDst = (uint16*)surfaceDesc2.lpSurface;
+
+        for (y = 0; y < height3; y++) {
+            uint16 *pCurrentDstWord;
+            int32 x;
+
+            pCurrentDstWord = pDst;
+            
+            for (x = 0; x < width3; x++) {
+                uint16 alphaWord = alphaBytes[((x * width2) >> 8) + ((y * height2) >> 8) * width];
+
+                if (alphaWord != 0) {
+                    uint16 alpha;
+                    uint16 rgbWord;
+                    uint16 rgb;
+
+                    // Average alpha texture 5-bit RGB and pack it into the upper 4 bits of a word
+                    alpha = (((alphaWord >> 10) & 0x1f) + ((alphaWord >> 5) & 0x1f) + ((alphaWord >> 0) & 0x1f)) / 3;
+                    alpha = (alpha & 0xfffe) << 11;
+
+                    if (alpha == 0) {
+                        alpha = 0x1000;
+                    }
+
+                    // Convert 5-bit RGB to 4-bit RGB
+                    rgbWord = baseBytes[((x * width2) >> 8) + ((y * height2) >> 8) * width];
+                    rgb = ((rgbWord >> 3) & 0xf00) | ((rgbWord >> 2) & 0xf0) | ((rgbWord >> 1) & 0xf);
+
+                    if (rgb == 0) {
+                        rgb = 1;
+                    }
+
+                    // Combine alpha and RGB
+                    *pCurrentDstWord = alpha | rgb;
+                }
+
+                pCurrentDstWord++;
+            }
+
+            pDst += surfaceDesc2.lPitch / sizeof(uint16);
+        }
+    }
+
+    IDirectDrawSurface4_Unlock(DAT_01b2ea60[texturePageIdx].surface, NULL);
+
+    if (textureId <= 0) {
+        if (IDirectDrawSurface4_QueryInterface(DAT_01b2ea60[texturePageIdx].surface, 
+                &IID_IDirect3DTexture2, &DAT_01b2ea60[texturePageIdx].texture) != DD_OK) {
+            display_messagebox("Could not query texture surface");
+        }
+
+        colorKey.dwColorSpaceLowValue = 0;
+        colorKey.dwColorSpaceHighValue = 0;
+
+        if (IDirectDrawSurface4_SetColorKey(DAT_01b2ea60[texturePageIdx].surface, 8, &colorKey) != DD_OK) {
+            display_messagebox("Couldn't set color key on texture..");
+        }
+    }
+
+    return texturePageIdx + 1;
+}
+
+void try_init_zbuffer() {
+    DDSURFACEDESC2 surfaceDesc;
+    
+    gZEnable = FALSE;
+
+    IDirect3D3_EnumZBufferFormats(gDirect3D3, gD3DClassID, enum_zbuffer_formats_callback, &DAT_01b91140);
+
+    if (!gZEnable) {
+        return;
+    }
+
+    memset(&surfaceDesc, 0, sizeof(DDSURFACEDESC2));
+    surfaceDesc.dwSize = sizeof(DDSURFACEDESC2);
+    surfaceDesc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    surfaceDesc.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY | DDSCAPS_ZBUFFER;
+    surfaceDesc.dwWidth = gDisplayWidth;
+    surfaceDesc.dwHeight = gDisplayHeight;
+    memcpy(&surfaceDesc.ddpfPixelFormat, &DAT_01b91140, sizeof(DDPIXELFORMAT));
+
+    if (IDirectDraw4_CreateSurface(gDirectDraw4, &surfaceDesc, &gZBufferSurface, NULL) != DD_OK) {
+        gZEnable = FALSE;
+        return;
+    }
+
+    if (IDirectDrawSurface4_AddAttachedSurface(gDDBackBuffer, gZBufferSurface) != DD_OK) {
+        IDirectDrawSurface4_Release(gZBufferSurface);
+        gZEnable = FALSE;
+    } else {
+        if (DAT_0051ad80 != NULL) {
+            custom_free(&DAT_0051ad80);
+        }
+
+        DAT_0051ad80 = custom_alloc(gDisplayHeight * gDisplayWidth * 2);
+    }
+
+    DAT_01b2dd80 = 0;
+    DAT_01b2dd84 = 0;
+    DAT_01b2dd88 = gDisplayWidth;
+    DAT_01b2dd8c = gDisplayHeight;
+}
+
+HRESULT CALLBACK enum_zbuffer_formats_callback(LPDDPIXELFORMAT lpDDPixFmt, LPVOID lpContext) {
+    if (lpDDPixFmt->dwFlags == DDPF_ZBUFFER && lpDDPixFmt->dwZBufferBitDepth == 16) {
+        memcpy(lpContext, lpDDPixFmt, sizeof(DDPIXELFORMAT));
+        gZEnable = TRUE;
+    }
+
+    return D3DENUMRET_OK;
+}
+
+void FUN_00403cf0(int32 textureId, int32 x, int32 y, int32 width, int32 height, int32 texLeft,
+        int32 texTop, int32 texRight, int32 texBottom) {
+    float32 widthMultipleOfMin;
+    float32 heightMultipleOfMin;
+
+    int32 triangleCount;
+
+    float32 alpha;
+    float32 r;
+    float32 g;
+    float32 b;
+
+    float32 texLeft2;
+    float32 texTop2;
+    float32 texRight2;
+    float32 texBottom2;
+
+    D3DCOLOR color;
+    D3DCOLOR specular;
+
+    widthMultipleOfMin = DAT_01b2ea60[textureId - 1].widthMultipleOfMin - 1.0;
+    heightMultipleOfMin = DAT_01b2ea60[textureId - 1].heightMultipleOfMin - 1.0;
+
+    triangleCount = gVertexCount / 3;
+
+    gTextureQueue[triangleCount] = textureId - 1;
+
+    gViewportQueue[triangleCount].left = DAT_005f0b64;
+    gViewportQueue[triangleCount].top = DAT_005f0b60;
+    gViewportQueue[triangleCount].right = DAT_005f8c48;
+    gViewportQueue[triangleCount].bottom = DAT_005f8c44;
+
+    texLeft2 = texLeft / widthMultipleOfMin;
+    texTop2 = texTop / heightMultipleOfMin;
+    texRight2 = texRight / widthMultipleOfMin;
+    texBottom2 = texBottom / heightMultipleOfMin;
+
+    if (DAT_0051ada8 == 2) {
+        alpha = 0.15f;
+        gRenderFlagQueue[triangleCount] = 2;
+    } else {
+        alpha = 1.0f;
+        gRenderFlagQueue[triangleCount] = 0;
+    }
+
+    gRenderFlagQueue[triangleCount] |= 0x10;
+
+    gVertexQueue[gVertexCount + 0].sx = x;
+    gVertexQueue[gVertexCount + 0].sy = y;
+    gVertexQueue[gVertexCount + 0].sz = DAT_01b18068;
+    gVertexQueue[gVertexCount + 0].rhw = 1.0f;
+    gVertexQueue[gVertexCount + 1].sx = x;
+    gVertexQueue[gVertexCount + 1].sy = y + height;
+    gVertexQueue[gVertexCount + 1].sz = DAT_01b18068;
+    gVertexQueue[gVertexCount + 1].rhw = 1.0f;
+    gVertexQueue[gVertexCount + 2].sx = x + width;
+    gVertexQueue[gVertexCount + 2].sy = y + height;
+    gVertexQueue[gVertexCount + 2].sz = DAT_01b18068;
+    gVertexQueue[gVertexCount + 2].rhw = 1.0f;
+
+    gVertexQueue[gVertexCount + 0].tu = texLeft2;
+    gVertexQueue[gVertexCount + 0].tv = texTop2;
+    gVertexQueue[gVertexCount + 1].tu = texLeft2;
+    gVertexQueue[gVertexCount + 1].tv = texBottom2;
+    gVertexQueue[gVertexCount + 2].tu = texRight2;
+    gVertexQueue[gVertexCount + 2].tv = texBottom2;
+
+    r = 1.0f;
+    g = 1.0f;
+    b = 1.0f;
+
+    if (DAT_0051ad84 != 0) {
+        r = 0.4f;
+        g = 0.6f;
+        r = 0.9f;
+    }
+
+    color = D3DRGBA(r, g, b, alpha);
+    specular = D3DRGBA(0, 0, 0, 0);
+
+    gVertexQueue[gVertexCount + 0].color = color;
+    gVertexQueue[gVertexCount + 0].specular = specular;
+    gVertexQueue[gVertexCount + 1].color = color;
+    gVertexQueue[gVertexCount + 1].specular = specular;
+    gVertexQueue[gVertexCount + 2].color = color;
+    gVertexQueue[gVertexCount + 2].specular = specular;
+
+    gVertexCount += 3;
+
+    triangleCount = gVertexCount / 3;
+
+    gTextureQueue[triangleCount] = textureId - 1;
+
+    gViewportQueue[triangleCount].left = DAT_005f0b64;
+    gViewportQueue[triangleCount].top = DAT_005f0b60;
+    gViewportQueue[triangleCount].right = DAT_005f8c48;
+    gViewportQueue[triangleCount].bottom = DAT_005f8c44;
+
+    if (DAT_0051ada8 == 2) {
+        alpha = 0.15f;
+        gRenderFlagQueue[triangleCount] = 2;
+    } else {
+        alpha = 1.0f;
+        gRenderFlagQueue[triangleCount] = 0;
+    }
+
+    gRenderFlagQueue[triangleCount] |= 0x10;
+
+    gVertexQueue[gVertexCount + 0].sx = x;
+    gVertexQueue[gVertexCount + 0].sy = y;
+    gVertexQueue[gVertexCount + 0].sz = DAT_01b18068;
+    gVertexQueue[gVertexCount + 0].rhw = 1.0f;
+    gVertexQueue[gVertexCount + 1].sx = x + width;
+    gVertexQueue[gVertexCount + 1].sy = y + height;
+    gVertexQueue[gVertexCount + 1].sz = DAT_01b18068;
+    gVertexQueue[gVertexCount + 1].rhw = 1.0f;
+    gVertexQueue[gVertexCount + 2].sx = x + width;
+    gVertexQueue[gVertexCount + 2].sy = y;
+    gVertexQueue[gVertexCount + 2].sz = DAT_01b18068;
+    gVertexQueue[gVertexCount + 2].rhw = 1.0f;
+
+    gVertexQueue[gVertexCount + 0].tu = texLeft2;
+    gVertexQueue[gVertexCount + 0].tv = texTop2;
+    gVertexQueue[gVertexCount + 1].tu = texRight2;
+    gVertexQueue[gVertexCount + 1].tv = texBottom2;
+    gVertexQueue[gVertexCount + 2].tu = texRight2;
+    gVertexQueue[gVertexCount + 2].tv = texTop2;
+
+    color = D3DRGBA(1.0f, 1.0f, 1.0f, alpha);
+    specular = D3DRGBA(0, 0, 0, 0);
+
+    gVertexQueue[gVertexCount + 0].color = color;
+    gVertexQueue[gVertexCount + 0].specular = specular;
+    gVertexQueue[gVertexCount + 1].color = color;
+    gVertexQueue[gVertexCount + 1].specular = specular;
+    gVertexQueue[gVertexCount + 2].color = color;
+    gVertexQueue[gVertexCount + 2].specular = specular;
+
+    DAT_0051ada8 = 0;
+
+    gVertexCount += 3;
+}
+
+// Queues verts for fog of war edges
+void FUN_00404380(int textureId, int x, int y, int width, int height, int matrixIdx) {
+    int texWidth;
+    int texHeight;
+
+    int centerX;
+    int centerY;
+
+    int left;
+    int top;
+    int bottom;
+    int right;
+
+    float x_;
+    float y_;
+    float z_;
+
+    int baseX;
+    int baseY;
+
+    int sxArray[6];
+    int syArray[6];
+    int tuArray[6];
+    int tvArray[6];
+
+    float widthMultipleOfMin;
+    float heightMultipleOfMin;
+
+    int i;
+
+    Matrix3x3 matrix;
+
+    texWidth = DAT_01b2ea60[textureId - 1].width;
+    texHeight = DAT_01b2ea60[textureId - 1].height;
+
+    centerX = x + width / 2;
+    centerY = y + height / 2;
+
+    top = y;
+    left = x;
+    bottom = y + height;
+    right = x + width;
+
+    FUN_00409aa0(&matrix, 2, matrixIdx);
+
+    x_ = 0.0f;
+    y_ = 0.0f;
+    z_ = 0.0f; // <- not in original code
+    mul_mat3_vec3(&matrix, &x_, &y_, &z_);
+    baseX = centerX + x_;
+    baseY = centerY + y_;
+
+    x_ = centerX - right;
+    y_ = centerY - top;
+    z_ = 0.0f;
+    mul_mat3_vec3(&matrix, &x_, &y_, &z_);
+    sxArray[0] = baseX + x_;
+    syArray[0] = baseY + y_;
+
+    x_ = centerX - left;
+    y_ = centerY - top;
+    z_ = 0.0f;
+    mul_mat3_vec3(&matrix, &x_, &y_, &z_);
+    sxArray[1] = baseX + x_;
+    syArray[1] = baseY + y_;
+
+    x_ = centerX - left;
+    y_ = centerY - bottom;
+    z_ = 0.0f;
+    mul_mat3_vec3(&matrix, &x_, &y_, &z_);
+    sxArray[2] = baseX + x_;
+    syArray[2] = baseY + y_;
+
+    x_ = centerX - right;
+    y_ = centerY - top;
+    z_ = 0.0f;
+    mul_mat3_vec3(&matrix, &x_, &y_, &z_);
+    sxArray[3] = baseX + x_;
+    syArray[3] = baseY + y_;
+
+    x_ = centerX - left;
+    y_ = centerY - bottom;
+    z_ = 0.0f;
+    mul_mat3_vec3(&matrix, &x_, &y_, &z_);
+    sxArray[4] = baseX + x_;
+    syArray[4] = baseY + y_;
+
+    x_ = centerX - right;
+    y_ = centerY - bottom;
+    z_ = 0.0f;
+    mul_mat3_vec3(&matrix, &x_, &y_, &z_);
+    sxArray[5] = baseX + x_;
+    syArray[5] = baseY + y_;
+
+    tuArray[0] = texWidth - 1;
+    tvArray[0] = 0;
+    
+    tuArray[1] = 0;
+    tvArray[1] = 0;
+    
+    tuArray[2] = 0;
+    tvArray[2] = texHeight - 1;
+    
+    tuArray[3] = texWidth - 1;
+    tvArray[3] = 0;
+    
+    tuArray[4] = 0;
+    tvArray[4] = texHeight - 1;
+
+    tuArray[5] = texWidth - 1;
+    tvArray[5] = texHeight - 1;
+
+    if (((gVertexCount / 3) + 2) >= 16384) {
+        return;
+    }
+
+    widthMultipleOfMin = DAT_01b2ea60[textureId - 1].widthMultipleOfMin - 1.0;
+    heightMultipleOfMin = DAT_01b2ea60[textureId - 1].heightMultipleOfMin - 1.0;
+
+    for (i = 0; i < 6; i += 3) {
+        int32 triCount = gVertexCount / 3;
+
+        gRenderFlagQueue[triCount] = 5;
+
+        gTextureQueue[triCount] = textureId - 1;
+
+        gViewportQueue[triCount].left = DAT_005f0b64;
+        gViewportQueue[triCount].top = DAT_005f0b60;
+        gViewportQueue[triCount].right = DAT_005f8c48;
+        gViewportQueue[triCount].bottom = DAT_005f8c44;
+
+        gVertexQueue[gVertexCount + 0].sx = sxArray[i + 0];
+        gVertexQueue[gVertexCount + 0].sy = syArray[i + 0];
+        gVertexQueue[gVertexCount + 0].sz = DAT_01b18068;
+        gVertexQueue[gVertexCount + 0].rhw = 1.0f;
+
+        gVertexQueue[gVertexCount + 1].sx = sxArray[i + 1];
+        gVertexQueue[gVertexCount + 1].sy = syArray[i + 1];
+        gVertexQueue[gVertexCount + 1].sz = DAT_01b18068;
+        gVertexQueue[gVertexCount + 1].rhw = 1.0f;
+
+        gVertexQueue[gVertexCount + 2].sx = sxArray[i + 2];
+        gVertexQueue[gVertexCount + 2].sy = syArray[i + 2];
+        gVertexQueue[gVertexCount + 2].sz = DAT_01b18068;
+        gVertexQueue[gVertexCount + 2].rhw = 1.0f;
+
+        gVertexQueue[gVertexCount + 0].tu = (tuArray[i + 0] + 0.5) / widthMultipleOfMin;
+        gVertexQueue[gVertexCount + 0].tv = (tvArray[i + 0] + 0.5) / heightMultipleOfMin;
+
+        gVertexQueue[gVertexCount + 1].tu = (tuArray[i + 1] + 0.5) / widthMultipleOfMin;
+        gVertexQueue[gVertexCount + 1].tv = (tvArray[i + 1] + 0.5) / heightMultipleOfMin;
+
+        gVertexQueue[gVertexCount + 2].tu = (tuArray[i + 2] + 0.5) / widthMultipleOfMin;
+        gVertexQueue[gVertexCount + 2].tv = (tvArray[i + 2] + 0.5) / heightMultipleOfMin;
+
+        gVertexQueue[gVertexCount + 0].color = D3DRGBA(1, 1, 1, 1);
+        gVertexQueue[gVertexCount + 0].specular = D3DRGBA(0, 0, 0, 0);
+
+        gVertexQueue[gVertexCount + 1].color = D3DRGBA(1, 1, 1, 1);
+        gVertexQueue[gVertexCount + 1].specular = D3DRGBA(0, 0, 0, 0);
+
+        gVertexQueue[gVertexCount + 2].color = D3DRGBA(1, 1, 1, 1);
+        gVertexQueue[gVertexCount + 2].specular = D3DRGBA(0, 0, 0, 0);
+
+        gVertexCount += 3;
+    }
 }

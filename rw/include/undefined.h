@@ -7,10 +7,41 @@
 
 #include "types.h"
 
+typedef struct TextureFile {
+    uint16 *data;
+    uint32 width;
+    uint32 height;
+    uint16 firstWord;
+    uint16 unk0xe;
+    int32 x;
+    int32 y;
+    int32 textureId;
+    char unk0x1c_pad[152];
+} TextureFile;
+
+typedef struct CursorTexture {
+    TextureFile frames[8];
+    TextureFile texture;
+    int32 numFrames;
+    int32 currentFrame;
+} CursorTexture;
+
+typedef struct Matrix3x3 {
+    float32 m00;
+    float32 m01;
+    float32 m02;
+    float32 m10;
+    float32 m11;
+    float32 m12;
+    float32 m20;
+    float32 m21;
+    float32 m22;
+} Matrix3x3;
+
 extern char gTempString[];
 extern char gTempString2[];
 
-extern int gCursorTextures;
+extern CursorTexture gCursorTextures[24];
 
 extern int32 DAT_00ece464;
 extern int32 DAT_00945e94;
@@ -94,3 +125,5 @@ extern void FUN_00406f30();
 extern void FUN_004c3b60(int32*, int32*, int32*, int32*, int32*);
 extern void FUN_004c3ac0(int32, int32, int32, int32);
 extern void FUN_004c39f0(const char *str, int32 x, int32 y);
+
+extern void mul_mat3_vec3(Matrix3x3 *m, float32 *x, float32 *y, float32 *z);

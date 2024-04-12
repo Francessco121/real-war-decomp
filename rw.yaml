@@ -25,7 +25,7 @@ exe:
   rdataFileOffset: 0xe9000
   dataVirtualAddress: 0xec000
   dataFileOffset: 0xec000
-  bssVirtualAddress: 0x11b000
+  bssVirtualAddress: 0x11ad80
 
 # A map of the virtual address space of the base exe
 #
@@ -43,8 +43,10 @@ segments:
   # DOS/PE/COFF headers
   - [0x400000, bin]
   # .text
-  - [0x401000, text, d3d]
-  - [0x403260, text]
+  - [0x401000, text, 3d]
+  - [0x404a40, text]
+  - [0x409860, text, segment_409860]
+  - [0x4098d0, text]
   - [0x409b40, text, load_texture]
   - [0x409f50, text]
   - [0x461dd0, text, game_dirs]
@@ -54,6 +56,8 @@ segments:
   - [0x4b9660, text]
   - [0x4c49a0, text, segment_4c49a0]
   - [0x4c4a20, text]
+  - [0x4c7080, text, segment_4c7080]
+  - [0x4c7170, text]
   - [0x4d1c90, text, sound]
   - [0x4d4510, text, window]
   - [0x4d50f0, text, window_graphics]
@@ -63,6 +67,8 @@ segments:
   - [0x4d7050, text]
   - [0x4d7270, text, graphics_mem]
   - [0x4d7450, text]
+  - [0x4d7bc0, text, cursors]
+  - [0x4d8090, text]
   - [0x4d8140, text, keyboard]
   - [0x4d81b0, bin] # thunks
   - [0x4d81c0, text] # library?
@@ -82,7 +88,8 @@ segments:
   - [0x51702c, data, sound]
   - [0x5171d0, data]
   # .data (uninitialized)
-  - [0x51b000, bss]
+  - [0x51ad80, bss]
+  - [0x51b000, bss] # bss start, aligned
   # .rsrc
   - [0x1ba6000, bin]
 
@@ -108,7 +115,8 @@ symbols:
   FUN_00402e30: [0x402e30, 1072]
   FUN_00403260: [0x403260, 1216]
   FUN_00403720: [0x403720, 1120]
-  FUN_00403b80: [0x403b80, 368]
+  try_init_zbuffer: [0x403b80, 304]
+  enum_zbuffer_formats_callback: [0x403cb0, 64]
   FUN_00403cf0: [0x403cf0, 1680]
   FUN_00404380: [0x404380, 1728]
   FUN_00404a40: [0x404a40, 1472]
@@ -137,7 +145,7 @@ symbols:
   FUN_00409330: [0x409330, 480]
   FUN_00409510: [0x409510, 656]
   FUN_004097a0: [0x4097a0, 192]
-  FUN_00409860: [0x409860, 112]
+  mul_mat3_vec3: [0x409860, 112]
   FUN_004098d0: [0x4098d0, 96]
   FUN_00409930: [0x409930, 32]
   FUN_00409950: [0x409950, 256]
@@ -541,8 +549,8 @@ symbols:
   FUN_00461be0: [0x461be0, 320]
   FUN_00461d20: [0x461d20, 176]
   load_game_dirs_from_registry: [0x461dd0, 208]
-  to_absolute_data_path2: [0x461ea0, 304]
-  to_absolute_data_path: [0x461fd0, 288]
+  to_absolute_data_path: [0x461ea0, 304]
+  to_absolute_dirtree_path: [0x461fd0, 288]
   cd_check: [0x4620f0, 176]
   get_absolute_vid_path: [0x4621a0, 96]
   set_game_registry_value: [0x462200, 896]
@@ -1022,7 +1030,7 @@ symbols:
   FUN_004bfea0: [0x4bfea0, 256]
   FUN_004bffa0: [0x4bffa0, 256]
   FUN_004c00a0: [0x4c00a0, 576]
-  FUN_004c02e0: [0x4c02e0, 112]
+  get_tga_file_length: [0x4c02e0, 112]
   load_targa_file: [0x4c0350, 880]
   FUN_004c06c0: [0x4c06c0, 944]
   FUN_004c0a70: [0x4c0a70, 416]
@@ -1264,7 +1272,7 @@ symbols:
   FUN_004d7bb0: [0x4d7bb0, 16]
   FUN_004d7bc0: [0x4d7bc0, 416]
   FUN_004d7d60: [0x4d7d60, 112]
-  FUN_004d7dd0: [0x4d7dd0, 400]
+  load_cursor_texture_frames: [0x4d7dd0, 400]
   FUN_004d7f60: [0x4d7f60, 176]
   FUN_004d8010: [0x4d8010, 16]
   load_cursor_textures: [0x4d8020, 64]
@@ -1547,6 +1555,7 @@ symbols:
   IID_IDirectDraw4: 0x4e9a08
   IID_IDirect3D: 0x4e9e98
   IID_IDirect3D3: 0x4e9eb8
+  IID_IDirect3DTexture2: 0x4e9f98
   GUID_004ea6c8: 0x4ea6c8
   #endregion
   
@@ -1554,9 +1563,9 @@ symbols:
   ._data: 0x4ec000
   gDontInitD3D: 0x4ec034
   DAT_004ec038: 0x4ec038
-  gVidTree: 0x50a410
-  gDataTree: 0x50a510
-  gCDDataDir: 0x50a610
+  gVidTree: [0x50a410, 256]
+  gDataTree: [0x50a510, 256]
+  gCDDataDir: [0x50a610, 256]
   gRegKeyValueDataSize: 0x50a740
   sTimerStrings: 0x5144e8
   gBitmapInfo: 0x517028
@@ -1572,9 +1581,10 @@ symbols:
   gMinTextureWidth: 0x51ad9c
   gMinTextureHeight: 0x51ada0
   DAT_0051ada4: 0x51ada4
+  DAT_0051ada8: 0x51ada8
   gZEnable: 0x51adb0
   gDirect3D3: 0x51adb4
-  lpD3D__try_find_valid_d3d_device: 0x51adb8
+  sD3D__try_find_valid_d3d_device: 0x51adb8
   gDirect3DDevice3: 0x51adbc
   g3DViewport: 0x51adc0
   DAT_0051adc4: 0x51adc4
@@ -1583,10 +1593,10 @@ symbols:
   gRenderFlagQueue: 0x51add0
   gVertexCount: 0x51add4
   DAT_0051add8: 0x51add8
-  devIsHardware__enum_devices_callback: 0x51addc
-  devIsMonoColor__enum_devices_callback: 0x51ade0
+  sDevIsHardware__enum_devices_callback: 0x51addc
+  sDevIsMonoColor__enum_devices_callback: 0x51ade0
   gCmdLineArgB: 0x51ae34
-  gDirTree: 0x51affc
+  gDirTree: 0x51affc # this extends into .bss for some reason
   #endregion
   
   #region Uninitialized Data
@@ -1635,11 +1645,13 @@ symbols:
   DAT_0051b968: 0x51b968
   gMouseHistoryIdx: 0x51b96c
   gMouseBufferIdx: 0x51b970
+  gCurrentCursorIdx: 0x51b974
   DAT_0051b978: 0x51b978
   gBlitsPerS: 0x51b980
   DAT_0051b988: 0x51b988
   sLoadedBigFileHeader: 0x51b98c
   gMouseButtonsHeldUnbuffered: 0x51e0e4
+  DAT_0051e100: 0x51e100
   gWndHandle: 0x51e200
   sSoundStatus: 0x51e204
   gKeysTapped: 0x51e220
@@ -1732,10 +1744,14 @@ symbols:
   DAT_01b18068: 0x1b18068
   gRegKeyValueType: 0x1a94ea4
   gDirTreeRegValueData: 0x1a94ec0
+  DAT_01b2dd80: 0x1b2dd80
+  DAT_01b2dd84: 0x1b2dd84
+  DAT_01b2dd88: 0x1b2dd88
+  DAT_01b2dd8c: 0x1b2dd8c
   gD3DClassID: 0x1b2dd90
   DAT_01b2dda0: 0x1b2dda0
   gD3DGlobals: 0x1b2dda4
-  DAT_01b2ea4c: 0x1b2ea4c
+  gZBufferSurface: 0x1b2ea4c
   gFreeDisplayMemory: 0x1b2ea50
   DAT_01b2ea60: 0x1b2ea60
   gD3DSoftwareFeatures: 0x1b90a60
@@ -1745,6 +1761,7 @@ symbols:
   gD3DViewport2: 0x1b910a0
   DAT_01b910e0: 0x1b910e0
   gDdsCaps2: 0x1b91130
+  DAT_01b91140: 0x1b91140
   #endregion
 
   .rsrc: 0x1ba6000
@@ -1811,6 +1828,11 @@ literalSymbols:
   "??_C@_0BH@LCHK@Failed?5on?5add?5viewport?$AA@": ["&\"Failed on add viewport\"", 24, 0x4ec12c]
   "??_C@_0BD@IPJP@Failed?5on?5viewport?$AA@": ["&\"Failed on viewport\"", 20, 0x4ec144]
   "??_C@_0BE@CLGM@Failed?5on?5Create?53D?$AA@": ["&\"Failed on Create 3D\"", 20, 0x4ec158]
+  "??_C@_0CE@EAEP@Couldn?8t?5set?5color?5key?5on?5textur@": ["&\"Couldn't set color key on texture...\"", 36, 0x4ec16c]
+  "??_C@_0CA@GAHP@Could?5not?5query?5texture?5surface?$AA@": ["&\"Could not query texture surface\"", 32, 0x4ec190]
+  "??_C@_0BO@BBPF@could?5not?5create?5?$CFs?5texture?4?4?$AA@": ["&\"could not create %s texture..\"", 32, 0x4ec1b0]
+  "??_C@_0CB@BOGM@No?5more?5Texture?5pages?5available?4@": ["&\"No more Texture pages available.\"", 36, 0x4ec1d0]
+  "??_C@_0CI@FJJD@could?5not?5create?5alpha?5object?5te@": ["&\"could not create alpha object tex...\"", 40, 0x4ec1f4]
   "??_C@_02DILL@?$CFs?$AA@": ["&\"%s\"", 4, 0x4ec3b0, 0x50a840]
   "??_C@_02JKAF@rb?$AA@": ["&\"rb\"", 4, 0x4ec4c4]
   "??_C@_02MECO@?$CFd?$AA@": ["&\"%d\"", 4, 0x4ec540]
@@ -1824,6 +1846,7 @@ literalSymbols:
   "??_C@_08LKLH@DATATREE?$AA@": ["&\"DATATREE\"", 12, 0x50a764]
   "??_C@_07NDHC@DIRTREE?$AA@": ["&\"DIRTREE\"", 8, 0x50a770]
   "??_C@_08PMEL@GAMESAVE?$AA@": ["&\"GAMESAVE\"", 12, 0x50a77c]
+  "??_C@_09ECJI@?$CFsdata?2?$CFs?$AA@": ["&\"%sdata\\%s\"", 12, 0x50a788]
   "??_C@_0N@BFFL@?$CFscdtest?4txt?$AA@": ["&\"%scdtest.txt\"", 16, 0x50a794]
   "??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@": ["&\"Please insert the Real War CD\nin...\"", 80, 0x50a7a4]
   "??_C@_0M@MBIA@?$CFsintro?4mpg?$AA@": ["&\"%sintro.mpg\"", 12, 0x50a7f4]
@@ -1875,3 +1898,4 @@ literalSymbols:
   "??_C@_0BM@GLPJ@Trying?5to?5Allocate?50?5Bytes?4?$AA@": ["&\"Trying to Allocate 0 Bytes.\"", 28, 0x5175dc]
   "??_C@_0BE@OCIJ@Virtual?5Free?5Failed?$AA@": ["&\"Virtual Free Failed\"", 20, 0x5175f8]
   "??_C@_0BG@HLJH@Memory?5unaccounted?5?$CFd?$AA@": ["&\"Memory unaccounted %d\"", 24, 0x51760c]
+  "??_C@_0BH@CMIJ@data?2cursor?2?$CFs?$CF02d?4tga?$AA@": ["&\"data\\cursor\\%s%02d.tga\"", 24, 0x51768c]

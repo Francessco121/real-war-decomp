@@ -13,7 +13,7 @@ extern void _load_bigfile_header_base(char *path);
 extern size_t _write_bytes_to_file_base(const char *filename, const void *ptr, int length);
 
 extern int find_bigfile_entry_by_path(char *path);
-extern void to_absolute_data_path(char *path);
+extern void to_absolute_dirtree_path(char *path);
 
 extern int sBigFileEntryCount;
 
@@ -68,7 +68,7 @@ void load_bigfile_header_hook(char *path) {
     char absolutePath[256];
 
     sprintf(absolutePath, "%s", path);
-    to_absolute_data_path(absolutePath);
+    to_absolute_dirtree_path(absolutePath);
 
     log_printlnf("Loading bigfile at: %s", absolutePath);
 #endif

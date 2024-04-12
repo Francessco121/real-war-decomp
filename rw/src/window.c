@@ -439,6 +439,8 @@ bool handle_window_focus_change() {
             if (gBitmapCreated) {
                 do_window_paint(NULL);
             } else {
+                // NOTE: restoring the front buffer here locks the game up when alt-tabbing back 
+                // into a fullscreen hardware accelerated instance of the game
                 if (gDDFrontBuffer != NULL) {
                     IDirectDrawSurface4_Restore(gDDFrontBuffer);
                 }

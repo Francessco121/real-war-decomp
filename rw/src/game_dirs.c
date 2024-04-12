@@ -8,16 +8,17 @@
 #include "warnsuppress.h"
 #include "window.h"
 
-extern char gDirTree[];
 
 // .data
 
-extern char gVidTree[];
-extern char gDataTree[];
-extern char gCDDataDir[];
-extern DWORD gRegKeyValueDataSize; // = 256
+char gVidTree[256] = "vids\\";
+char gDataTree[256] = "data\\";
+char gCDDataDir[256] = "vids\\";
+DWORD gRegKeyValueDataSize = 256;
 
 // .bss
+
+char gDirTree[256] = "";
 
 char gRegKeyClass[16];
 HKEY gSoftwareRegKey;
@@ -50,7 +51,7 @@ void load_game_dirs_from_registry() {
     }
 }
 
-void to_absolute_data_path2(char *path) {
+void to_absolute_data_path(char *path) {
     int pathLen;
     int i;
     int dataSlashIdx;
@@ -90,7 +91,7 @@ void to_absolute_data_path2(char *path) {
     }
 }
 
-void to_absolute_data_path(char *path) {
+void to_absolute_dirtree_path(char *path) {
     int pathLen;
     int i;
     int dataSlashIdx;
@@ -124,7 +125,7 @@ void to_absolute_data_path(char *path) {
     }
 
     sprintf(temp, "%s", path);
-    sprintf(&temp[dataSlashIdx - 1], "%s%s", gDataTree, &path[dataSlashIdx + 4]);
+    sprintf(&temp[dataSlashIdx - 1], "%sdata\\%s", gDirTree, &path[dataSlashIdx + 4]);
     sprintf(path, "%s", temp);
 }
 
