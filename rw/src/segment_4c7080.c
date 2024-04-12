@@ -18,12 +18,12 @@ uint16 *FUN_004c7080(TextureFile *baseTex, TextureFile *alphaTex) {
         uint16 alphaRgbAverage;
 
         alphaWord = alphaTex->data[i];
-        alphaRgbAverage = (((alphaWord >> 10) & 0x1f) + ((alphaWord >> 5) & 0x1f) + (alphaWord & 0x1f)) / 3;
+        alphaRgbAverage = (uint16)((((alphaWord >> 10) & 0x1f) + ((alphaWord >> 5) & 0x1f) + (alphaWord & 0x1f)) / 3);
 
         if ((i & 1) == 0) {
-            var2 = alphaRgbAverage << 4;
+            var2 = (uint8)(alphaRgbAverage << 4);
         } else {
-            var2 = var2 | (alphaRgbAverage & 0xf);
+            var2 = (uint8)(var2 | (alphaRgbAverage & 0xf));
             ((uint8*)allocBytes)[(i >> 1) + (baseTex->width * baseTex->height) * 2] = var2;
         }
 

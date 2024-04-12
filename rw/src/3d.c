@@ -37,7 +37,7 @@ typedef struct UnkTexStruct1 {
     /*0x34*/ int32 unk0x34[32]; // unsure of length
     /*0xb4*/ LPDIRECTDRAWSURFACE4 surface;
     /*0xb8*/ LPDIRECT3DTEXTURE2 texture;
-    /*0xbc*/ char *unk0xbc;
+    /*0xbc*/ int32 unk0xbc;
     /*0xc0*/ void *unk0xc0;
 } UnkTexStruct1;
 
@@ -389,7 +389,7 @@ bool32 init_d3d(HWND hWnd) {
     }
 }
 
-int32 FUN_004013f0() {
+int32 FUN_004013f0(HWND hWnd) {
     HRESULT result;
     
     gVertexQueue = custom_alloc(0x180000);
@@ -1012,8 +1012,8 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
     gRenderFlagQueue[triangleCount] = 0;
 
     if (gTextureQueue[gVertexCount / 3] >= 0) {
-        tuDivisor = DAT_01b2ea60[gTextureQueue[triangleCount] & 0xffff].widthMultipleOfMin - 1.0;
-        tvDivisor = DAT_01b2ea60[gTextureQueue[triangleCount] & 0xffff].heightMultipleOfMin - 1.0;
+        tuDivisor = (float32)(DAT_01b2ea60[gTextureQueue[triangleCount] & 0xffff].widthMultipleOfMin - 1.0);
+        tvDivisor = (float32)(DAT_01b2ea60[gTextureQueue[triangleCount] & 0xffff].heightMultipleOfMin - 1.0);
 
         gVertexQueue[gVertexCount + 0].tu = (float32)(param1->tu1 + 0.5) / tuDivisor;
         gVertexQueue[gVertexCount + 0].tv = (float32)(param1->tv1 + 0.5) / tvDivisor;
@@ -1048,7 +1048,7 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
         color_a = 0.4f;
     }
 
-    spec_a = DAT_0051ad8c * 0.00062499999f + 0.2;
+    spec_a = (float32)(DAT_0051ad8c * 0.00062499999f + 0.2);
 
     spec_r = 0.0;
     spec_g = 0.0;
@@ -1059,30 +1059,30 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
     color_b = param1->unk0xd4 * 0.0035714286f;
 
     if (DAT_0051ad84 != 0) {
-        color_r = color_r - 0.6;
-        color_g = color_g - 0.4;
-        color_b = color_b - 0.1;
+        color_r = (float32)(color_r - 0.6);
+        color_g = (float32)(color_g - 0.4);
+        color_b = (float32)(color_b - 0.1);
     }
 
     if (color_r > 1.0) {
-        spec_r = (color_r - 1.0) * 0.6666666666666666;
+        spec_r = (float32)((color_r - 1.0) * 0.6666666666666666);
         color_r = 1;
     } else if (color_r < 0.0) {
-        color_r = 0.0;
+        color_r = 0;
     }
 
     if (color_g > 1.0) {
-        spec_g = (color_g - 1.0) * 0.6666666666666666;
+        spec_g = (float32)((color_g - 1.0) * 0.6666666666666666);
         color_g = 1;
     } else if (color_g < 0.0) {
-        color_g = 0.0;
+        color_g = 0;
     }
 
     if (color_b > 1.0) {
-        spec_b = (color_b - 1.0) * 0.6666666666666666;
+        spec_b = (float32)((color_b - 1.0) * 0.6666666666666666);
         color_b = 1;
     } else if (color_b < 0.0) {
-        color_b = 0.0;
+        color_b = 0;
     }
 
     gVertexQueue[gVertexCount + 0].color = D3DRGBA(color_r, color_g, color_b, color_a);
@@ -1097,68 +1097,68 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
     color_b = param1->unk0xd6 * 0.0035714286f;
 
     if (DAT_0051ad84 != 0) {
-        color_r = color_r - 0.6;
-        color_g = color_g - 0.4;
-        color_b = color_b - 0.1;
+        color_r = (float32)(color_r - 0.6);
+        color_g = (float32)(color_g - 0.4);
+        color_b = (float32)(color_b - 0.1);
     }
 
     if (color_r > 1.0) {
-        spec_r = (color_r - 1.0) * 0.6666666666666666;
+        spec_r = (float32)((color_r - 1.0) * 0.6666666666666666);
         color_r = 1;
     } else if (color_r < 0.0) {
-        color_r = 0.0;
+        color_r = 0;
     }
 
     if (color_g > 1.0) {
-        spec_g = (color_g - 1.0) * 0.6666666666666666;
+        spec_g = (float32)((color_g - 1.0) * 0.6666666666666666);
         color_g = 1;
     } else if (color_g < 0.0) {
-        color_g = 0.0;
+        color_g = 0;
     }
 
     if (color_b > 1.0) {
-        spec_b = (color_b - 1.0) * 0.6666666666666666;
+        spec_b = (float32)((color_b - 1.0) * 0.6666666666666666);
         color_b = 1;
     } else if (color_b < 0.0) {
-        color_b = 0.0;
+        color_b = 0;
     }
 
     gVertexQueue[gVertexCount + 1].color = D3DRGBA(color_r, color_g, color_b, color_a);
     gVertexQueue[gVertexCount + 1].specular = D3DRGBA(spec_r, spec_g, spec_b, spec_a);
 
-    spec_r = 0.0;
-    spec_g = 0.0;
-    spec_b = 0.0;
+    spec_r = 0;
+    spec_g = 0;
+    spec_b = 0;
 
     color_r = param1->unk0xc8 * 0.0035714286f;
     color_g = param1->unk0xd0 * 0.0035714286f;
     color_b = param1->unk0xd8 * 0.0035714286f;
 
     if (DAT_0051ad84 != 0) {
-        color_r = color_r - 0.6;
-        color_g = color_g - 0.4;
-        color_b = color_b - 0.1;
+        color_r = (float32)(color_r - 0.6);
+        color_g = (float32)(color_g - 0.4);
+        color_b = (float32)(color_b - 0.1);
     }
 
     if (color_r > 1.0) {
-        spec_r = (color_r - 1.0) * 0.6666666666666666;
+        spec_r = (float32)((color_r - 1.0) * 0.6666666666666666);
         color_r = 1;
     } else if (color_r < 0.0) {
-        color_r = 0.0;
+        color_r = 0;
     }
 
     if (color_g > 1.0) {
-        spec_g = (color_g - 1.0) * 0.6666666666666666;
+        spec_g = (float32)((color_g - 1.0) * 0.6666666666666666);
         color_g = 1;
     } else if (color_g < 0.0) {
-        color_g = 0.0;
+        color_g = 0;
     }
 
     if (color_b > 1.0) {
-        spec_b = (color_b - 1.0) * 0.6666666666666666;
+        spec_b = (float32)((color_b - 1.0) * 0.6666666666666666);
         color_b = 1;
     } else if (color_b < 0.0) {
-        color_b = 0.0;
+        color_b = 0;
     }
 
     gVertexQueue[gVertexCount + 2].color = D3DRGBA(color_r, color_g, color_b, color_a);
@@ -1215,8 +1215,8 @@ void FUN_00402e30(UnkModelStruct* param1, int32 param2, UnkModelStruct2* param3)
     }
 
     if (gTextureQueue[triangleCount] >= 0) {
-        tuDivisor = DAT_01b2ea60[gTextureQueue[triangleCount]].widthMultipleOfMin - 1.0;
-        tvDivisor = DAT_01b2ea60[gTextureQueue[triangleCount]].heightMultipleOfMin - 1.0;
+        tuDivisor = (float32)(DAT_01b2ea60[gTextureQueue[triangleCount]].widthMultipleOfMin - 1.0);
+        tvDivisor = (float32)(DAT_01b2ea60[gTextureQueue[triangleCount]].heightMultipleOfMin - 1.0);
 
         gVertexQueue[gVertexCount + 0].tu = (float32)(param1->tu1 + 0.5) / tuDivisor;
         gVertexQueue[gVertexCount + 0].tv = (float32)(param1->tv1 + 0.5) / tvDivisor;
@@ -1555,8 +1555,8 @@ int FUN_00403720(uint16 *baseBytes, uint16 *alphaBytes, int32 width, int32 heigh
                     uint16 rgb;
 
                     // Average alpha texture 5-bit RGB and pack it into the upper 4 bits of a word
-                    alpha = (((alphaWord >> 10) & 0x1f) + ((alphaWord >> 5) & 0x1f) + ((alphaWord >> 0) & 0x1f)) / 3;
-                    alpha = (alpha & 0xfffe) << 11;
+                    alpha = (uint16)((((alphaWord >> 10) & 0x1f) + ((alphaWord >> 5) & 0x1f) + ((alphaWord >> 0) & 0x1f)) / 3);
+                    alpha = (uint16)((alpha & 0xfffe) << 11);
 
                     if (alpha == 0) {
                         alpha = 0x1000;
@@ -1564,14 +1564,14 @@ int FUN_00403720(uint16 *baseBytes, uint16 *alphaBytes, int32 width, int32 heigh
 
                     // Convert 5-bit RGB to 4-bit RGB
                     rgbWord = baseBytes[((x * width2) >> 8) + ((y * height2) >> 8) * width];
-                    rgb = ((rgbWord >> 3) & 0xf00) | ((rgbWord >> 2) & 0xf0) | ((rgbWord >> 1) & 0xf);
+                    rgb = (uint16)(((rgbWord >> 3) & 0xf00) | ((rgbWord >> 2) & 0xf0) | ((rgbWord >> 1) & 0xf));
 
                     if (rgb == 0) {
                         rgb = 1;
                     }
 
                     // Combine alpha and RGB
-                    *pCurrentDstWord = alpha | rgb;
+                    *pCurrentDstWord = (uint16)(alpha | rgb);
                 }
 
                 pCurrentDstWord++;
@@ -1670,8 +1670,8 @@ void FUN_00403cf0(int32 textureId, int32 x, int32 y, int32 width, int32 height, 
     D3DCOLOR color;
     D3DCOLOR specular;
 
-    widthMultipleOfMin = DAT_01b2ea60[textureId - 1].widthMultipleOfMin - 1.0;
-    heightMultipleOfMin = DAT_01b2ea60[textureId - 1].heightMultipleOfMin - 1.0;
+    widthMultipleOfMin = (float32)(DAT_01b2ea60[textureId - 1].widthMultipleOfMin - 1.0);
+    heightMultipleOfMin = (float32)(DAT_01b2ea60[textureId - 1].heightMultipleOfMin - 1.0);
 
     triangleCount = gVertexCount / 3;
 
@@ -1697,16 +1697,16 @@ void FUN_00403cf0(int32 textureId, int32 x, int32 y, int32 width, int32 height, 
 
     gRenderFlagQueue[triangleCount] |= 0x10;
 
-    gVertexQueue[gVertexCount + 0].sx = x;
-    gVertexQueue[gVertexCount + 0].sy = y;
+    gVertexQueue[gVertexCount + 0].sx = (float32)x;
+    gVertexQueue[gVertexCount + 0].sy = (float32)y;
     gVertexQueue[gVertexCount + 0].sz = DAT_01b18068;
     gVertexQueue[gVertexCount + 0].rhw = 1.0f;
-    gVertexQueue[gVertexCount + 1].sx = x;
-    gVertexQueue[gVertexCount + 1].sy = y + height;
+    gVertexQueue[gVertexCount + 1].sx = (float32)x;
+    gVertexQueue[gVertexCount + 1].sy = (float32)(y + height);
     gVertexQueue[gVertexCount + 1].sz = DAT_01b18068;
     gVertexQueue[gVertexCount + 1].rhw = 1.0f;
-    gVertexQueue[gVertexCount + 2].sx = x + width;
-    gVertexQueue[gVertexCount + 2].sy = y + height;
+    gVertexQueue[gVertexCount + 2].sx = (float32)(x + width);
+    gVertexQueue[gVertexCount + 2].sy = (float32)(y + height);
     gVertexQueue[gVertexCount + 2].sz = DAT_01b18068;
     gVertexQueue[gVertexCount + 2].rhw = 1.0f;
 
@@ -1758,16 +1758,16 @@ void FUN_00403cf0(int32 textureId, int32 x, int32 y, int32 width, int32 height, 
 
     gRenderFlagQueue[triangleCount] |= 0x10;
 
-    gVertexQueue[gVertexCount + 0].sx = x;
-    gVertexQueue[gVertexCount + 0].sy = y;
+    gVertexQueue[gVertexCount + 0].sx = (float32)x;
+    gVertexQueue[gVertexCount + 0].sy = (float32)y;
     gVertexQueue[gVertexCount + 0].sz = DAT_01b18068;
     gVertexQueue[gVertexCount + 0].rhw = 1.0f;
-    gVertexQueue[gVertexCount + 1].sx = x + width;
-    gVertexQueue[gVertexCount + 1].sy = y + height;
+    gVertexQueue[gVertexCount + 1].sx = (float32)(x + width);
+    gVertexQueue[gVertexCount + 1].sy = (float32)(y + height);
     gVertexQueue[gVertexCount + 1].sz = DAT_01b18068;
     gVertexQueue[gVertexCount + 1].rhw = 1.0f;
-    gVertexQueue[gVertexCount + 2].sx = x + width;
-    gVertexQueue[gVertexCount + 2].sy = y;
+    gVertexQueue[gVertexCount + 2].sx = (float32)(x + width);
+    gVertexQueue[gVertexCount + 2].sy = (float32)y;
     gVertexQueue[gVertexCount + 2].sz = DAT_01b18068;
     gVertexQueue[gVertexCount + 2].rhw = 1.0f;
 
@@ -1794,39 +1794,39 @@ void FUN_00403cf0(int32 textureId, int32 x, int32 y, int32 width, int32 height, 
 }
 
 // Queues verts for fog of war edges
-void FUN_00404380(int textureId, int x, int y, int width, int height, int matrixIdx) {
-    int texWidth;
-    int texHeight;
+void FUN_00404380(int32 textureId, int32 x, int32 y, int32 width, int32 height, int32 matrixIdx) {
+    int32 texWidth;
+    int32 texHeight;
 
-    int centerX;
-    int centerY;
+    int32 centerX;
+    int32 centerY;
 
-    int left;
-    int top;
-    int bottom;
-    int right;
+    int32 left;
+    int32 top;
+    int32 bottom;
+    int32 right;
 
-    float x_;
-    float y_;
-    float z_;
+    float32 x_;
+    float32 y_;
+    float32 z_;
 
-    int baseX;
-    int baseY;
+    int32 baseX;
+    int32 baseY;
 
-    int sxArray[6];
-    int syArray[6];
-    int tuArray[6];
-    int tvArray[6];
+    int32 sxArray[6];
+    int32 syArray[6];
+    int32 tuArray[6];
+    int32 tvArray[6];
 
-    float widthMultipleOfMin;
-    float heightMultipleOfMin;
+    float32 widthMultipleOfMin;
+    float32 heightMultipleOfMin;
 
-    int i;
+    int32 i;
 
     Matrix3x3 matrix;
 
-    texWidth = DAT_01b2ea60[textureId - 1].width;
     texHeight = DAT_01b2ea60[textureId - 1].height;
+    texWidth = DAT_01b2ea60[textureId - 1].width;
 
     centerX = x + width / 2;
     centerY = y + height / 2;
@@ -1840,52 +1840,52 @@ void FUN_00404380(int textureId, int x, int y, int width, int height, int matrix
 
     x_ = 0.0f;
     y_ = 0.0f;
-    z_ = 0.0f; // <- not in original code
+    //z_ = 0.0f; // <- not in original code
     mul_mat3_vec3(&matrix, &x_, &y_, &z_);
-    baseX = centerX + x_;
-    baseY = centerY + y_;
+    baseX = (int32)(centerX + x_);
+    baseY = (int32)(centerY + y_);
 
-    x_ = centerX - right;
-    y_ = centerY - top;
+    x_ = (float32)(centerX - right);
+    y_ = (float32)(centerY - top);
     z_ = 0.0f;
     mul_mat3_vec3(&matrix, &x_, &y_, &z_);
-    sxArray[0] = baseX + x_;
-    syArray[0] = baseY + y_;
+    sxArray[0] = (int32)(baseX + x_);
+    syArray[0] = (int32)(baseY + y_);
 
-    x_ = centerX - left;
-    y_ = centerY - top;
+    x_ = (float32)(centerX - left);
+    y_ = (float32)(centerY - top);
     z_ = 0.0f;
     mul_mat3_vec3(&matrix, &x_, &y_, &z_);
-    sxArray[1] = baseX + x_;
-    syArray[1] = baseY + y_;
+    sxArray[1] = (int32)(baseX + x_);
+    syArray[1] = (int32)(baseY + y_);
 
-    x_ = centerX - left;
-    y_ = centerY - bottom;
+    x_ = (float32)(centerX - left);
+    y_ = (float32)(centerY - bottom);
     z_ = 0.0f;
     mul_mat3_vec3(&matrix, &x_, &y_, &z_);
-    sxArray[2] = baseX + x_;
-    syArray[2] = baseY + y_;
+    sxArray[2] = (int32)(baseX + x_);
+    syArray[2] = (int32)(baseY + y_);
 
-    x_ = centerX - right;
-    y_ = centerY - top;
+    x_ = (float32)(centerX - right);
+    y_ = (float32)(centerY - top);
     z_ = 0.0f;
     mul_mat3_vec3(&matrix, &x_, &y_, &z_);
-    sxArray[3] = baseX + x_;
-    syArray[3] = baseY + y_;
+    sxArray[3] = (int32)(baseX + x_);
+    syArray[3] = (int32)(baseY + y_);
 
-    x_ = centerX - left;
-    y_ = centerY - bottom;
+    x_ = (float32)(centerX - left);
+    y_ = (float32)(centerY - bottom);
     z_ = 0.0f;
     mul_mat3_vec3(&matrix, &x_, &y_, &z_);
-    sxArray[4] = baseX + x_;
-    syArray[4] = baseY + y_;
+    sxArray[4] = (int32)(baseX + x_);
+    syArray[4] = (int32)(baseY + y_);
 
-    x_ = centerX - right;
-    y_ = centerY - bottom;
+    x_ = (float32)(centerX - right);
+    y_ = (float32)(centerY - bottom);
     z_ = 0.0f;
     mul_mat3_vec3(&matrix, &x_, &y_, &z_);
-    sxArray[5] = baseX + x_;
-    syArray[5] = baseY + y_;
+    sxArray[5] = (int32)(baseX + x_);
+    syArray[5] = (int32)(baseY + y_);
 
     tuArray[0] = texWidth - 1;
     tvArray[0] = 0;
@@ -1909,8 +1909,8 @@ void FUN_00404380(int textureId, int x, int y, int width, int height, int matrix
         return;
     }
 
-    widthMultipleOfMin = DAT_01b2ea60[textureId - 1].widthMultipleOfMin - 1.0;
-    heightMultipleOfMin = DAT_01b2ea60[textureId - 1].heightMultipleOfMin - 1.0;
+    widthMultipleOfMin = (float32)(DAT_01b2ea60[textureId - 1].widthMultipleOfMin - 1.0);
+    heightMultipleOfMin = (float32)(DAT_01b2ea60[textureId - 1].heightMultipleOfMin - 1.0);
 
     for (i = 0; i < 6; i += 3) {
         int32 triCount = gVertexCount / 3;
@@ -1924,38 +1924,38 @@ void FUN_00404380(int textureId, int x, int y, int width, int height, int matrix
         gViewportQueue[triCount].right = DAT_005f8c48;
         gViewportQueue[triCount].bottom = DAT_005f8c44;
 
-        gVertexQueue[gVertexCount + 0].sx = sxArray[i + 0];
-        gVertexQueue[gVertexCount + 0].sy = syArray[i + 0];
+        gVertexQueue[gVertexCount + 0].sx = (float32)sxArray[i + 0];
+        gVertexQueue[gVertexCount + 0].sy = (float32)syArray[i + 0];
         gVertexQueue[gVertexCount + 0].sz = DAT_01b18068;
         gVertexQueue[gVertexCount + 0].rhw = 1.0f;
 
-        gVertexQueue[gVertexCount + 1].sx = sxArray[i + 1];
-        gVertexQueue[gVertexCount + 1].sy = syArray[i + 1];
+        gVertexQueue[gVertexCount + 1].sx = (float32)sxArray[i + 1];
+        gVertexQueue[gVertexCount + 1].sy = (float32)syArray[i + 1];
         gVertexQueue[gVertexCount + 1].sz = DAT_01b18068;
         gVertexQueue[gVertexCount + 1].rhw = 1.0f;
 
-        gVertexQueue[gVertexCount + 2].sx = sxArray[i + 2];
-        gVertexQueue[gVertexCount + 2].sy = syArray[i + 2];
+        gVertexQueue[gVertexCount + 2].sx = (float32)sxArray[i + 2];
+        gVertexQueue[gVertexCount + 2].sy = (float32)syArray[i + 2];
         gVertexQueue[gVertexCount + 2].sz = DAT_01b18068;
         gVertexQueue[gVertexCount + 2].rhw = 1.0f;
 
-        gVertexQueue[gVertexCount + 0].tu = (tuArray[i + 0] + 0.5) / widthMultipleOfMin;
-        gVertexQueue[gVertexCount + 0].tv = (tvArray[i + 0] + 0.5) / heightMultipleOfMin;
+        gVertexQueue[gVertexCount + 0].tu = (float32)(tuArray[i + 0] + 0.5) / widthMultipleOfMin;
+        gVertexQueue[gVertexCount + 0].tv = (float32)(tvArray[i + 0] + 0.5) / heightMultipleOfMin;
 
-        gVertexQueue[gVertexCount + 1].tu = (tuArray[i + 1] + 0.5) / widthMultipleOfMin;
-        gVertexQueue[gVertexCount + 1].tv = (tvArray[i + 1] + 0.5) / heightMultipleOfMin;
+        gVertexQueue[gVertexCount + 1].tu = (float32)(tuArray[i + 1] + 0.5) / widthMultipleOfMin;
+        gVertexQueue[gVertexCount + 1].tv = (float32)(tvArray[i + 1] + 0.5) / heightMultipleOfMin;
 
-        gVertexQueue[gVertexCount + 2].tu = (tuArray[i + 2] + 0.5) / widthMultipleOfMin;
-        gVertexQueue[gVertexCount + 2].tv = (tvArray[i + 2] + 0.5) / heightMultipleOfMin;
+        gVertexQueue[gVertexCount + 2].tu = (float32)(tuArray[i + 2] + 0.5) / widthMultipleOfMin;
+        gVertexQueue[gVertexCount + 2].tv = (float32)(tvArray[i + 2] + 0.5) / heightMultipleOfMin;
 
-        gVertexQueue[gVertexCount + 0].color = D3DRGBA(1, 1, 1, 1);
-        gVertexQueue[gVertexCount + 0].specular = D3DRGBA(0, 0, 0, 0);
+        gVertexQueue[gVertexCount + 0].color = (D3DCOLOR)D3DRGBA(1.0, 1.0, 1.0, 1.0);
+        gVertexQueue[gVertexCount + 0].specular = (D3DCOLOR)D3DRGBA(0.0, 0.0, 0.0, 0.0);
 
-        gVertexQueue[gVertexCount + 1].color = D3DRGBA(1, 1, 1, 1);
-        gVertexQueue[gVertexCount + 1].specular = D3DRGBA(0, 0, 0, 0);
+        gVertexQueue[gVertexCount + 1].color = (D3DCOLOR)D3DRGBA(1.0, 1.0, 1.0, 1.0);
+        gVertexQueue[gVertexCount + 1].specular = (D3DCOLOR)D3DRGBA(0.0, 0.0, 0.0, 0.0);
 
-        gVertexQueue[gVertexCount + 2].color = D3DRGBA(1, 1, 1, 1);
-        gVertexQueue[gVertexCount + 2].specular = D3DRGBA(0, 0, 0, 0);
+        gVertexQueue[gVertexCount + 2].color = (D3DCOLOR)D3DRGBA(1.0, 1.0, 1.0, 1.0);
+        gVertexQueue[gVertexCount + 2].specular = (D3DCOLOR)D3DRGBA(0.0, 0.0, 0.0, 0.0);
 
         gVertexCount += 3;
     }

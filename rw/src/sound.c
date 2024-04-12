@@ -1712,7 +1712,7 @@ void sound_set_pitch(int32 pitch, int32 idx) {
         return;
     }
 
-    frequency = (pitch / 1024.0) * DAT_0053ee00[idx];
+    frequency = (uint32)((pitch / 1024.0) * DAT_0053ee00[idx]);
 
     if (DAT_00574a00[idx] != 0) {
         sSoundBuffer1 = gSoundBuffers1[idx];
