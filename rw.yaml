@@ -44,7 +44,7 @@ segments:
   - [0x400000, bin]
   # .text
   - [0x401000, text, 3d]
-  - [0x404a40, text]
+  - [0x408b10, text]
   - [0x409860, text, segment_409860]
   - [0x4098d0, text]
   - [0x409b40, text, load_texture]
@@ -1582,6 +1582,7 @@ symbols:
   gMinTextureHeight: 0x51ada0
   DAT_0051ada4: 0x51ada4
   DAT_0051ada8: 0x51ada8
+  DAT_0051adac: 0x51adac
   gZEnable: 0x51adb0
   gDirect3D3: 0x51adb4
   sD3D__try_find_valid_d3d_device: 0x51adb8
@@ -1726,13 +1727,19 @@ symbols:
   sUnusedTimerGlobal4: 0x5fa7cc
   gCmdLineArgN: 0x782700
   gCmdLineArgC: 0x88111c
+  DAT_008e72e0: 0x8e72e0
+  DAT_008e7400: 0x8e7400
+  DAT_008e7520: 0x8e7520
+  DAT_008e7640: 0x8e7640
   DAT_008ec0a4: 0x8ec0a4
   gCmdLineArgM: 0x8f07e0
   DAT_00945e94: 0x945e94
   DAT_00ece464: 0xece464
+  DAT_00ef6f40: 0xef6f40
   gCmdLineArgP: 0xef6f60
   gTempString: 0xef6fc0
   DAT_00f0c770: 0xf0c770
+  DAT_00f41c00: 0xf41c00
   gCmdLineArgS: 0xfe00e0
   DAT_00fe04d0: 0xfe04d0
   DAT_01359b80: 0x1359b80

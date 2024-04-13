@@ -50,7 +50,7 @@ typedef struct UnkGraphicsStruct4 {
 
 typedef struct UnkModelStruct {
     /*0x0*/ char unk0x0;
-    /*0x1*/ char unk0x1;
+    /*0x1*/ uint8 unk0x1;
     /*0x2*/ int16 unk0x2;
     /*0x4*/ char unk0x4_pad[48];
     /*0x34*/ float32 x1;
@@ -65,18 +65,18 @@ typedef struct UnkModelStruct {
     /*0x58*/ float32 z2;
     /*0x5c*/ float32 z3;
     /*0x60*/ char unk0x60_pad[100];
-    /*0xc4*/ short unk0xc4; // r
-    /*0xc6*/ short unk0xc6; // r
-    /*0xc8*/ short unk0xc8; // r
-    /*0xca*/ short unk0xca;
-    /*0xcc*/ short unk0xcc; // g
-    /*0xce*/ short unk0xce; // g
-    /*0xd0*/ short unk0xd0; // g
-    /*0xd2*/ short unk0xd2;
-    /*0xd4*/ short unk0xd4; // b
-    /*0xd6*/ short unk0xd6; // b
-    /*0xd8*/ short unk0xd8; // b
-    /*0xda*/ short unk0xda;
+    /*0xc4*/ int16 r1; // red
+    /*0xc6*/ int16 r2; // red
+    /*0xc8*/ int16 r3; // red
+    /*0xca*/ int16 unk0xca;
+    /*0xcc*/ int16 g1; // green
+    /*0xce*/ int16 g2; // green
+    /*0xd0*/ int16 g3; // green
+    /*0xd2*/ int16 unk0xd2;
+    /*0xd4*/ int16 b1; // blue
+    /*0xd6*/ int16 b2; // blue
+    /*0xd8*/ int16 b3; // blue
+    /*0xda*/ int16 unk0xda;
     /*0xdc*/ int32 tu1;
     /*0xe0*/ int32 tu2;
     /*0xe4*/ int32 tu3;
@@ -85,18 +85,19 @@ typedef struct UnkModelStruct {
     /*0xf0*/ int32 tv2;
     /*0xf4*/ int32 tv3;
     /*0xf8*/ char unk0xf8_pad[8];
-    /*0x100*/ short unk0x100;
-    /*0x102*/ short unk0x102;
-    /*0x104*/ int32 unk0x104_pad;
-    /*0x108*/ int32 unk0x108;
+    /*0x100*/ int16 texWidth;
+    /*0x102*/ int16 texHeight;
+    /*0x104*/ int16 unk0x104;
+    /*0x106*/ int16 unk0x106;
+    /*0x108*/ uint16 *texBytes;
 } UnkModelStruct;
 
 typedef struct UnkModelStruct2 {
-    /*0x0*/ int32 unk0x0;
-    /*0x4*/ int32 unk0x4;
-    /*0x8*/ int32 unk0x8;
+    /*0x0*/ uint16 *texBytes;
+    /*0x4*/ int32 texWidth;
+    /*0x8*/ int32 texHeight;
     /*0xc*/ char unk0xc_pad[12];
-    /*0x18*/ int32 textureId; // 1-indexed?
+    /*0x18*/ int32 textureId; // 1-indexed
 } UnkModelStruct2;
 
 extern int32 DAT_005f0b60;
@@ -160,9 +161,20 @@ extern int32 DAT_01b2dd8c;
 
 extern int32 DAT_0051ada8;
 
+extern int32 DAT_0051adac;
+
+extern UnkModelStruct DAT_008e72e0;
+extern UnkModelStruct DAT_008e7400;
+extern UnkModelStruct DAT_008e7520;
+extern UnkModelStruct DAT_008e7640;
+
+extern int32 DAT_00ef6f40;
+
+extern UnkModelStruct2 DAT_00f41c00;
+
 extern void try_init_zbuffer();
 extern int32 FUN_00401af0();
-extern int32 FUN_004055c0(int32);
+extern int32 FUN_004055c0(uint16*);
 extern void FUN_00409aa0(Matrix3x3 *matrix,int param_2,int index);
 
 // .data
@@ -1030,7 +1042,7 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
         gVertexQueue[gVertexCount + 2].tv = 0.0f;
     }
 
-    if (param1->unk0x108 == 0 || param1->unk0x1 == 0) {
+    if (param1->texBytes == NULL || param1->unk0x1 == 0) {
         gTextureQueue[triangleCount] = -1;
     }
 
@@ -1054,9 +1066,9 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
     spec_g = 0.0;
     spec_b = 0.0;
     
-    color_r = param1->unk0xc4 * 0.0035714286f;
-    color_g = param1->unk0xcc * 0.0035714286f;
-    color_b = param1->unk0xd4 * 0.0035714286f;
+    color_r = param1->r1 * 0.0035714286f;
+    color_g = param1->g1 * 0.0035714286f;
+    color_b = param1->b1 * 0.0035714286f;
 
     if (DAT_0051ad84 != 0) {
         color_r = (float32)(color_r - 0.6);
@@ -1092,9 +1104,9 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
     spec_g = 0.0;
     spec_b = 0.0;
 
-    color_r = param1->unk0xc6 * 0.0035714286f;
-    color_g = param1->unk0xce * 0.0035714286f;
-    color_b = param1->unk0xd6 * 0.0035714286f;
+    color_r = param1->r2 * 0.0035714286f;
+    color_g = param1->g2 * 0.0035714286f;
+    color_b = param1->b2 * 0.0035714286f;
 
     if (DAT_0051ad84 != 0) {
         color_r = (float32)(color_r - 0.6);
@@ -1130,9 +1142,9 @@ void FUN_00402470(UnkModelStruct* param1, UnkModelStruct2* param2) {
     spec_g = 0;
     spec_b = 0;
 
-    color_r = param1->unk0xc8 * 0.0035714286f;
-    color_g = param1->unk0xd0 * 0.0035714286f;
-    color_b = param1->unk0xd8 * 0.0035714286f;
+    color_r = param1->r3 * 0.0035714286f;
+    color_g = param1->g3 * 0.0035714286f;
+    color_b = param1->b3 * 0.0035714286f;
 
     if (DAT_0051ad84 != 0) {
         color_r = (float32)(color_r - 0.6);
@@ -1208,8 +1220,8 @@ void FUN_00402e30(UnkModelStruct* param1, int32 param2, UnkModelStruct2* param3)
 
     gRenderFlagQueue[triangleCount] = 1;
 
-    if (param1->unk0x108 != param3->unk0x0) {
-        gTextureQueue[triangleCount] = FUN_004055c0(param1->unk0x108);
+    if (param1->texBytes != param3->texBytes) {
+        gTextureQueue[triangleCount] = FUN_004055c0(param1->texBytes);
     } else {
         gTextureQueue[triangleCount] = param3->textureId - 1;
     }
@@ -1243,7 +1255,7 @@ void FUN_00402e30(UnkModelStruct* param1, int32 param2, UnkModelStruct2* param3)
     gVertexQueue[gVertexCount + 2].color = color;
     gVertexQueue[gVertexCount + 2].specular = specular;
 
-    if (param1->unk0x108 == 0 || param1->unk0x1 == 0) {
+    if (param1->texBytes == NULL || param1->unk0x1 == 0) {
         gTextureQueue[triangleCount] = -1;
     }
 
@@ -1259,7 +1271,7 @@ void FUN_00402e30(UnkModelStruct* param1, int32 param2, UnkModelStruct2* param3)
 }
 
 // Loads textures for 3D models
-int FUN_00403260(char *texPath, uint16 *texBytes, int32 width, int32 height, int32 textureId) {
+int32 FUN_00403260(char *texPath, uint16 *texBytes, int32 width, int32 height, int32 textureId) {
     int32 widthMultipleOfMin;
     int32 heightMultipleOfMin;
 
@@ -1275,8 +1287,8 @@ int FUN_00403260(char *texPath, uint16 *texBytes, int32 width, int32 height, int
 
     DDCOLORKEY colorKey;
 
-    widthMultipleOfMin = ((gMinTextureWidth - 1 + width) / gMinTextureWidth) * gMinTextureWidth;
-    heightMultipleOfMin = ((gMinTextureHeight - 1 + width) / gMinTextureHeight) * gMinTextureHeight;
+    widthMultipleOfMin = ((gMinTextureWidth + width - 1) / gMinTextureWidth) * gMinTextureWidth;
+    heightMultipleOfMin = ((gMinTextureHeight + height - 1) / gMinTextureHeight) * gMinTextureHeight;
 
     if (widthMultipleOfMin > gMaxTextureWidth) {
         widthMultipleOfMin = gMaxTextureWidth;
@@ -1308,11 +1320,11 @@ int FUN_00403260(char *texPath, uint16 *texBytes, int32 width, int32 height, int
         DAT_01b2ea60[texturePageIdx].heightMultipleOfMin = heightMultipleOfMin;
         DAT_01b2ea60[texturePageIdx].texBytes = texBytes;
         DAT_01b2ea60[texturePageIdx].unk0xbc = textureId; // TODO: this might not be right
-        DAT_01b2ea60[texturePageIdx].unk0x24 = 0;
         DAT_01b2ea60[texturePageIdx].unk0xc0 = NULL;
         DAT_01b2ea60[texturePageIdx].unk0x28 = 0;
         DAT_01b2ea60[texturePageIdx].unk0x2c = 0;
         DAT_01b2ea60[texturePageIdx].unk0x30 = 0;
+        DAT_01b2ea60[texturePageIdx].unk0x24 = 0;
 
         memset(&surfaceDesc, 0, sizeof(DDSURFACEDESC2));
         surfaceDesc.dwSize = sizeof(DDSURFACEDESC2);
@@ -1433,7 +1445,7 @@ int FUN_00403260(char *texPath, uint16 *texBytes, int32 width, int32 height, int
 }
 
 // Handles textures for cursors, fog of war edges, unit stars, and probably more
-int FUN_00403720(uint16 *baseBytes, uint16 *alphaBytes, int32 width, int32 height, int32 textureId) {
+int32 FUN_00403720(uint16 *baseBytes, uint16 *alphaBytes, int32 width, int32 height, int32 textureId) {
     int32 widthMultipleOfMin;
     int32 heightMultipleOfMin;
 
@@ -1450,7 +1462,7 @@ int FUN_00403720(uint16 *baseBytes, uint16 *alphaBytes, int32 width, int32 heigh
     DDCOLORKEY colorKey;
 
     widthMultipleOfMin = ((gMinTextureWidth - 1 + width) / gMinTextureWidth) * gMinTextureWidth;
-    heightMultipleOfMin = ((gMinTextureHeight - 1 + width) / gMinTextureHeight) * gMinTextureHeight;
+    heightMultipleOfMin = ((gMinTextureHeight - 1 + height) / gMinTextureHeight) * gMinTextureHeight;
 
     if (widthMultipleOfMin > gMaxTextureWidth) {
         widthMultipleOfMin = gMaxTextureWidth;
@@ -1959,4 +1971,429 @@ void FUN_00404380(int32 textureId, int32 x, int32 y, int32 width, int32 height, 
 
         gVertexCount += 3;
     }
+}
+
+void FUN_00404a40(int32 textureId, int32 x, int32 y, int32 width, int32 height, int32 r, int32 g, int32 b) {
+    float32 prevGlobalVal;
+
+    int32 texWidth;
+    int32 texHeight;
+
+    int32 red;
+    int32 green;
+    int32 blue;
+
+    prevGlobalVal = DAT_01b18068;
+
+    DAT_0051adac = 3;
+
+    DAT_01b18068 = (float32)(0.0003 - DAT_0051ad90 * 0.000005);
+
+    if (textureId != 0) {
+        texWidth = DAT_01b2ea60[textureId - 1].width;
+        texHeight = DAT_01b2ea60[textureId - 1].height;
+    }
+
+    memset(&DAT_008e72e0, 0, sizeof(DAT_008e72e0));
+    memset(&DAT_008e7400, 0, sizeof(DAT_008e7400));
+    memset(&DAT_008e7520, 0, sizeof(DAT_008e7520));
+    memset(&DAT_008e7640, 0, sizeof(DAT_008e7640));
+
+    DAT_008e72e0.unk0x0 = 3;
+    DAT_008e7400.unk0x0 = 3;
+    DAT_008e7520.unk0x0 = 3;
+    DAT_008e7640.unk0x0 = 3;
+
+    DAT_008e72e0.unk0x1 = 0xff;
+    DAT_008e7400.unk0x1 = 0xff;
+    DAT_008e7520.unk0x1 = 0xff;
+    DAT_008e7640.unk0x1 = 0xff;
+
+    if (DAT_00ef6f40 != 0) {
+        red = (int32)(r * 84.0f);
+        green = (int32)(g * 84.0f);
+        blue = (int32)(b * 84.0f);
+
+        DAT_008e72e0.unk0x2 = 128;
+        DAT_008e7400.unk0x2 = 128;
+        DAT_008e7520.unk0x2 = 128;
+        DAT_008e7640.unk0x2 = 128;
+
+        x = width / 2 + x;
+        y = height / 2 + y;
+
+        width *= 2;
+        height *= 2;
+
+        x = -(width / 2) + x;
+        y = -(height / 2) + y;
+    } else {
+        red = (int32)(r * 64.0f);
+        green = (int32)(g * 64.0f);
+        blue = (int32)(b * 64.0f);
+
+        DAT_008e72e0.unk0x2 = 2048;
+        DAT_008e7400.unk0x2 = 2048;
+        DAT_008e7520.unk0x2 = 2048;
+        DAT_008e7640.unk0x2 = 2048;
+    }
+
+    DAT_008e72e0.r1 = (int16)red;
+    DAT_008e72e0.r2 = (int16)(red / 4);
+    DAT_008e72e0.r3 = (int16)(red / 4);
+    DAT_008e72e0.g1 = (int16)green;
+    DAT_008e72e0.g2 = (int16)(green / 4);
+    DAT_008e72e0.g3 = (int16)(green / 4);
+    DAT_008e72e0.b1 = (int16)blue;
+    DAT_008e72e0.b2 = (int16)(blue / 4);
+    DAT_008e72e0.b3 = (int16)(blue / 4);
+
+    DAT_008e7400.r1 = (int16)red;
+    DAT_008e7400.r2 = (int16)(red / 4);
+    DAT_008e7400.r3 = (int16)(red / 4);
+    DAT_008e7400.g1 = (int16)green;
+    DAT_008e7400.g2 = (int16)(green / 4);
+    DAT_008e7400.g3 = (int16)(green / 4);
+    DAT_008e7400.b1 = (int16)blue;
+    DAT_008e7400.b2 = (int16)(blue / 4);
+    DAT_008e7400.b3 = (int16)(blue / 4);
+
+    DAT_008e7520.r1 = (int16)red;
+    DAT_008e7520.r2 = (int16)(red / 4);
+    DAT_008e7520.r3 = (int16)(red / 4);
+    DAT_008e7520.g1 = (int16)green;
+    DAT_008e7520.g2 = (int16)(green / 4);
+    DAT_008e7520.g3 = (int16)(green / 4);
+    DAT_008e7520.b1 = (int16)blue;
+    DAT_008e7520.b2 = (int16)(blue / 4);
+    DAT_008e7520.b3 = (int16)(blue / 4);
+
+    DAT_008e7640.r1 = (int16)red;
+    DAT_008e7640.r2 = (int16)(red / 4);
+    DAT_008e7640.r3 = (int16)(red / 4);
+    DAT_008e7640.g1 = (int16)green;
+    DAT_008e7640.g2 = (int16)(green / 4);
+    DAT_008e7640.g3 = (int16)(green / 4);
+    DAT_008e7640.b1 = (int16)blue;
+    DAT_008e7640.b2 = (int16)(blue / 4);
+    DAT_008e7640.b3 = (int16)(blue / 4);
+
+    DAT_008e72e0.x1 = (float32)((width / 2) + x);
+    DAT_008e72e0.y1 = (float32)((height / 2) + y);
+    DAT_008e72e0.x2 = (float32)(x + width);
+    DAT_008e72e0.y2 = (float32)y;
+    DAT_008e72e0.x3 = (float32)x;
+    DAT_008e72e0.y3 = (float32)y;
+
+    DAT_008e7400.x1 = (float32)((width / 2) + x);
+    DAT_008e7400.y1 = (float32)((height / 2) + y);
+    DAT_008e7400.x2 = (float32)(x + width);
+    DAT_008e7400.y2 = (float32)(y + height);
+    DAT_008e7400.x3 = (float32)(x + width);
+    DAT_008e7400.y3 = (float32)y;
+
+    DAT_008e7520.x1 = (float32)((width / 2) + x);
+    DAT_008e7520.x2 = (float32)x;
+    DAT_008e7520.y1 = (float32)((height / 2) + y);
+    DAT_008e7520.y2 = (float32)(y + height);
+    DAT_008e7520.x3 = (float32)(x + width);
+    DAT_008e7520.y3 = (float32)(y + height);
+
+    DAT_008e7640.x1 = (float32)((width / 2) + x);
+    DAT_008e7640.y1 = (float32)((height / 2) + y);
+    DAT_008e7640.x2 = (float32)x;
+    DAT_008e7640.y2 = (float32)y;
+    DAT_008e7640.x3 = (float32)x;
+    DAT_008e7640.y3 = (float32)(y + height);
+
+    DAT_008e72e0.tu1 = texWidth / 2;
+    DAT_008e72e0.tv1 = texHeight / 2;
+    DAT_008e72e0.tu2 = texWidth - 1;
+    DAT_008e72e0.tv2 = 0;
+    DAT_008e72e0.tu3 = 0;
+    DAT_008e72e0.tv3 = 0;
+    
+    DAT_008e7400.tu1 = texWidth / 2;
+    DAT_008e7400.tv1 = texHeight / 2;
+    DAT_008e7400.tu2 = texWidth - 1;
+    DAT_008e7400.tv2 = texHeight - 1;
+    DAT_008e7400.tu3 = texWidth - 1;
+    DAT_008e7400.tv3 = 0;
+
+    DAT_008e7520.tu1 = texWidth / 2;
+    DAT_008e7520.tv1 = texHeight / 2;
+    DAT_008e7520.tu2 = 0;
+    DAT_008e7520.tv2 = texHeight - 1;
+    DAT_008e7520.tu3 = texWidth - 1;
+    DAT_008e7520.tv3 = texHeight - 1;
+
+    DAT_008e7640.tu1 = texWidth / 2;
+    DAT_008e7640.tv1 = texHeight / 2;
+    DAT_008e7640.tu2 = 0;
+    DAT_008e7640.tv2 = 0;
+    DAT_008e7640.tu3 = 0;
+    DAT_008e7640.tv3 = texHeight - 1;
+
+    if (textureId > 0) {
+        DAT_00f41c00.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_00f41c00.textureId = textureId;
+        DAT_00f41c00.texWidth = texWidth;
+        DAT_00f41c00.texHeight = texHeight;
+
+        DAT_008e72e0.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_008e72e0.texWidth = (int16)DAT_01b2ea60[textureId - 1].width;
+        DAT_008e72e0.texHeight = (int16)DAT_01b2ea60[textureId - 1].height;
+        DAT_008e72e0.unk0x104 = (int16)DAT_01b2ea60[textureId - 1].width;
+
+        DAT_008e7400.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_008e7400.texWidth = (int16)DAT_01b2ea60[textureId - 1].width;
+        DAT_008e7400.texHeight = (int16)DAT_01b2ea60[textureId - 1].height;
+        DAT_008e7400.unk0x104 = (int16)DAT_01b2ea60[textureId - 1].width;
+
+        DAT_008e7520.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_008e7520.texWidth = (int16)DAT_01b2ea60[textureId - 1].width;
+        DAT_008e7520.texHeight = (int16)DAT_01b2ea60[textureId - 1].height;
+        DAT_008e7520.unk0x104 = (int16)DAT_01b2ea60[textureId - 1].width;
+
+        DAT_008e7640.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_008e7640.texWidth = (int16)DAT_01b2ea60[textureId - 1].width;
+        DAT_008e7640.texHeight = (int16)DAT_01b2ea60[textureId - 1].height;
+        DAT_008e7640.unk0x104 = (int16)DAT_01b2ea60[textureId - 1].width;
+    } else {
+        DAT_00f41c00.texBytes = NULL;
+        DAT_00f41c00.textureId = 0;
+        DAT_00f41c00.texWidth = texWidth;
+        DAT_00f41c00.texHeight = texHeight;
+    }
+
+    FUN_00402470(&DAT_008e72e0, &DAT_00f41c00);
+    FUN_00402470(&DAT_008e7400, &DAT_00f41c00);
+    FUN_00402470(&DAT_008e7520, &DAT_00f41c00);
+    FUN_00402470(&DAT_008e7640, &DAT_00f41c00);
+
+    DAT_0051adac = 0;
+
+    DAT_01b18068 = prevGlobalVal;
+
+    DAT_0051ad90 += 1;
+}
+
+void FUN_00405000(int32 textureId, int32 x, int32 y, int32 width, int32 height, int32 r, int32 g, int32 b) {
+    float32 prevGlobalVal;
+
+    int32 texWidth;
+    int32 texHeight;
+
+    int32 red;
+    int32 green;
+    int32 blue;
+
+    prevGlobalVal = DAT_01b18068;
+
+    DAT_0051adac = 3;
+
+    DAT_01b18068 = (float32)(0.0003 - DAT_0051ad90 * 0.000005);
+
+    if (textureId != 0) {
+        texWidth = DAT_01b2ea60[textureId - 1].width;
+        texHeight = DAT_01b2ea60[textureId - 1].height;
+    }
+
+    memset(&DAT_008e72e0, 0, sizeof(DAT_008e72e0));
+    memset(&DAT_008e7400, 0, sizeof(DAT_008e7400));
+    memset(&DAT_008e7520, 0, sizeof(DAT_008e7520));
+    memset(&DAT_008e7640, 0, sizeof(DAT_008e7640));
+
+    DAT_008e72e0.unk0x0 = 3;
+    DAT_008e7400.unk0x0 = 3;
+    DAT_008e7520.unk0x0 = 3;
+    DAT_008e7640.unk0x0 = 3;
+
+    DAT_008e72e0.unk0x1 = 0xff;
+    DAT_008e7400.unk0x1 = 0xff;
+    DAT_008e7520.unk0x1 = 0xff;
+    DAT_008e7640.unk0x1 = 0xff;
+
+    if (DAT_00ef6f40 != 0) {
+        red = (int32)(r * 84.0f);
+        green = (int32)(g * 84.0f);
+        blue = (int32)(b * 84.0f);
+
+        DAT_008e72e0.unk0x2 = 128;
+        DAT_008e7400.unk0x2 = 128;
+        DAT_008e7520.unk0x2 = 128;
+        DAT_008e7640.unk0x2 = 128;
+
+        x = width / 2 + x;
+        y = height / 2 + y;
+
+        width *= 2;
+        height *= 2;
+
+        x = -(width / 2) + x;
+        y = -(height / 2) + y;
+    } else {
+        red = (int32)(r * 64.0f);
+        green = (int32)(g * 64.0f);
+        blue = (int32)(b * 64.0f);
+
+        DAT_008e72e0.unk0x2 = 128;
+        DAT_008e7400.unk0x2 = 128;
+        DAT_008e7520.unk0x2 = 128;
+        DAT_008e7640.unk0x2 = 128;
+    }
+
+    DAT_008e72e0.r1 = (int16)red;
+    DAT_008e72e0.r2 = (int16)(red / 4);
+    DAT_008e72e0.r3 = (int16)(red / 4);
+    DAT_008e72e0.g1 = (int16)green;
+    DAT_008e72e0.g2 = (int16)(green / 4);
+    DAT_008e72e0.g3 = (int16)(green / 4);
+    DAT_008e72e0.b1 = (int16)blue;
+    DAT_008e72e0.b2 = (int16)(blue / 4);
+    DAT_008e72e0.b3 = (int16)(blue / 4);
+
+    DAT_008e7400.r1 = (int16)red;
+    DAT_008e7400.r2 = (int16)(red / 4);
+    DAT_008e7400.r3 = (int16)(red / 4);
+    DAT_008e7400.g1 = (int16)green;
+    DAT_008e7400.g2 = (int16)(green / 4);
+    DAT_008e7400.g3 = (int16)(green / 4);
+    DAT_008e7400.b1 = (int16)blue;
+    DAT_008e7400.b2 = (int16)(blue / 4);
+    DAT_008e7400.b3 = (int16)(blue / 4);
+
+    DAT_008e7520.r1 = (int16)red;
+    DAT_008e7520.r2 = (int16)(red / 4);
+    DAT_008e7520.r3 = (int16)(red / 4);
+    DAT_008e7520.g1 = (int16)green;
+    DAT_008e7520.g2 = (int16)(green / 4);
+    DAT_008e7520.g3 = (int16)(green / 4);
+    DAT_008e7520.b1 = (int16)blue;
+    DAT_008e7520.b2 = (int16)(blue / 4);
+    DAT_008e7520.b3 = (int16)(blue / 4);
+
+    DAT_008e7640.r1 = (int16)red;
+    DAT_008e7640.r2 = (int16)(red / 4);
+    DAT_008e7640.r3 = (int16)(red / 4);
+    DAT_008e7640.g1 = (int16)green;
+    DAT_008e7640.g2 = (int16)(green / 4);
+    DAT_008e7640.g3 = (int16)(green / 4);
+    DAT_008e7640.b1 = (int16)blue;
+    DAT_008e7640.b2 = (int16)(blue / 4);
+    DAT_008e7640.b3 = (int16)(blue / 4);
+
+    DAT_008e72e0.x1 = (float32)((width / 2) + x);
+    DAT_008e72e0.y1 = (float32)((height / 2) + y);
+    DAT_008e72e0.x2 = (float32)(x + width);
+    DAT_008e72e0.y2 = (float32)y;
+    DAT_008e72e0.x3 = (float32)x;
+    DAT_008e72e0.y3 = (float32)y;
+
+    DAT_008e7400.x1 = (float32)((width / 2) + x);
+    DAT_008e7400.y1 = (float32)((height / 2) + y);
+    DAT_008e7400.x2 = (float32)(x + width);
+    DAT_008e7400.y2 = (float32)(y + height);
+    DAT_008e7400.x3 = (float32)(x + width);
+    DAT_008e7400.y3 = (float32)y;
+
+    DAT_008e7520.x1 = (float32)((width / 2) + x);
+    DAT_008e7520.x2 = (float32)x;
+    DAT_008e7520.y1 = (float32)((height / 2) + y);
+    DAT_008e7520.y2 = (float32)(y + height);
+    DAT_008e7520.x3 = (float32)(x + width);
+    DAT_008e7520.y3 = (float32)(y + height);
+
+    DAT_008e7640.x1 = (float32)((width / 2) + x);
+    DAT_008e7640.y1 = (float32)((height / 2) + y);
+    DAT_008e7640.x2 = (float32)x;
+    DAT_008e7640.y2 = (float32)y;
+    DAT_008e7640.x3 = (float32)x;
+    DAT_008e7640.y3 = (float32)(y + height);
+
+    DAT_008e72e0.tu1 = texWidth / 2;
+    DAT_008e72e0.tv1 = texHeight / 2;
+    DAT_008e72e0.tu2 = texWidth - 1;
+    DAT_008e72e0.tv2 = 0;
+    DAT_008e72e0.tu3 = 0;
+    DAT_008e72e0.tv3 = 0;
+    
+    DAT_008e7400.tu1 = texWidth / 2;
+    DAT_008e7400.tv1 = texHeight / 2;
+    DAT_008e7400.tu2 = texWidth - 1;
+    DAT_008e7400.tv2 = texHeight - 1;
+    DAT_008e7400.tu3 = texWidth - 1;
+    DAT_008e7400.tv3 = 0;
+
+    DAT_008e7520.tu1 = texWidth / 2;
+    DAT_008e7520.tv1 = texHeight / 2;
+    DAT_008e7520.tu2 = 0;
+    DAT_008e7520.tv2 = texHeight - 1;
+    DAT_008e7520.tu3 = texWidth - 1;
+    DAT_008e7520.tv3 = texHeight - 1;
+
+    DAT_008e7640.tu1 = texWidth / 2;
+    DAT_008e7640.tv1 = texHeight / 2;
+    DAT_008e7640.tu2 = 0;
+    DAT_008e7640.tv2 = 0;
+    DAT_008e7640.tu3 = 0;
+    DAT_008e7640.tv3 = texHeight - 1;
+
+    if (textureId > 0) {
+        DAT_00f41c00.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_00f41c00.textureId = textureId;
+        DAT_00f41c00.texWidth = texWidth;
+        DAT_00f41c00.texHeight = texHeight;
+
+        DAT_008e72e0.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_008e72e0.texWidth = (int16)DAT_01b2ea60[textureId - 1].width;
+        DAT_008e72e0.texHeight = (int16)DAT_01b2ea60[textureId - 1].height;
+        DAT_008e72e0.unk0x104 = (int16)DAT_01b2ea60[textureId - 1].width;
+
+        DAT_008e7400.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_008e7400.texWidth = (int16)DAT_01b2ea60[textureId - 1].width;
+        DAT_008e7400.texHeight = (int16)DAT_01b2ea60[textureId - 1].height;
+        DAT_008e7400.unk0x104 = (int16)DAT_01b2ea60[textureId - 1].width;
+
+        DAT_008e7520.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_008e7520.texWidth = (int16)DAT_01b2ea60[textureId - 1].width;
+        DAT_008e7520.texHeight = (int16)DAT_01b2ea60[textureId - 1].height;
+        DAT_008e7520.unk0x104 = (int16)DAT_01b2ea60[textureId - 1].width;
+
+        DAT_008e7640.texBytes = DAT_01b2ea60[textureId - 1].texBytes;
+        DAT_008e7640.texWidth = (int16)DAT_01b2ea60[textureId - 1].width;
+        DAT_008e7640.texHeight = (int16)DAT_01b2ea60[textureId - 1].height;
+        DAT_008e7640.unk0x104 = (int16)DAT_01b2ea60[textureId - 1].width;
+    } else {
+        DAT_00f41c00.texBytes = NULL;
+        DAT_00f41c00.textureId = 0;
+        DAT_00f41c00.texWidth = texWidth;
+        DAT_00f41c00.texHeight = texHeight;
+    }
+
+    FUN_00402470(&DAT_008e72e0, &DAT_00f41c00);
+    FUN_00402470(&DAT_008e7400, &DAT_00f41c00);
+    FUN_00402470(&DAT_008e7520, &DAT_00f41c00);
+    FUN_00402470(&DAT_008e7640, &DAT_00f41c00);
+
+    DAT_0051adac = 0;
+
+    DAT_01b18068 = prevGlobalVal;
+
+    DAT_0051ad90 += 1;
+}
+
+int32 FUN_004055c0(uint16 *param1) {
+    int32 i;
+    int32 foundIdx;
+
+    foundIdx = -1;
+
+    for (i = 0; i < 2048; i++) {
+        if (DAT_01b2ea60[i].texBytes == param1) {
+            foundIdx = i;
+        }
+    }
+
+    return foundIdx;
 }
