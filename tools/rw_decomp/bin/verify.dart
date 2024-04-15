@@ -206,8 +206,13 @@ void main(List<String> args) {
 
   // Compute new totals
   final textTotalMatchingBytes = textResults.values.fold(0, (sum, sym) => sum + sym.matchingBytes);
+  final textTotalCoveredBytes = textResults.values.fold(0, (sum, sym) => sum + sym.totalBaseBytes);
+
   final rdataTotalMatchingBytes = rdataResults.values.fold(0, (sum, sym) => sum + sym.matchingBytes);
+  final rdataTotalCoveredBytes = rdataResults.values.fold(0, (sum, sym) => sum + sym.totalBaseBytes);
+
   final dataTotalMatchingBytes = dataResults.values.fold(0, (sum, sym) => sum + sym.matchingBytes);
+  final dataTotalCoveredBytes = dataResults.values.fold(0, (sum, sym) => sum + sym.totalBaseBytes);
 
   // Emit verification result file
   final result = VerificationResult(
@@ -215,14 +220,17 @@ void main(List<String> args) {
     objs: objTimestamps,
     text: VerificationSectionResult(
       totalMatchingBytes: textTotalMatchingBytes,
+      totalCoveredBytes: textTotalCoveredBytes,
       symbols: textResults,
     ),
     rdata: VerificationSectionResult(
       totalMatchingBytes: rdataTotalMatchingBytes,
+      totalCoveredBytes: rdataTotalCoveredBytes,
       symbols: rdataResults,
     ),
     data: VerificationSectionResult(
       totalMatchingBytes: dataTotalMatchingBytes,
+      totalCoveredBytes: dataTotalCoveredBytes,
       symbols: dataResults,
     ),
   );

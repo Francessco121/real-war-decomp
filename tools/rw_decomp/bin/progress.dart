@@ -82,30 +82,55 @@ Future<void> main(List<String> args) async {
             : sum));
 
   final textMatchingBytes = verification.text.totalMatchingBytes;
+  final textCoveredBytes = verification.text.totalCoveredBytes;
+
   final rdataMatchingBytes = verification.rdata.totalMatchingBytes;
+  final rdataCoveredBytes = verification.rdata.totalCoveredBytes;
+
   final dataMatchingBytes = verification.data.totalMatchingBytes + stringLiteralTotalBytes;
+  final dataCoveredBytes = verification.data.totalCoveredBytes + stringLiteralTotalBytes;
 
   final equivalentFunctions = verification.text.symbols.length;
 
   // Display
   final totalBytes = textTotalBytes + rdataTotalBytes + dataTotalBytes;
   final totalMatchingBytes = textMatchingBytes + rdataMatchingBytes + dataMatchingBytes;
+  final totalCoveredBytes = textCoveredBytes + rdataCoveredBytes + dataCoveredBytes;
 
+  final totalMatchingBytePercentage = ((totalMatchingBytes / totalBytes) * 100.0).toStringAsFixed(2);
+  final totalCoveredBytePercentage = ((totalCoveredBytes / totalBytes) * 100.0).toStringAsFixed(2);
+  final totalAccuracy = totalCoveredBytes == 0 ? 'N/A' : ((totalMatchingBytes / totalCoveredBytes) * 100.0).toStringAsFixed(2);
   final funcPercentage = ((equivalentFunctions / totalFunctions) * 100.0).toStringAsFixed(2);
-  final textBytePercentage = ((textMatchingBytes / textTotalBytes) * 100.0).toStringAsFixed(2);
-  final rdataBytePercentage = ((rdataMatchingBytes / rdataTotalBytes) * 100.0).toStringAsFixed(2);
-  final dataBytePercentage = ((dataMatchingBytes / dataTotalBytes) * 100.0).toStringAsFixed(2);
-  final totalBytePercentage = ((totalMatchingBytes / totalBytes) * 100.0).toStringAsFixed(2);
+
+  final textMatchingBytePercentage = ((textMatchingBytes / textTotalBytes) * 100.0).toStringAsFixed(2);
+  final textCoveredBytePercentage = ((textCoveredBytes / textTotalBytes) * 100.0).toStringAsFixed(2);
+  final textAccuracy = textCoveredBytes == 0 ? 'N/A' : ((textMatchingBytes / textCoveredBytes) * 100.0).toStringAsFixed(2);
+  
+  final rdataMatchingBytePercentage = ((rdataMatchingBytes / rdataTotalBytes) * 100.0).toStringAsFixed(2);
+  final rdataCoveredBytePercentage = ((rdataCoveredBytes / rdataTotalBytes) * 100.0).toStringAsFixed(2);
+  final rdataAccuracy = rdataCoveredBytes == 0 ? 'N/A' : ((rdataMatchingBytes / rdataCoveredBytes) * 100.0).toStringAsFixed(2);
+  
+  final dataMatchingBytePercentage = ((dataMatchingBytes / dataTotalBytes) * 100.0).toStringAsFixed(2);
+  final dataCoveredBytePercentage = ((dataCoveredBytes / dataTotalBytes) * 100.0).toStringAsFixed(2);
+  final dataAccuracy = dataCoveredBytes == 0 ? 'N/A' : ((dataMatchingBytes / dataCoveredBytes) * 100.0).toStringAsFixed(2);
 
   print('total:');
-  print('    bytes:      ${'$totalMatchingBytes/$totalBytes'.padLeft(14)} ($totalBytePercentage%)');
+  print('    accur:      ${'$totalAccuracy%'.padLeft(14)}');
+  print('    match:      ${'$totalMatchingBytes/$totalBytes'.padLeft(14)} ($totalMatchingBytePercentage%)');
+  print('    cover:      ${'$totalCoveredBytes/$totalBytes'.padLeft(14)} ($totalCoveredBytePercentage%)');
   print('.text:');
+  print('    accur:      ${'$textAccuracy%'.padLeft(14)}');
+  print('    match:      ${'$textMatchingBytes/$textTotalBytes'.padLeft(14)} ($textMatchingBytePercentage%)');
+  print('    cover:      ${'$textCoveredBytes/$textTotalBytes'.padLeft(14)} ($textCoveredBytePercentage%)');
   print('    funcs:      ${'$equivalentFunctions/$totalFunctions'.padLeft(14)} ($funcPercentage%)');
-  print('    bytes:      ${'$textMatchingBytes/$textTotalBytes'.padLeft(14)} ($textBytePercentage%)');
   print('.rdata:');
-  print('    bytes:      ${'$rdataMatchingBytes/$rdataTotalBytes'.padLeft(14)} ($rdataBytePercentage%)');
+  print('    accur:      ${'$rdataAccuracy%'.padLeft(14)}');
+  print('    match:      ${'$rdataMatchingBytes/$rdataTotalBytes'.padLeft(14)} ($rdataMatchingBytePercentage%)');
+  print('    cover:      ${'$rdataCoveredBytes/$rdataTotalBytes'.padLeft(14)} ($rdataCoveredBytePercentage%)');
   print('.data:');
-  print('    bytes:      ${'$dataMatchingBytes/$dataTotalBytes'.padLeft(14)} ($dataBytePercentage%)');
+  print('    accur:      ${'$dataAccuracy%'.padLeft(14)}');
+  print('    match:      ${'$dataMatchingBytes/$dataTotalBytes'.padLeft(14)} ($dataMatchingBytePercentage%)');
+  print('    cover:      ${'$dataCoveredBytes/$dataTotalBytes'.padLeft(14)} ($dataCoveredBytePercentage%)');
 
   // Generate shields
   if (genShields) {
@@ -117,8 +142,8 @@ Future<void> main(List<String> args) async {
       shieldFile.writeAsStringSync(shieldSvg);
     }
 
-    await makeShield('total.svg', 'Total', '$totalBytePercentage%');
-    await makeShield('funcs.svg', 'Functions', '$funcPercentage%');
+    await makeShield('coverage.svg', 'Progress', '$totalCoveredBytePercentage%');
+    await makeShield('accuracy.svg', 'Accuracy', '$totalAccuracy%');
 
     print('');
     print('Wrote new shields to $shieldsDir');

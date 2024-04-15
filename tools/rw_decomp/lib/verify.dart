@@ -45,10 +45,12 @@ class VerificationResult {
 
 class VerificationSectionResult {
   final int totalMatchingBytes;
+  final int totalCoveredBytes;
   final Map<int, SymbolVerificationResult> symbols;
 
   VerificationSectionResult({
     required this.totalMatchingBytes, 
+    required this.totalCoveredBytes, 
     required this.symbols,
   });
 
@@ -61,6 +63,7 @@ class VerificationSectionResult {
 
     return VerificationSectionResult(
       totalMatchingBytes: json['totalMatchingBytes'],
+      totalCoveredBytes: json['totalCoveredBytes'],
       symbols: symbols,
     );
   }
@@ -70,6 +73,7 @@ class VerificationSectionResult {
 
     return {
       'totalMatchingBytes': totalMatchingBytes,
+      'totalCoveredBytes': totalCoveredBytes,
       'symbols': {
         for (final sym in syms)
           '0x${sym.address.toRadixString(16)}': _symbolToString(sym)

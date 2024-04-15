@@ -1,5 +1,5 @@
 # Real War (2001) Decompilation
-![](./docs/shields/total.svg) ![](./docs/shields/funcs.svg)
+![](./docs/shields/coverage.svg) ![](./docs/shields/accuracy.svg)
 
 A work in progress decompilation of the PC game [Real War (2001) by Rival Interactive](https://en.wikipedia.org/wiki/Real_War_(video_game)).
 
