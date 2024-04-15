@@ -214,7 +214,7 @@ HRESULT CALLBACK enum_pixel_formats_callback(LPDDPIXELFORMAT lpDDPixFmt, LPVOID 
             lpDDPixFmt->dwRBitMask == 0x7c00 &&
             lpDDPixFmt->dwGBitMask == 0x3e0 &&
             lpDDPixFmt->dwBBitMask == 0x1f) {
-            
+            // ARGB1555
             DAT_0051ada4 = 1;
             return D3DENUMRET_CANCEL;
         }
@@ -224,6 +224,7 @@ HRESULT CALLBACK enum_pixel_formats_callback(LPDDPIXELFORMAT lpDDPixFmt, LPVOID 
             lpDDPixFmt->dwGBitMask == 0x7e0 &&
             lpDDPixFmt->dwBBitMask == 0x1f) {
             
+            // RGB565
             DAT_0051ada4 = 2;
             return D3DENUMRET_CANCEL;
         }
@@ -2396,4 +2397,12 @@ int32 FUN_004055c0(uint16 *param1) {
     }
 
     return foundIdx;
+}
+
+// FUN_004055f0
+
+// FUN_00406170
+
+int32 FUN_00406a30(int32 textureId) {
+    return DAT_01b2ea60[textureId - 1].unk0x24;
 }

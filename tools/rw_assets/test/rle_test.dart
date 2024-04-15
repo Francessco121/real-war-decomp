@@ -2,16 +2,17 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
-import 'package:rw_assets/tgc.dart';
+import 'package:rw_assets/image_utils.dart';
+import 'package:rw_assets/src/rle.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('tgcRleEncode', () {
+  test('rleEncode16', () {
     final testImageFile = File(p.join(p.current, 'test/test.tga'));
     final testImageData = _getTgaImageData(testImageFile.readAsBytesSync());
 
-    final encoded = tgcRleEncode(testImageData);
-    final (decoded, _) = tgcRleDecode(encoded);
+    final encoded = rleEncode16(testImageData, maxRunLength: 4096);
+    final (decoded, _) = rleDecode16(encoded);
 
     expect(decoded, equals(testImageData));
   });

@@ -51,9 +51,11 @@ segments:
   - [0x409f50, text]
   - [0x461dd0, text, game_dirs]
   - [0x4626c0, text]
+  - [0x4b9000, text, segment_4b9000]
   - [0x4b92e0, text, timers]
   - [0x4b9610, bin] # this might be assembler output, not c code
   - [0x4b9660, text]
+  - [0x4c47b0, text, segment_4c47b0]
   - [0x4c49a0, text, segment_4c49a0]
   - [0x4c4a20, text]
   - [0x4c7080, text, segment_4c7080]
@@ -1734,13 +1736,16 @@ symbols:
   DAT_008ec0a4: 0x8ec0a4
   gCmdLineArgM: 0x8f07e0
   DAT_00945e94: 0x945e94
+  DAT_00945f60: 0x945f60
   DAT_00ece464: 0xece464
+  DAT_00ed3d28: 0xed3d28
   DAT_00ef6f40: 0xef6f40
   gCmdLineArgP: 0xef6f60
   gTempString: 0xef6fc0
   DAT_00f0c770: 0xf0c770
   DAT_00f41c00: 0xf41c00
   gCmdLineArgS: 0xfe00e0
+  DAT_00fe0200: 0xfe0200
   DAT_00fe04d0: 0xfe04d0
   DAT_01359b80: 0x1359b80
   gRealWarRegKey: 0x1a94964
@@ -1847,15 +1852,15 @@ literalSymbols:
   "??_C@_02NGAF@wb?$AA@": ["&\"wb\"", 4, 0x4ec808]
   "??_C@_08LOIE@Software?$AA@": ["&\"Software\"", 12, 0x50a710]
   "??_C@_07JKHC@RealWar?$AA@": ["&\"RealWar\"", 8, 0x50a720]
-  "??_C@_07BDDJ@?$CFsvids?2?$AA@": ["&\"%svids\\\"", 8, 0x50a744]
+  "??_C@_07BDDJ@?$CFsvids?2?$AA@": ["&\"%svids\\\\\"", 8, 0x50a744]
   "??_C@_09HKCN@CDDATADIR?$AA@": ["&\"CDDATADIR\"", 12, 0x50a74c]
   "??_C@_07KFIJ@VIDTREE?$AA@": ["&\"VIDTREE\"", 8, 0x50a758]
   "??_C@_08LKLH@DATATREE?$AA@": ["&\"DATATREE\"", 12, 0x50a764]
   "??_C@_07NDHC@DIRTREE?$AA@": ["&\"DIRTREE\"", 8, 0x50a770]
   "??_C@_08PMEL@GAMESAVE?$AA@": ["&\"GAMESAVE\"", 12, 0x50a77c]
-  "??_C@_09ECJI@?$CFsdata?2?$CFs?$AA@": ["&\"%sdata\\%s\"", 12, 0x50a788]
+  "??_C@_09ECJI@?$CFsdata?2?$CFs?$AA@": ["&\"%sdata\\\\%s\"", 12, 0x50a788]
   "??_C@_0N@BFFL@?$CFscdtest?4txt?$AA@": ["&\"%scdtest.txt\"", 16, 0x50a794]
-  "??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@": ["&\"Please insert the Real War CD\nin...\"", 80, 0x50a7a4]
+  "??_C@_0EP@EBGI@Please?5insert?5the?5Real?5War?5CD?6in@": ["&\"Please insert the Real War CD\\ni...\"", 80, 0x50a7a4]
   "??_C@_0M@MBIA@?$CFsintro?4mpg?$AA@": ["&\"%sintro.mpg\"", 12, 0x50a7f4]
   "??_C@_0BI@DAKD@Couldn?8t?5Open?5Registry?$CB?$AA@": ["&\"Couldn't Open Registry!\"", 24, 0x50a800]
   "??_C@_0BH@DOK@Couldn?8t?5Create?5Key?5?$CFs?$AA@": ["&\"Couldn't Create Key %s\"", 24, 0x50a818]
@@ -1867,35 +1872,36 @@ literalSymbols:
   "??_C@_07EHLA@?$CF24s?5?$CFd?$AA@": ["&\"%24s %d\"", 8, 0x51560c]
   "??_C@_0BF@EPFG@Resolution?5Per?5Frame?$AA@": ["&\"Resolution Per Frame\"", 24, 0x515614]
   "??_C@_08OBHM@Clockers?$AA@": ["&\"Clockers\"", 12, 0x51562c]
+  "??_C@_0BF@EOJP@Bad?5Anim?5Filename?6?$CFs?$AA@": ["&\"Bad Anim Filename\\n%s\"", 24, 0x515efc]
   "??_C@_0BA@DNOA@Real?5War?3?5V9?425?$AA@": ["&\"Real War: V9.25\"", 16, 0x517018]
   "??_C@_0BN@CLGL@Sound?5System?5Not?5Initialized?$AA@": ["&\"Sound System Not Initialized\"", 32, 0x5172b8]
-  "??_C@_0BO@CGAO@Bad?5or?5Missing?5Adpcm?5file?4?6?$CFs?$AA@": ["&\"Bad or Missing Adpcm file.\n%s\"", 32, 0x5172d8]
+  "??_C@_0BO@CGAO@Bad?5or?5Missing?5Adpcm?5file?4?6?$CFs?$AA@": ["&\"Bad or Missing Adpcm file.\\n%s\"", 32, 0x5172d8]
   "??_C@_0CF@FJIA@Could?5not?5Malloc?5Adpcm?5Sound?5Buf@": ["&\"Could not Malloc Adpcm Sound Buff...\"", 40, 0x5172f8]
   "??_C@_05IMKO@Start?$AA@": ["&\"Start\"", 8, 0x517320]
   "??_C@_07NAEA@VidTree?$AA@": ["&\"VidTree\"", 8, 0x517328]
   "??_C@_08BNMK@DataTree?$AA@": ["&\"DataTree\"", 12, 0x517334]
-  "??_C@_07BNCA@?$CFsdata?2?$AA@": ["&\"%sdata\\\"", 8, 0x517340]
-  "??_C@_02CLHN@?5?7?$AA@": ["&\" \t\"", 4, 0x517354]
+  "??_C@_07BNCA@?$CFsdata?2?$AA@": ["&\"%sdata\\\\\"", 8, 0x517340]
+  "??_C@_02CLHN@?5?7?$AA@": ["&\" \\t\"", 4, 0x517354]
   "??_C@_0L@CNEI@Message?4?4?4?$AA@": ["&\"Message...\"", 12, 0x517358]
-  "??_C@_0BP@NFAL@Failed?5Creating?5D3D?5Devices?4?4?6?$AA@": ["&\"Failed Creating D3D Devices..\n\"", 32, 0x517364]
-  "??_C@_0BH@MPMI@Failed?5on?5Back?5Buffer?6?$AA@": ["&\"Failed on Back Buffer\n\"", 24, 0x517384]
-  "??_C@_0BI@MLGD@Failed?5on?5Front?5Buffer?6?$AA@": ["&\"Failed on Front Buffer\n\"", 24, 0x51739c]
-  "??_C@_0BE@LJMM@Failed?5Set?5Display?6?$AA@": ["&\"Failed Set Display\n\"", 20, 0x5173b4]
-  "??_C@_0BL@LLKL@Failed?5Create?5D3D?5render?4?6?$AA@": ["&\"Failed Create D3D render.\n\"", 28, 0x5173c8]
-  "??_C@_0BB@PDB@Failed?5Set?5Coop?6?$AA@": ["&\"Failed Set Coop\n\"", 20, 0x5173e4]
-  "??_C@_0BP@KFIP@Failed?5on?5D?5Draw?5Create?5Query?6?$AA@": ["&\"Failed on D Draw Create Query\n\"", 32, 0x5173f8]
-  "??_C@_0CB@NFGP@Failed?5on?5D?5Draw?5Create?5Primary?6@": ["&\"Failed on D Draw Create Primary\n\"", 36, 0x517418]
+  "??_C@_0BP@NFAL@Failed?5Creating?5D3D?5Devices?4?4?6?$AA@": ["&\"Failed Creating D3D Devices..\\n\"", 32, 0x517364]
+  "??_C@_0BH@MPMI@Failed?5on?5Back?5Buffer?6?$AA@": ["&\"Failed on Back Buffer\\n\"", 24, 0x517384]
+  "??_C@_0BI@MLGD@Failed?5on?5Front?5Buffer?6?$AA@": ["&\"Failed on Front Buffer\\n\"", 24, 0x51739c]
+  "??_C@_0BE@LJMM@Failed?5Set?5Display?6?$AA@": ["&\"Failed Set Display\\n\"", 20, 0x5173b4]
+  "??_C@_0BL@LLKL@Failed?5Create?5D3D?5render?4?6?$AA@": ["&\"Failed Create D3D render.\\n\"", 28, 0x5173c8]
+  "??_C@_0BB@PDB@Failed?5Set?5Coop?6?$AA@": ["&\"Failed Set Coop\\n\"", 20, 0x5173e4]
+  "??_C@_0BP@KFIP@Failed?5on?5D?5Draw?5Create?5Query?6?$AA@": ["&\"Failed on D Draw Create Query\\n\"", 32, 0x5173f8]
+  "??_C@_0CB@NFGP@Failed?5on?5D?5Draw?5Create?5Primary?6@": ["&\"Failed on D Draw Create Primary\\n\"", 36, 0x517418]
   "??_C@_0N@JIFI@Windows?5Blit?$AA@": ["&\"Windows Blit\"", 16, 0x51743c]
   "??_C@_0CH@KOEI@Blit?5Tick?5Counts?5?$DN?5?$CFd?5Blits?5Per?5@": ["&\"Blit Tick Counts = %d Blits Per S...\"", 40, 0x51744c]
-  "??_C@_0BF@LLFO@Memory?5map?5file?4?$AN?6?$AN?6?$AA@": ["&\"Memory map file.\r\n\r\n\"", 24, 0x517474]
+  "??_C@_0BF@LLFO@Memory?5map?5file?4?$AN?6?$AN?6?$AA@": ["&\"Memory map file.\\r\\n\\r\\n\"", 24, 0x517474]
   "??_C@_09HLII@rwmap?4txt?$AA@": ["&\"rwmap.txt\"", 12, 0x51748c]
-  "??_C@_06MODA@?$CFs?$AN?6?$AN?6?$AA@": ["&\"%s\r\n\r\n\"", 8, 0x517498]
+  "??_C@_06MODA@?$CFs?$AN?6?$AN?6?$AA@": ["&\"%s\\r\\n\\r\\n\"", 8, 0x517498]
   "??_C@_0BA@CJEL@Total?5Used?5?$DN?5?$CFd?$AA@": ["&\"Total Used = %d\"", 16, 0x5174a0]
   "??_C@_0BF@OCDB@Total?5Used?5?$DN?5?$CFd?0?$CF03d?$AA@": ["&\"Total Used = %d,%03d\"", 24, 0x5174b0]
   "??_C@_0BK@JJMG@Total?5Used?5?$DN?5?$CFd?0?$CF03d?0?$CF03d?$AA@": ["&\"Total Used = %d,%03d,%03d\"", 28, 0x5174c8]
-  "??_C@_0BD@PAEF@?$CFs?5?5?5?5?5?5?5?5?5?$CF3d?$AN?6?$AN?6?$AA@": ["&\"%s         %3d\r\n\r\n\"", 20, 0x5174e4]
-  "??_C@_0BE@LABO@?$CFs?5?5?5?5?5?$CF3d?0?$CF03d?$AN?6?$AN?6?$AA@": ["&\"%s     %3d,%03d\r\n\r\n\"", 20, 0x5174f8]
-  "??_C@_0BF@JEHA@?$CFs?5?$CF3d?0?$CF03d?0?$CF03d?$AN?6?$AN?6?$AA@": ["&\"%s %3d,%03d,%03d\r\n\r\n\"", 24, 0x51750c]
+  "??_C@_0BD@PAEF@?$CFs?5?5?5?5?5?5?5?5?5?$CF3d?$AN?6?$AN?6?$AA@": ["&\"%s         %3d\\r\\n\\r\\n\"", 20, 0x5174e4]
+  "??_C@_0BE@LABO@?$CFs?5?5?5?5?5?$CF3d?0?$CF03d?$AN?6?$AN?6?$AA@": ["&\"%s     %3d,%03d\\r\\n\\r\\n\"", 20, 0x5174f8]
+  "??_C@_0BF@JEHA@?$CFs?5?$CF3d?0?$CF03d?0?$CF03d?$AN?6?$AN?6?$AA@": ["&\"%s %3d,%03d,%03d\\r\\n\\r\\n\"", 24, 0x51750c]
   "??_C@_0BL@KKGJ@Used?5?$DN?5?5?5?5?5?5?5?5?5?$CF3d?5at?5?$CF18s?$AA@": ["&\"Used =         %3d at %18s\"", 28, 0x517524]
   "??_C@_0BM@PPAH@Used?5?$DN?5?5?5?5?5?$CF3d?0?$CF03d?5at?5?$CF18s?$AA@": ["&\"Used =     %3d,%03d at %18s\"", 28, 0x517540]
   "??_C@_0BN@IHEA@Used?5?$DN?5?$CF3d?0?$CF03d?0?$CF03d?5at?5?$CF18s?$AA@": ["&\"Used = %3d,%03d,%03d at %18s\"", 32, 0x51755c]

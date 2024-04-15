@@ -5,6 +5,7 @@ import 'package:args/command_runner.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:rw_assets/console_utils.dart';
+import 'package:rw_assets/image_utils.dart';
 import 'package:rw_assets/tga.dart';
 import 'package:rw_assets/tgc.dart';
 

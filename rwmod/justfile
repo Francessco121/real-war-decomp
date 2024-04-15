@@ -89,3 +89,8 @@ set shell := ["powershell.exe", "-c"]
 [no-exit-message]
 @kvag *args:
     dart run ../tools/rw_assets/bin/kvag.dart {{args}}
+
+# work with SPT files
+[no-exit-message]
+@spt *args:
+    dart run ../tools/rw_assets/bin/spt.dart {{args}}

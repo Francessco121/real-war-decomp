@@ -381,17 +381,17 @@ String _literalToDisplayString(String literal) {
 
     switch (c) {
       case 9: // horizontal tab
-        buffer.write('\\t');
+        buffer.write(r'\\t');
       case 10: // newline
-        buffer.write('\\n');
+        buffer.write(r'\\n');
       case 13: // carriage return
-        buffer.write('\\r');
+        buffer.write(r'\\r');
       case < 32: // non-printable
         break;
       case 34: // double quote
-        buffer.write('\\"');
+        buffer.write(r'\\"');
       case 92: // backslash
-        buffer.write('\\\\');
+        buffer.write(r'\\\\');
       default:
         buffer.writeCharCode(c);
     }
