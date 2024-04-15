@@ -337,7 +337,7 @@ void _displayDiff(Console console, List<DiffLine<Instruction>> lines, int scroll
   final bottomDiffPen = AnsiPen()..black()..xterm(3, bg: true);
   final bottomOkPen = AnsiPen()..black()..xterm(10, bg: true);
 
-  final mnemonicDiffPen = AnsiPen()..xterm(12);
+  final instructionDiffPen = AnsiPen()..xterm(12);
   final opDiffPen = AnsiPen()..xterm(3);
   final byteDiffPen = AnsiPen()..xterm(13);
   final addPen = AnsiPen()..xterm(10);
@@ -441,15 +441,15 @@ void _displayDiff(Console console, List<DiffLine<Instruction>> lines, int scroll
         srcMnemonicColor = byteDiffPen;
         srcOpColor = byteDiffPen;
         srcSymbolColor = byteDiffPen;
-      case DifferenceType.mnemonic:
-        targAddressColor = mnemonicDiffPen;
-        targMnemonicColor = mnemonicDiffPen;
-        targOpColor = mnemonicDiffPen;
+      case DifferenceType.instruction:
+        targAddressColor = instructionDiffPen;
+        targMnemonicColor = targ!.mnemonic == src!.mnemonic ? null : instructionDiffPen;
+        targOpColor = instructionDiffPen;
         srcSymbol = '|';
-        srcAddressColor = mnemonicDiffPen;
-        srcMnemonicColor = mnemonicDiffPen;
-        srcOpColor = mnemonicDiffPen;
-        srcSymbolColor = mnemonicDiffPen;
+        srcAddressColor = instructionDiffPen;
+        srcMnemonicColor = targ.mnemonic == src.mnemonic ? null : instructionDiffPen;
+        srcOpColor = instructionDiffPen;
+        srcSymbolColor = instructionDiffPen;
       case DifferenceType.operands:
         targAddressColor = opDiffPen;
         targMnemonicColor = null;
@@ -486,7 +486,9 @@ void _displayDiff(Console console, List<DiffLine<Instruction>> lines, int scroll
     // Only color differing operands when that's the main difference
     List<OperandDiff>? targOpColors;
     List<OperandDiff>? srcOpColors;
-    if (targ != null && src != null && diffType == DifferenceType.operands) {
+    if (targ != null && src != null && 
+        (diffType == DifferenceType.operands ||
+          (diffType == DifferenceType.instruction && targ.mnemonic == src.mnemonic))) {
       final targOps = targOp!.split(',');
       final srcOps = srcOp!.split(',');
 
@@ -619,13 +621,12 @@ DifferenceType _determineDifference(DiffLine<Instruction> line, RealWarYaml rw) 
         return DifferenceType.bytes;
       }
     case DiffEditType.substitute:
-      if (targ!.mnemonic != src!.mnemonic) {
-        return DifferenceType.mnemonic;
-      } else if (doInstructionsMatchViaLiteralSymbol(rw, targ, src)) {
+      if (doInstructionsMatchViaLiteralSymbol(rw, targ!, src!)) {
         // Instructions only differ by a literal reference for the same literal value
         return DifferenceType.none;
       } else {
-        return DifferenceType.operands;
+        // Mnemonic or operand *types* are different
+        return DifferenceType.instruction;
       }
     case DiffEditType.insert:
       return DifferenceType.insertion;
@@ -638,7 +639,7 @@ enum DifferenceType {
   none,
   bytes,
   operands,
-  mnemonic,
+  instruction,
   insertion,
   deletion
 }
