@@ -45,9 +45,16 @@ A quick overview of the decompilation process:
 
 ## Cool Stuff
 
+### Asset Viewer
+Explore Real War's custom asset files with a viewer program built upon knowledge from this decompilation project: https://github.com/Francessco121/real-war-asset-viewer
+
 ### Tools
-- `tools/rw_assets/bin/bigfile.dart` - Unpacks all files in `bigfile.dat` into a directory. 
-- `tools/rw_assets/bin/tgc.dart` - Converts to and from Real War's Targa Compressed (TGC) image files. 
+- `tools/rw_assets/bin`
+    - `bigfile.dart` - Unpacks all files in `bigfile.dat` into a directory. 
+    - `bse.dart` - Exports Real War's BSE model files. 
+    - `kvag.dart` - Converts to and from Real War's KVAG audio files. 
+    - `spt.dart` - Exports Real War's SPT 2D sprite/animation files.
+    - `tgc.dart` - Converts to and from Real War's Targa Compressed (TGC) image files. 
 
 ### Game CLI Args
 The game has many undocumented command-line arguments that it will accept. Each argument starts with a `-`, followed by a single uppercase letter. For an argument to actually be recognized by the game, it must have a "value" after it (i.e. `-G 1`) even if the "value" has no effect (i.e. it can be anything, it just needs to be there). Note: There does not need to be a space between the argument name and its value.

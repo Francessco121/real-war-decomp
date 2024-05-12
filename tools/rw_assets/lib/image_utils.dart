@@ -28,9 +28,9 @@ Uint8List argb1555ToRgba8888(Uint8List bytes) {
   for (int i = 0; i < bytes.lengthInBytes; i += 2) {
     final word = data.getUint16(i, Endian.little);
     final a = (word & 0x8000) == 0 ? 255 : 0;
-    final r = ((word >> 10) & 0x1F) * 8;
-    final g = ((word >> 5) & 0x1F) * 8;
-    final b = ((word >> 0) & 0x1F) * 8;
+    final r = (((word >> 10) & 0x1F) * 255) ~/ 31;
+    final g = (((word >> 5) & 0x1F) * 255) ~/ 31;
+    final b = (((word >> 0) & 0x1F) * 255) ~/ 31;
 
     builder.addByte(r);
     builder.addByte(g);

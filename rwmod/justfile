@@ -94,3 +94,8 @@ set shell := ["powershell.exe", "-c"]
 [no-exit-message]
 @spt *args:
     dart run ../tools/rw_assets/bin/spt.dart {{args}}
+
+# work with BSE files
+[no-exit-message]
+@bse *args:
+    dart run ../tools/rw_assets/bin/bse.dart {{args}}

@@ -2,7 +2,7 @@
 
 bitfield SPTHeader  {
     frameCount : 30;
-    padding : 1;
+    unk : 1;
     isRle : 1;
 };
 
