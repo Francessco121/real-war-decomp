@@ -36,15 +36,15 @@ class KvagHeader {
     final adpcmBytes = Uint8List.sublistView(kvagBytes, _kvagAdpcmByteOffset);
     
     final pcmBytes = header.isStereo
-        ? _adpcmDecompressStereo(adpcmBytes)
-        : _adpcmDecompressMono(adpcmBytes);
+        ? _adpcmDecompressStereo(adpcmBytes, header.size)
+        : _adpcmDecompressMono(adpcmBytes, header.size);
     
     return (header, pcmBytes);
   } else {
     // File doesn't have the KVAG header and is just raw mono ADPCM
     //
     // The game code defaults the sample rate to 22050 in this case
-    final pcmBytes = _adpcmDecompressMono(kvagBytes);
+    final pcmBytes = _adpcmDecompressMono(kvagBytes, kvagBytes.lengthInBytes);
 
     return (KvagHeader('', kvagBytes.lengthInBytes, 22050, false), pcmBytes);
   }
@@ -71,8 +71,8 @@ const _stepSizeTable = <int>[
   24623, 27086, 29794, 32767,
 ];
 
-Uint8List _adpcmDecompressMono(Uint8List adpcm) {
-  final output = BytesBuilder();
+Uint8List _adpcmDecompressMono(Uint8List adpcm, int size) {
+  final output = Uint8List(size * 2 * 2);
 
   int index = 0;
   int predictor = 0;
@@ -114,16 +114,16 @@ Uint8List _adpcmDecompressMono(Uint8List adpcm) {
     predictor = max(-32768, min(32767, predictor));
 
     step = _stepSizeTable[index];
-    output.addByte(predictor & 0xFF);
-    output.addByte((predictor >> 8) & 0xFF);
+    output[(i * 2) + 0] = predictor & 0xFF;
+    output[(i * 2) + 1] = (predictor >> 8) & 0xFF;
     i++;
   }
 
-  return output.takeBytes();
+  return output;
 }
 
-Uint8List _adpcmDecompressStereo(Uint8List adpcm) {
-  final output = BytesBuilder();
+Uint8List _adpcmDecompressStereo(Uint8List adpcm, int size) {
+  final output = Uint8List(size * 2 * 2);
 
   int index1 = 0;
   int predictor1 = 0;
@@ -178,12 +178,12 @@ Uint8List _adpcmDecompressStereo(Uint8List adpcm) {
     step1 = _stepSizeTable[index1];
     step2 = _stepSizeTable[index2];
 
-    output.addByte(predictor1 & 0xFF);
-    output.addByte((predictor1 >> 8) & 0xFF);
-    output.addByte(predictor2 & 0xFF);
-    output.addByte((predictor2 >> 8) & 0xFF);
+    output[(i * 4) + 0] = predictor1 & 0xFF;
+    output[(i * 4) + 1] = (predictor1 >> 8) & 0xFF;
+    output[(i * 4) + 2] = predictor2 & 0xFF;
+    output[(i * 4) + 3] = (predictor2 >> 8) & 0xFF;
     i++;
   }
 
-  return output.takeBytes();
+  return output;
 }

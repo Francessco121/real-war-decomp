@@ -343,7 +343,7 @@ void write_adpcm_to_sound_buffers(
     IDirectSoundBuffer *soundBuffer1, 
     IDirectSoundBuffer *soundBuffer2,
     const int8 *adpcmBytes,
-    uint32 adpcmLength,
+    uint32 pcmByteCount,
     bool32 isStereo
 ) {
     LPVOID audioPtr1_1;
@@ -363,7 +363,7 @@ void write_adpcm_to_sound_buffers(
     if (isStereo) {
         gHResult1 = IDirectSoundBuffer_Lock(soundBuffer1, 
             /*dwWriteCursor*/ 0,
-            /*dwWriteBytes*/ adpcmLength / 2,
+            /*dwWriteBytes*/ pcmByteCount / 2,
             /*lplpvAudioPtr1*/ &audioPtr1_1,
             /*lpdwAudioBytes1*/ &audioBytes1_1,
             /*lplpvAudioPtr2*/ &audioPtr2_1,
@@ -372,7 +372,7 @@ void write_adpcm_to_sound_buffers(
         
         gHResult2 = IDirectSoundBuffer_Lock(soundBuffer2, 
             /*dwWriteCursor*/ 0,
-            /*dwWriteBytes*/ adpcmLength / 2,
+            /*dwWriteBytes*/ pcmByteCount / 2,
             /*lplpvAudioPtr1*/ &audioPtr1_2,
             /*lpdwAudioBytes1*/ &audioBytes1_2,
             /*lplpvAudioPtr2*/ &audioPtr2_2,
@@ -400,7 +400,7 @@ void write_adpcm_to_sound_buffers(
     } else {
         gHResult1 = IDirectSoundBuffer_Lock(soundBuffer1, 
             /*dwWriteCursor*/ 0,
-            /*dwWriteBytes*/ adpcmLength,
+            /*dwWriteBytes*/ pcmByteCount,
             /*lplpvAudioPtr1*/ &audioPtr1_1,
             /*lpdwAudioBytes1*/ &audioBytes1_1,
             /*lplpvAudioPtr2*/ &audioPtr2_1,

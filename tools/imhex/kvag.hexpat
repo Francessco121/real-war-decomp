@@ -10,7 +10,7 @@ struct KVAGHeader {
 struct KVAG {
     if (has_header()) {
         KVAGHeader header;
-        u8 adpcmBytes[header.dataSize];
+        u8 adpcmBytes[sizeof($) - sizeof(KVAGHeader)];
     } else {
         // File is just raw mono ADPCM with a 22050 sample rate
         u8 adpcmBytes[sizeof($)];
