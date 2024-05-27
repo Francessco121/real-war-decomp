@@ -45,6 +45,15 @@ A quick overview of the decompilation process:
 
 ## Cool Stuff
 
+### Compatibility Fixes
+Real War has various issues running on modern Windows. Eventually, this project aims to provide patches but for now external software can be used to run the game quite well.
+
+#### DDrawCompat
+See [docs/ddraw_compat.md](./docs/ddraw_compat.md) for a guide for using DDrawCompat to fix most of the game's issues.
+
+#### Wine
+[Wine](https://www.winehq.org/) on Linux runs Real War very well out of the box, with basically perfect hardware acceleration. Still needs a framerate limiter. Try out the virtual desktop option for a hardware acceleration compatible windowed mode!
+
 ### Asset Viewer
 Explore Real War's custom asset files with a viewer program built upon knowledge from this decompilation project: https://github.com/Francessco121/real-war-asset-viewer
 

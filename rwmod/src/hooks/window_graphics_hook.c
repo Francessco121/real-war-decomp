@@ -1,6 +1,6 @@
 #include <WINDOWS.H>
 
-#define LOCK_FRAMERATE_TO_60 1
+#define LOCK_FRAMERATE_TO_60 0
 
 void _draw_frame_base();
 
